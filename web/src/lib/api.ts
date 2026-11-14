@@ -46,12 +46,12 @@ export const API_MODE: "mock" | "live" =
 
 /** Every route the web app calls, in one place so it is easy to line up with the server. */
 export const paths = {
-  me: "/me",
+  me: "/auth/me",
   login: "/auth/demo-login",
   logout: "/auth/logout",
   lectures: "/lectures",
   lecture: (id: string) => `/lectures/${enc(id)}`,
-  source: (lectureId: string, bulletId: string) => `/lectures/${enc(lectureId)}/bullets/${enc(bulletId)}/source`,
+  source: (bulletId: string) => `/bullets/${enc(bulletId)}/source`,
   suggestionsFor: (bulletId: string) => `/bullets/${enc(bulletId)}/suggestions`,
   suggestions: "/suggestions",
   vote: (suggestionId: string) => `/suggestions/${enc(suggestionId)}/vote`,
@@ -167,7 +167,7 @@ export const httpApi: BoardNotesApi = {
   logout: () => request<void>(paths.logout, { method: "POST" }),
   listLectures: () => request<LectureSummary[]>(paths.lectures),
   getLecture: (id) => request<LectureDetail>(paths.lecture(id)),
-  getSource: (lectureId, bulletId) => request<SourceView>(paths.source(lectureId, bulletId)),
+  getSource: (_lectureId, bulletId) => request<SourceView>(paths.source(bulletId)),
   listSuggestions: (bulletId) => request<Suggestion[]>(paths.suggestionsFor(bulletId)),
   createSuggestion: (body) => request<Suggestion>(paths.suggestions, json(body)),
   vote: (suggestionId) => request<VoteResult>(paths.vote(suggestionId), { method: "POST" }),

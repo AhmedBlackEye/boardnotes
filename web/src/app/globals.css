@@ -20,6 +20,12 @@
   --color-accent: var(--color-accent-default);
   --color-accent-hover: var(--color-accent-hover);
   --color-accent-subtle: var(--color-accent-subtle);
+  --color-accent-border: var(--color-accent-border);
+  --color-side-text: var(--color-text-sidebar);
+  --color-side-muted: var(--color-text-sidebar-muted);
+  --color-side-strong: var(--color-text-sidebar-strong);
+  --shadow-card: var(--elevation-card);
+  --shadow-panel: var(--elevation-panel);
   --color-success: var(--color-success-default);
   --color-success-subtle: var(--color-success-subtle);
   --color-warning: var(--color-warning-default);

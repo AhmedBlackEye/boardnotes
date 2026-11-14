@@ -10,7 +10,9 @@ import subprocess  # noqa: S404 - fixed argument lists, never a shell
 from dataclasses import dataclass
 from pathlib import Path
 
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
+
+from app.config import settings
 
 from .interfaces import VideoCheckError
 from .video import run_tool, safe_input
@@ -42,10 +44,13 @@ def parse_frame_times(ffmpeg_log: str) -> list[float]:
 
 def make_small(src: Path, dst: Path, max_edge: int = SMALL_EDGE) -> None:
     """Save a copy of `src` whose long edge is at most `max_edge` (never upscales)."""
-    with Image.open(src) as img:
-        small = img.convert("RGB")
-        small.thumbnail((max_edge, max_edge), Image.Resampling.LANCZOS)
-        small.save(dst, "JPEG", quality=85)
+    try:
+        with Image.open(src) as img:
+            small = img.convert("RGB")
+            small.thumbnail((max_edge, max_edge), Image.Resampling.LANCZOS)
+            small.save(dst, "JPEG", quality=85)
+    except (OSError, UnidentifiedImageError, Image.DecompressionBombError) as e:
+        raise VideoCheckError("We couldn't read the picture in this video. Please check the file plays correctly.") from e
 
 
 def sample_frames(video: Path, out_dir: Path, interval_s: float, small_edge: int = SMALL_EDGE) -> list[SampledFrame]:
@@ -59,14 +64,24 @@ def sample_frames(video: Path, out_dir: Path, interval_s: float, small_edge: int
         old.unlink()  # a retried job must not mix in frames from an earlier run
 
     args = ["ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "info", "-y", *safe_input(video), "-map", "0:v:0", "-an"]
-    args += ["-vf", select_filter(interval_s), "-fps_mode", "vfr", "-q:v", "2", str(full_dir / "frame_%05d.jpg")]
+    args += [
+        "-vf",
+        select_filter(interval_s),
+        "-fps_mode",
+        "vfr",
+        "-frames:v",
+        str(settings.max_frames),
+        "-q:v",
+        "2",
+        str(full_dir / "frame_%05d.jpg"),
+    ]
     try:
         result = run_tool(args)
     except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
         raise VideoCheckError("We couldn't read the picture in this video. Please check the file plays correctly.") from e
 
     times = parse_frame_times(result.stderr)
-    paths = sorted(full_dir.glob("frame_*.jpg"))
+    paths = sorted(full_dir.glob("frame_*.jpg"), key=lambda p: int(p.stem.removeprefix("frame_")))
     if len(times) != len(paths):
         raise RuntimeError(f"ffmpeg wrote {len(paths)} frames but reported {len(times)} timestamps")
 

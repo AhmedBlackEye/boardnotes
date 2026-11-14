@@ -16,7 +16,7 @@ from app.pipeline.video import extract_audio, probe_video
 
 
 def ff(*args: str) -> None:
-    subprocess.run(["ffmpeg", "-nostdin", "-v", "error", "-y", *args], check=True)
+    subprocess.run(["ffmpeg", "-nostdin", "-v", "error", "-y", *args], check=True)  # noqa: S603, S607
 
 
 def make_video(path: Path, dur=10, size="1280x720", audio=True, video=True):
@@ -113,8 +113,21 @@ def test_extract_audio_mono_16k(vid, tmp_path):
 
 def test_extract_audio_stereo_downmix(tmp_path):
     p = tmp_path / "st.mp4"
-    ff("-f", "lavfi", "-i", "testsrc=size=1280x720:rate=10:duration=2", "-f", "lavfi", "-i", "sine=duration=2:sample_rate=48000",
-       "-ac", "2", "-pix_fmt", "yuv420p", str(p))
+    ff(
+        "-f",
+        "lavfi",
+        "-i",
+        "testsrc=size=1280x720:rate=10:duration=2",
+        "-f",
+        "lavfi",
+        "-i",
+        "sine=duration=2:sample_rate=48000",
+        "-ac",
+        "2",
+        "-pix_fmt",
+        "yuv420p",
+        str(p),
+    )
     out = extract_audio(p, tmp_path / "o")
     with wave.open(str(out)) as w:
         assert (w.getnchannels(), w.getframerate()) == (1, 16000)
@@ -195,7 +208,7 @@ class _F:
 
 
 def G(t, lines, readable=0.9, board=True):
-    return GlancedFrame(frame=_F(t), glance=FrameGlance(shows_board=board, readable=readable, lines=lines))
+    return GlancedFrame(frame=_F(t), glance=FrameGlance(shows_board=board, readable=readable, lines=lines))  # pyright: ignore[reportArgumentType]
 
 
 def times(kfs):

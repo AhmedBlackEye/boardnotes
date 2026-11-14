@@ -9,6 +9,8 @@ import subprocess  # noqa: S404 - fixed argument lists, never a shell
 from pathlib import Path
 from typing import Any
 
+from app.config import settings
+
 from .interfaces import VideoCheckError, VideoInfo
 
 MIN_GOOD_HEIGHT = 720
@@ -17,10 +19,13 @@ FFMPEG_TIMEOUT_S = 60 * 60  # a 2 h lecture is decoded once per pass; generous u
 UNREADABLE = "We couldn't read this file as a video. Please upload a lecture recording such as an MP4 or MOV file."
 NO_PICTURE = "This file has no picture. Please upload a video recording of the lecture, not just the audio."
 NO_SOUND = "This video has no sound. BoardNotes needs the lecturer's voice, so please upload a recording with audio."
+TOO_LONG = "This video is longer than BoardNotes can process. Please upload a shorter recording or split the lecture."
+TOO_LARGE = "This video's picture size is larger than BoardNotes supports. Please export it at 4K or lower."
+MAX_PIXELS = 8192 * 4608  # roughly 8K
 LOW_RES = "Resolution below 720p: board text may be hard to read"
 
 
-ALLOWED_FORMATS = frozenset({"mov", "mp4", "matroska", "webm", "avi"})  # demuxers we accept (format_name parts)
+ALLOWED_FORMATS = frozenset({"mov", "matroska", "webm", "avi"})  # demuxers we accept (format_name parts)
 
 
 def safe_input(video: Path) -> list[str]:
@@ -92,6 +97,11 @@ def probe_video(video: Path) -> VideoInfo:
     duration = _float(data["format"].get("duration")) or _float(picture.get("duration"))
     if duration is None or duration <= 0:
         raise VideoCheckError(UNREADABLE)
+
+    if duration > settings.max_duration_s:
+        raise VideoCheckError(TOO_LONG)
+    if width * height > MAX_PIXELS:
+        raise VideoCheckError(TOO_LARGE)
 
     warnings = [LOW_RES] if min(width, height) < MIN_GOOD_HEIGHT else []
     return VideoInfo(duration_s=duration, width=width, height=height, has_video=True, has_audio=True, warnings=warnings)

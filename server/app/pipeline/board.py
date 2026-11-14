@@ -10,6 +10,8 @@ from PIL import Image as PILImage
 from rapidfuzz import fuzz
 
 from app.contracts.ai import BoardBlock, BoardRead, BoardReadBlock
+from app.contracts.enums import BlockType
+from app.llm.anthropic_llm import RefusedError
 from app.llm.client import LLM, Image, LLMRequest
 
 from .interfaces import FrameReading, Keyframe
@@ -19,6 +21,13 @@ log = logging.getLogger(__name__)
 MAX_EDGE_PX = 1568  # long-edge limit for vision input; larger images are downscaled
 READ_CONCURRENCY = 6
 READ_ATTEMPTS = 2  # first try + one retry
+RETRY_BACKOFF_S = 2.0  # wait before a retry, times the attempt number
+MAX_IMAGE_PIXELS = 40_000_000  # refuse to decode anything bigger (ffmpeg frames are far smaller)
+
+
+class BoardReadError(RuntimeError):
+    """Raised when no keyframe at all could be read, so the lecture would otherwise come out silently empty."""
+
 
 BOARD_READ_INSTRUCTIONS = """\
 You are transcribing the writing on a lecture blackboard or whiteboard from one video frame.
@@ -63,6 +72,8 @@ Use them only as a hint, and read the image yourself."""
 def load_image(data: bytes) -> Image:
     """Return the image for the model, downscaled so the long edge is at most MAX_EDGE_PX."""
     with PILImage.open(io.BytesIO(data)) as img:
+        if img.size[0] * img.size[1] > MAX_IMAGE_PIXELS:
+            raise ValueError(f"frame is too large ({img.size[0]}x{img.size[1]})")
         fmt = img.format
         if max(img.size) <= MAX_EDGE_PX and fmt in ("JPEG", "PNG"):
             return Image(data=data, media_type="image/jpeg" if fmt == "JPEG" else "image/png")
@@ -97,17 +108,29 @@ async def _read_one(keyframe: Keyframe, llm: LLM, sem: asyncio.Semaphore) -> Fra
             try:
                 read = await llm.structured(req, BoardRead)
                 return FrameReading(keyframe=keyframe, read=read)
+            except RefusedError as exc:
+                log.warning("board_read: frame at %.1fs refused, not retrying: %s", keyframe.time_s, exc)
+                return None
             except Exception as exc:
                 log.warning("board_read: frame at %.1fs failed (attempt %d/%d): %s", keyframe.time_s, attempt, READ_ATTEMPTS, exc)
+                if attempt < READ_ATTEMPTS:
+                    await asyncio.sleep(RETRY_BACKOFF_S * attempt)
         log.error("board_read: skipping frame at %.1fs after %d attempts", keyframe.time_s, READ_ATTEMPTS)
         return None
 
 
 async def read_board(keyframes: list[Keyframe], llm: LLM) -> list[FrameReading]:
-    """Read every keyframe at full resolution. Frames that fail twice are skipped. Output is in time order."""
+    """Read every keyframe at full resolution. Frames that fail twice are skipped. Output is in time order.
+
+    Raises BoardReadError if there were keyframes but none could be read."""
     sem = asyncio.Semaphore(READ_CONCURRENCY)
     results = await asyncio.gather(*(_read_one(kf, llm, sem) for kf in keyframes))
-    return sorted((r for r in results if r is not None), key=lambda r: r.keyframe.time_s)
+    readings = sorted((r for r in results if r is not None), key=lambda r: r.keyframe.time_s)
+    if keyframes and not readings:
+        raise BoardReadError(f"none of the {len(keyframes)} keyframes could be read")
+    if len(readings) < len(keyframes) / 2:
+        log.warning("board_read: only %d of %d keyframes could be read", len(readings), len(keyframes))
+    return readings
 
 
 # ---------- B-2: merge readings across frames ----------
@@ -120,6 +143,7 @@ FULLER_SHARE = 0.9  # a reading under this share of a matching reading's length 
 
 _LATEX_NOISE = re.compile(r"\\(left|right|big|Big|bigg|Bigg|displaystyle|,|;|:|!|quad|qquad)(?![a-zA-Z])")
 _NON_KEY = re.compile(r"[^\w\\{}^_=+\-*/<>()\[\]|]")
+_SINGLE_BRACED = re.compile(r"\{(\w)\}")  # x^{2} -> x^2, \frac{1}{2} -> \frac12
 
 
 def normalise(text: str) -> str:
@@ -133,7 +157,13 @@ def _keys(block: BoardReadBlock) -> list[str]:
     keys = [normalise(block.text)]
     if block.latex:
         keys.append(normalise(block.latex))
+    if is_math(block):
+        keys = [_SINGLE_BRACED.sub(r"\1", k) for k in keys]
     return [k for k in keys if k]
+
+
+def is_math(block: BoardReadBlock) -> bool:
+    return block.type == BlockType.MATH or bool(block.latex)
 
 
 def _is_fragment(short: str, long: str) -> bool:
@@ -142,11 +172,27 @@ def _is_fragment(short: str, long: str) -> bool:
     return fuzz.partial_ratio(short, long) >= PARTIAL_RATIO
 
 
-def similarity(a: list[str], b: list[str]) -> float:
-    """Best match score (0-100) between two readings over their text/LaTeX keys; 0 if they look different."""
+def _strict_score(ka: str, kb: str) -> float:
+    """Maths: one symbol changes the meaning (x^2+1=0 vs x^2+2=0), so only identical keys, or a key that is an exact
+    piece of the other (cut off by the frame edge, or still being written), count as the same writing."""
+    if ka == kb:
+        return 100.0
+    short, long = sorted((ka, kb), key=len)
+    if len(short) >= PARTIAL_MIN_CHARS and len(short) >= PARTIAL_MIN_SHARE * len(long) and short in long:
+        return 100.0
+    return 0.0
+
+
+def similarity(a: list[str], b: list[str], *, strict: bool = False) -> float:
+    """Best match score (0-100) between two readings over their text/LaTeX keys; 0 if they look different.
+
+    strict (for maths) allows no edits: see _strict_score."""
     best = 0.0
     for ka in a:
         for kb in b:
+            if strict:
+                best = max(best, _strict_score(ka, kb))
+                continue
             score = fuzz.ratio(ka, kb)
             if score < SAME_RATIO:
                 short, long = sorted((ka, kb), key=len)
@@ -198,7 +244,8 @@ def merge_blocks(readings: list[FrameReading]) -> list[BoardBlock]:
 
     Readings are matched by normalised text/LaTeX (not position, since the camera moves). A reading that is a fragment
     of a longer one (cut off by the frame edge, or still being written) joins the same block; the fullest, most
-    confident reading wins. Ids are assigned b_0001, b_0002, ... in order of first appearance.
+    confident reading wins. Maths is matched strictly (no edits allowed), so derivation steps that differ by one
+    symbol stay separate blocks. Ids are assigned b_0001, b_0002, ... in order of first appearance.
     """
     clusters: list[_Cluster] = []
     for reading in sorted(readings, key=lambda r: r.keyframe.time_s):
@@ -209,7 +256,11 @@ def merge_blocks(readings: list[FrameReading]) -> list[BoardBlock]:
                 continue
             sighting = _Sighting(time_s=t, block=block, keys=keys)
             # Two blocks in the same frame are different writing, so a cluster takes at most one block per frame.
-            candidates = [(similarity(keys, c.best.keys), i) for i, c in enumerate(clusters) if t not in c.frames]
+            candidates = [
+                (similarity(keys, c.best.keys, strict=is_math(block) or is_math(c.best.block)), i)
+                for i, c in enumerate(clusters)
+                if t not in c.frames
+            ]
             score, index = max(candidates, default=(0.0, -1))
             if score > 0:
                 clusters[index].add(sighting)

@@ -94,3 +94,20 @@ def test_empty_blocks_are_ignored_and_bbox_is_clamped() -> None:
 
 def test_no_readings_gives_no_blocks() -> None:
     assert merge_blocks([]) == []
+
+
+def test_maths_differing_by_one_symbol_stays_separate() -> None:
+    steps = [("x^2 + 1 = 0", "x^2+1=0"), ("x^2 + 2 = 0", "x^2+2=0"), ("f(x) = x^2", "f(x)=x^2"), ("f(x) = x^3", "f(x)=x^3")]
+    out = merge_blocks([frame(float(i), blk(text, latex)) for i, (text, latex) in enumerate(steps)])
+    assert [b.latex for b in out] == [latex for _, latex in steps]
+
+
+def test_maths_with_brace_and_spacing_differences_still_merges() -> None:
+    out = merge_blocks([frame(3, blk("x^2 + 1 = 0", "x^{2} + 1 = 0")), frame(6, blk("x^2+1=0", r"x^2 \, + 1 = 0"))])
+    assert len(out) == 1
+
+
+def test_math_fragment_must_be_an_exact_piece() -> None:
+    full = blk("2x + y = 3, x - 2y = -1", r"\begin{cases} 2x + y = 3 \\ x - 2y = -1 \end{cases}")
+    out = merge_blocks([frame(3, full), frame(6, blk("2x + y = 4", "2x + y = 4"))])
+    assert len(out) == 2

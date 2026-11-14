@@ -1,12 +1,14 @@
 import io
 from pathlib import Path
 
+import pytest
 from PIL import Image as PILImage
 
 from app.contracts.ai import BoardRead
+from app.llm.anthropic_llm import RefusedError
 from app.llm.client import DATA_RULE, LLMRequest, T, Usage
 from app.llm.fake import FakeLLM
-from app.pipeline.board import MAX_EDGE_PX, load_image, read_board
+from app.pipeline.board import MAX_EDGE_PX, BoardReadError, load_image, read_board
 from app.pipeline.interfaces import Keyframe
 
 
@@ -76,11 +78,56 @@ async def test_read_board_retries_once_then_succeeds(tmp_path: Path) -> None:
     assert list(llm.calls.values()) == [2]
 
 
+class FailsFrameLLM:
+    """Always fails for frames whose first-pass lines are "bad"; answers from the fixtures otherwise."""
+
+    def __init__(self) -> None:
+        self.usage = Usage()
+        self.bad_calls = 0
+        self.fake = FakeLLM()
+
+    async def structured(self, req: LLMRequest, schema: type[T]) -> T:
+        if req.untrusted["first_pass_lines"] == "bad":  # noqa: S105 - not a password
+            self.bad_calls += 1
+            raise RuntimeError("overloaded")
+        return await self.fake.structured(req, schema)
+
+
 async def test_read_board_skips_frame_after_two_failures(tmp_path: Path) -> None:
-    llm = FlakyLLM(failures=2)
-    readings = await read_board([_keyframe(tmp_path, 3.0)], llm)
-    assert readings == []
-    assert list(llm.calls.values()) == [2]
+    llm = FailsFrameLLM()
+    readings = await read_board([_keyframe(tmp_path, 3.0, lines=["bad"]), _keyframe(tmp_path, 6.0)], llm)
+    assert [r.keyframe.time_s for r in readings] == [6.0]
+    assert llm.bad_calls == 2
+
+
+async def test_read_board_raises_when_every_frame_fails(tmp_path: Path) -> None:
+    with pytest.raises(BoardReadError):
+        await read_board([_keyframe(tmp_path, 3.0), _keyframe(tmp_path, 6.0)], FlakyLLM(failures=2))
+
+
+class RefusingLLM:
+    def __init__(self) -> None:
+        self.usage = Usage()
+        self.calls = 0
+
+    async def structured(self, req: LLMRequest, schema: type[T]) -> T:
+        self.calls += 1
+        raise RefusedError("declined")
+
+
+async def test_read_board_does_not_retry_refusals(tmp_path: Path) -> None:
+    llm = RefusingLLM()
+    with pytest.raises(BoardReadError):
+        await read_board([_keyframe(tmp_path, 3.0)], llm)
+    assert llm.calls == 1
+
+
+def test_huge_image_is_rejected_before_decoding(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from app.pipeline import board
+
+    monkeypatch.setattr(board, "MAX_IMAGE_PIXELS", 1000)
+    with pytest.raises(ValueError, match="too large"):
+        load_image(_jpeg(tmp_path / "a.jpg", (100, 100)).read_bytes())
 
 
 async def test_read_board_skips_unreadable_file(tmp_path: Path, fake_llm: FakeLLM) -> None:

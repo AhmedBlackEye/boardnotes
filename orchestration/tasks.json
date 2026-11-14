@@ -1,6 +1,6 @@
 {
  "project": "BoardNotes",
- "updated": "2026-11-14T23:05Z",
+ "updated": "2026-11-14T23:40Z",
  "status_flow": [
   "todo",
   "building",
@@ -330,110 +330,110 @@
    "title": "API skeleton: app, DB pool, demo login, role checks",
    "phase": "P1",
    "owner": "agent-D",
-   "status": "changes_requested",
+   "status": "merged",
    "depends_on": [],
    "acceptance": "Session cookie login as seeded users; students get 403 on lecturer routes",
    "checks": {
     "make_check": "pass",
-    "V1_review": "changes requested (round 2)",
-    "V2_tests": "pass (round 2)",
-    "V3_security": "pass (round 2)"
+    "V1_review": "pass (round 3)",
+    "V2_tests": "pass (111 tests, rerun by lead with DB up)",
+    "V3_security": "pass (round 3)"
    },
    "branch": "task/D-backend-api",
    "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/4",
    "notes": "",
-   "updated": "2026-11-14T23:05Z"
+   "updated": "2026-11-14T23:40Z"
   },
   {
    "id": "D-2",
    "title": "Lecture endpoints, source view, snapshots, video streaming",
    "phase": "P1",
    "owner": "agent-D",
-   "status": "changes_requested",
+   "status": "merged",
    "depends_on": [
     "D-1"
    ],
    "acceptance": "Matches contracts.api; video supports Range requests",
    "checks": {
     "make_check": "pass",
-    "V1_review": "changes requested (round 2)",
-    "V2_tests": "pass (round 2)",
-    "V3_security": "pass (round 2)"
+    "V1_review": "pass (round 3)",
+    "V2_tests": "pass (111 tests, rerun by lead with DB up)",
+    "V3_security": "pass (round 3)"
    },
    "branch": "task/D-backend-api",
    "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/4",
    "notes": "",
-   "updated": "2026-11-14T23:05Z"
+   "updated": "2026-11-14T23:40Z"
   },
   {
    "id": "D-3",
    "title": "Resumable upload, job runner, progress stream",
    "phase": "P1",
    "owner": "agent-D",
-   "status": "changes_requested",
+   "status": "merged",
    "depends_on": [
     "D-1"
    ],
    "acceptance": "Chunked upload with size/type limits; job runs pipeline stages via interfaces; progress over SSE",
    "checks": {
     "make_check": "pass",
-    "V1_review": "changes requested (round 2)",
-    "V2_tests": "pass (round 2)",
-    "V3_security": "pass (round 2)"
+    "V1_review": "pass (round 3)",
+    "V2_tests": "pass (111 tests, rerun by lead with DB up)",
+    "V3_security": "pass (round 3)"
    },
    "branch": "task/D-backend-api",
    "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/4",
    "notes": "",
-   "updated": "2026-11-14T23:05Z"
+   "updated": "2026-11-14T23:40Z"
   },
   {
    "id": "D-4",
    "title": "Suggestions, AI fix check, upvotes, review queue, decisions",
    "phase": "P1",
    "owner": "agent-D",
-   "status": "changes_requested",
+   "status": "merged",
    "depends_on": [
     "D-1"
    ],
    "acceptance": "Priority formula per docs; approve writes training_examples; injection-style fixes flagged",
    "checks": {
     "make_check": "pass",
-    "V1_review": "changes requested (round 2)",
-    "V2_tests": "pass (round 2)",
-    "V3_security": "pass (round 2)"
+    "V1_review": "pass (round 3)",
+    "V2_tests": "pass (111 tests, rerun by lead with DB up)",
+    "V3_security": "pass (round 3)"
    },
    "branch": "task/D-backend-api",
    "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/4",
    "notes": "",
-   "updated": "2026-11-14T23:05Z"
+   "updated": "2026-11-14T23:40Z"
   },
   {
    "id": "D-5",
    "title": "Ask the lecture (streamed, cached, cited)",
    "phase": "P1",
    "owner": "agent-D",
-   "status": "changes_requested",
+   "status": "merged",
    "depends_on": [
     "D-1"
    ],
    "acceptance": "Answers cite the lecture or say not covered; question passed as untrusted",
    "checks": {
     "make_check": "pass",
-    "V1_review": "changes requested (round 2)",
-    "V2_tests": "pass (round 2)",
-    "V3_security": "pass (round 2)"
+    "V1_review": "pass (round 3)",
+    "V2_tests": "pass (111 tests, rerun by lead with DB up)",
+    "V3_security": "pass (round 3)"
    },
    "branch": "task/D-backend-api",
    "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/4",
    "notes": "",
-   "updated": "2026-11-14T23:05Z"
+   "updated": "2026-11-14T23:40Z"
   },
   {
    "id": "D-6",
    "title": "PDF endpoints + regenerate on approval",
    "phase": "P1",
    "owner": "agent-D",
-   "status": "changes_requested",
+   "status": "merged",
    "depends_on": [
     "D-4",
     "C-2"
@@ -441,14 +441,14 @@
    "acceptance": "Download per lecture/module; regenerated after approvals",
    "checks": {
     "make_check": "pass",
-    "V1_review": "changes requested (round 2)",
-    "V2_tests": "pass (round 2)",
-    "V3_security": "pass (round 2)"
+    "V1_review": "pass (round 3)",
+    "V2_tests": "pass (111 tests, rerun by lead with DB up)",
+    "V3_security": "pass (round 3)"
    },
    "branch": "task/D-backend-api",
    "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/4",
    "notes": "",
-   "updated": "2026-11-14T23:05Z"
+   "updated": "2026-11-14T23:40Z"
   },
   {
    "id": "E-1",
@@ -558,7 +558,7 @@
    "title": "Merge all branches, wire pipeline into job runner",
    "phase": "P2",
    "owner": "lead",
-   "status": "todo",
+   "status": "building",
    "depends_on": [
     "A-3",
     "B-4",
@@ -576,7 +576,7 @@
    "branch": null,
    "pr": null,
    "notes": "",
-   "updated": "2026-11-14T16:44Z"
+   "updated": "2026-11-14T23:40Z"
   },
   {
    "id": "I-2",

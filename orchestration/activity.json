@@ -1,5 +1,9 @@
 [
  {
+  "at": "2026-11-14T23:40:00Z",
+  "text": "Phase 1 complete: D (backend & API) merged after two fix rounds. All five workstreams on main: 535 server + 97 web tests pass. Phase 2 (integration) starting."
+ },
+ {
   "at": "2026-11-14T23:05:00Z",
   "text": "E (frontend) merged after one fix round. main: 350 server + 97 web tests pass. 4 of 5 workstreams merged; D in its final fix round."
  },

@@ -265,6 +265,8 @@ async def test_cookie_secure_setting(app: FastAPI, anon: httpx.AsyncClient) -> N
 def test_live_mode_needs_a_real_session_secret() -> None:
     with pytest.raises(RuntimeError):
         check_production_settings(Settings(llm_mode="live"))
+    with pytest.raises(RuntimeError):
+        check_production_settings(Settings(llm_mode="live", session_secret=""))
     check_production_settings(Settings(llm_mode="live", session_secret="s3cret"))
     check_production_settings(Settings())
 

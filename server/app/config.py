@@ -42,7 +42,7 @@ DEFAULT_SESSION_SECRET = "dev-only-change-me"  # noqa: S105
 
 def check_production_settings(s: Settings) -> None:
     """Refuse to start with the development cookie secret when real model calls are enabled."""
-    if s.llm_mode == "live" and s.session_secret == DEFAULT_SESSION_SECRET:
+    if s.llm_mode == "live" and s.session_secret in ("", DEFAULT_SESSION_SECRET):
         raise RuntimeError("Set SESSION_SECRET before running with LLM_MODE=live")
 
 

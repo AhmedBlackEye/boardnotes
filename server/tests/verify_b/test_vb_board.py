@@ -27,7 +27,9 @@ def blk(text, conf=0.9, latex=None, bbox=(0.1, 0.1, 0.5, 0.2), type_=BlockType.T
 
 
 def reading(t: float, *blocks: BoardReadBlock) -> FrameReading:
-    return FrameReading(keyframe=Keyframe(time_s=t, path=Path("x.jpg"), lines=[], readable=0.9), read=BoardRead(blocks=list(blocks), frame_quality="good"))
+    return FrameReading(
+        keyframe=Keyframe(time_s=t, path=Path("x.jpg"), lines=[], readable=0.9), read=BoardRead(blocks=list(blocks), frame_quality="good")
+    )
 
 
 class RecLLM:
@@ -49,7 +51,9 @@ class RecLLM:
             if self.fail_times.get(key, 0) > 0:
                 self.fail_times[key] -= 1
                 raise RuntimeError("boom")
-            return schema.model_validate({"blocks": [{"type": "text", "text": "x", "latex": None, "bbox": [0, 0, 1, 1], "confidence": 0.9}], "frame_quality": "good"})
+            return schema.model_validate(
+                {"blocks": [{"type": "text", "text": "x", "latex": None, "bbox": [0, 0, 1, 1], "confidence": 0.9}], "frame_quality": "good"}
+            )
         finally:
             self.active -= 1
 
@@ -198,7 +202,9 @@ def test_merge_same_text_in_one_frame_not_collapsed():
 
 
 def test_merge_whitespace_case_insensitive_matching():
-    out = merge_blocks([reading(1.0, blk("Force  equals  mass times acceleration")), reading(2.0, blk("force equals mass times acceleration"))])
+    out = merge_blocks(
+        [reading(1.0, blk("Force  equals  mass times acceleration")), reading(2.0, blk("force equals mass times acceleration"))]
+    )
     assert len(out) == 1
 
 

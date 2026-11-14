@@ -1,24 +1,36 @@
 """V2 tests for B-4: validate_citations (pure code) and check_latex."""
 
 from app.contracts.ai import LOW_CONFIDENCE, BoardBlock, NoteBullet, SaidNotWritten, SectionNotes, TimeRange, TranscriptSegment
+from app.contracts.enums import BlockType
 from app.pipeline.citations import LatexError, check_latex, validate_citations
 
-TR = [TranscriptSegment(start_s=0, end_s=30, speaker="lecturer", text="a"), TranscriptSegment(start_s=30, end_s=60, speaker="lecturer", text="b")]
+TR = [
+    TranscriptSegment(start_s=0, end_s=30, speaker="lecturer", text="a"),
+    TranscriptSegment(start_s=30, end_s=60, speaker="lecturer", text="b"),
+]
 
 
 def B(i, conf=0.9):
-    return BoardBlock(id=i, type="text", text="t", latex=None, confidence=conf, first_seen_s=1.0, best_frame_s=1.0, bbox=[0, 0, 1, 1])
+    return BoardBlock(
+        id=i, type=BlockType.TEXT, text="t", latex=None, confidence=conf, first_seen_s=1.0, best_frame_s=1.0, bbox=[0, 0, 1, 1]
+    )
 
 
 def bullet(text="x", ids=(), ranges=(), conf=0.9, latex=None):
-    return NoteBullet(text=text, latex=latex, board_block_ids=list(ids), transcript_ranges=[TimeRange(start_s=a, end_s=b) for a, b in ranges], confidence=conf)
+    return NoteBullet(
+        text=text,
+        latex=latex,
+        board_block_ids=list(ids),
+        transcript_ranges=[TimeRange(start_s=a, end_s=b) for a, b in ranges],
+        confidence=conf,
+    )
 
 
 def sec(bullets, said=(), start=0.0, end=30.0, heading="H"):
     return SectionNotes(heading=heading, start_s=start, end_s=end, bullets=list(bullets), said_not_written=list(said))
 
 
-def run(bullets, blocks=(B("b_0001"),), **kw):
+def run(bullets, blocks=(B("b_0001"),), **kw):  # noqa: B008 - immutable test default
     rep = validate_citations([sec(bullets, **kw)], list(blocks), TR)
     return rep, rep.valid[0].bullets
 
@@ -80,7 +92,11 @@ def test_confidence_never_increased():
 
 
 def test_said_not_written_outside_transcript_dropped():
-    rep = validate_citations([sec([bullet(ids=["b_0001"])], said=[SaidNotWritten(text="ok", at_s=5.0), SaidNotWritten(text="bad", at_s=400.0)])], [B("b_0001")], TR)
+    rep = validate_citations(
+        [sec([bullet(ids=["b_0001"])], said=[SaidNotWritten(text="ok", at_s=5.0), SaidNotWritten(text="bad", at_s=400.0)])],
+        [B("b_0001")],
+        TR,
+    )
     assert [s.text for s in rep.valid[0].said_not_written] == ["ok"]
 
 

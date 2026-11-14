@@ -301,7 +301,7 @@
    },
    "branch": "task/C-audio-pdf",
    "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/2",
-   "notes": "",
+   "notes": "Lead fix before merge (automated scan): PDF link sanitiser must reject backslashes, whitespace and control characters, and turn site-relative paths into absolute https URLs on a configured origin.",
    "updated": "2026-11-14T21:40Z"
   },
   {

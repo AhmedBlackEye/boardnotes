@@ -12,6 +12,14 @@ const compat = new FlatCompat({
 const eslintConfig = [
   ...compat.extends("next/core-web-vitals", "next/typescript"),
   {
+    rules: {
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        { argsIgnorePattern: "^_", varsIgnorePattern: "^_", destructuredArrayIgnorePattern: "^_" },
+      ],
+    },
+  },
+  {
     ignores: [
       "node_modules/**",
       ".next/**",
@@ -19,6 +27,8 @@ const eslintConfig = [
       "build/**",
       "next-env.d.ts",
       "src/contracts/**",
+      // Code Connect templates run inside Figma, not in the app.
+      "src/figma/**",
     ],
   },
 ];

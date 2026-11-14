@@ -1,7 +1,13 @@
+"use client";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { useSession } from "@/lib/session";
+
 export default function Home() {
-  return (
-    <main className="flex min-h-screen items-center justify-center bg-board">
-      <h1 className="font-chalk text-6xl text-chalk">BoardNotes</h1>
-    </main>
-  );
+  const { me, ready } = useSession();
+  const router = useRouter();
+  useEffect(() => {
+    if (ready) router.replace(me ? "/lectures" : "/login");
+  }, [ready, me, router]);
+  return <div className="min-h-screen bg-canvas" />;
 }

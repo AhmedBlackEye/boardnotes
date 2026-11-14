@@ -27,7 +27,7 @@ check-server:
 	cd server && uv run ruff check . && uv run ruff format --check . && uv run pyright && uv run pytest -q -m "not live"
 
 check-web:
-	cd web && pnpm -s typecheck && pnpm -s lint
+	cd web && pnpm -s typecheck && pnpm -s lint && pnpm -s test
 
 dev-server:
 	cd server && uv run uvicorn app.main:app --reload --port 8000

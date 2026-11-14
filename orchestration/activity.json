@@ -1,5 +1,13 @@
 [
  {
+  "at": "2026-11-14T21:00:00Z",
+  "text": "Merged A (video & frames) and B (board AI & notes) into main: 179 tests pass. Remaining work restarted on Opus (Sonnet only writes the independent tests): C security fix, D review, E frontend."
+ },
+ {
+  "at": "2026-11-14T20:50:00Z",
+  "text": "Build session stopped again; unfinished work saved. B passed all re-checks; D backend built (PR #4)."
+ },
+ {
   "at": "2026-11-14T19:45:00Z",
   "text": "A (video & frames) verified after one fix round: code review, 31 independent tests and security review all pass. Ready to merge."
  },

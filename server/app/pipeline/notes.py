@@ -6,6 +6,15 @@ import asyncio
 from app.contracts.ai import BoardBlock, SectionNotes, SectionPlan, TranscriptSegment
 from app.llm.client import LLM, LLMRequest
 
+MAX_SECTIONS = 30  # hard cap on sections (one Opus call each), whatever the model returns
+MIN_SECTION_S = 20.0  # shorter sections are merged into a neighbour
+NOTES_CONCURRENCY = 4  # Opus calls in flight at once
+
+
+class NotesError(RuntimeError):
+    """Raised when a lecture with content gets no usable section plan."""
+
+
 PLAN_INSTRUCTIONS = """\
 Split this lecture into sections for study notes. You are given the board writing (one line per block:
 id, time it first appeared in seconds, type, content) and the transcript (one line per segment:
@@ -77,20 +86,56 @@ def plan_request(blocks: list[BoardBlock], transcript: list[TranscriptSegment]) 
     )
 
 
-def clean_plan(plan: SectionPlan) -> SectionPlan:
-    """Sort sections by time and drop empty or reversed spans."""
-    spans = sorted((s for s in plan.sections if s.end_s > s.start_s), key=lambda s: s.start_s)
+def _merge_into_neighbour(spans: list[SectionPlan.Span], i: int) -> None:
+    """Fold section i into the one before it (or after it, for the first), keeping the neighbour's heading."""
+    if i > 0:
+        spans[i - 1] = spans[i - 1].model_copy(update={"end_s": spans[i].end_s})
+    else:
+        spans[1] = spans[1].model_copy(update={"start_s": spans[0].start_s})
+    del spans[i]
+
+
+def clean_plan(plan: SectionPlan, lecture_end_s: float) -> SectionPlan:
+    """Turn the model's plan into a clean split of 0..lecture_end_s.
+
+    Drops empty, reversed and out-of-range spans, then uses each remaining section's start as a cut point, so overlaps
+    and gaps are repaired (a gap joins the section before it) and the first and last sections reach the lecture's ends.
+    Sections shorter than MIN_SECTION_S are merged into a neighbour, and the shortest are merged until at most
+    MAX_SECTIONS remain (the section count comes from the model, which reads untrusted text)."""
+    usable = sorted((s for s in plan.sections if s.end_s > s.start_s and s.start_s < lecture_end_s), key=lambda s: s.start_s)
+    if not usable:
+        return SectionPlan(sections=[])
+    starts = [0.0] + [s.start_s for s in usable[1:]]
+    ends = starts[1:] + [lecture_end_s]
+    spans = [SectionPlan.Span(heading=s.heading, start_s=a, end_s=b) for s, a, b in zip(usable, starts, ends, strict=True) if b > a]
+    i = 0
+    while i < len(spans) and len(spans) > 1:
+        if spans[i].end_s - spans[i].start_s < MIN_SECTION_S:
+            _merge_into_neighbour(spans, i)
+        else:
+            i += 1
+    while len(spans) > MAX_SECTIONS:
+        shortest = min(range(len(spans)), key=lambda k: spans[k].end_s - spans[k].start_s)
+        _merge_into_neighbour(spans, shortest)
     return SectionPlan(sections=spans)
 
 
 async def plan_sections(blocks: list[BoardBlock], transcript: list[TranscriptSegment], llm: LLM) -> SectionPlan:
-    plan = await llm.structured(plan_request(blocks, transcript), SectionPlan)
-    return clean_plan(plan)
+    """Ask the model for sections and clean them up. Raises NotesError if a lecture with content gets none."""
+    _, end = lecture_span(blocks, transcript)
+    plan = clean_plan(await llm.structured(plan_request(blocks, transcript), SectionPlan), end)
+    if end > 0 and not plan.sections:
+        raise NotesError("the model returned no usable sections for this lecture")
+    return plan
 
 
-def blocks_in(span: SectionPlan.Span, blocks: list[BoardBlock]) -> list[BoardBlock]:
-    """Blocks that first appear, or are best seen, during the section."""
-    return [b for b in blocks if span.start_s <= b.first_seen_s < span.end_s or span.start_s <= b.best_frame_s < span.end_s]
+def blocks_in(span: SectionPlan.Span, blocks: list[BoardBlock], *, last: bool = False) -> list[BoardBlock]:
+    """Blocks that first appear, or are best seen, during the section. The last section includes its end time."""
+
+    def inside(t: float) -> bool:
+        return span.start_s <= t < span.end_s or (last and t == span.end_s)
+
+    return [b for b in blocks if inside(b.first_seen_s) or inside(b.best_frame_s)]
 
 
 def segments_in(span: SectionPlan.Span, transcript: list[TranscriptSegment]) -> list[TranscriptSegment]:
@@ -98,26 +143,35 @@ def segments_in(span: SectionPlan.Span, transcript: list[TranscriptSegment]) -> 
     return [s for s in transcript if s.start_s < span.end_s and s.end_s > span.start_s]
 
 
-def notes_request(span: SectionPlan.Span, blocks: list[BoardBlock], transcript: list[TranscriptSegment]) -> LLMRequest:
+def notes_request(
+    span: SectionPlan.Span, blocks: list[BoardBlock], transcript: list[TranscriptSegment], *, last: bool = False
+) -> LLMRequest:
     return LLMRequest(
         task="write_notes",
         tier="notes",
         instructions=NOTES_INSTRUCTIONS.format(start=span.start_s, end=span.end_s),
         untrusted={
             "section_heading": span.heading,
-            "board_blocks": render_blocks(blocks_in(span, blocks)),
+            "board_blocks": render_blocks(blocks_in(span, blocks, last=last)),
             "transcript": render_transcript(segments_in(span, transcript)),
         },
         effort="medium",
     )
 
 
-async def _write_section(span: SectionPlan.Span, blocks: list[BoardBlock], transcript: list[TranscriptSegment], llm: LLM) -> SectionNotes:
-    notes = await llm.structured(notes_request(span, blocks, transcript), SectionNotes)
+async def _write_section(
+    span: SectionPlan.Span, blocks: list[BoardBlock], transcript: list[TranscriptSegment], llm: LLM, sem: asyncio.Semaphore, *, last: bool
+) -> SectionNotes:
+    async with sem:
+        notes = await llm.structured(notes_request(span, blocks, transcript, last=last), SectionNotes)
     # The plan is the source of truth for where a section sits.
     return notes.model_copy(update={"heading": span.heading, "start_s": span.start_s, "end_s": span.end_s})
 
 
 async def write_notes(plan: SectionPlan, blocks: list[BoardBlock], transcript: list[TranscriptSegment], llm: LLM) -> list[SectionNotes]:
-    """Write every section's notes concurrently, one model call per section, returned in plan order."""
-    return list(await asyncio.gather(*(_write_section(span, blocks, transcript, llm) for span in plan.sections)))
+    """Write every section's notes, one model call per section (at most NOTES_CONCURRENCY at once), in plan order."""
+    sem = asyncio.Semaphore(NOTES_CONCURRENCY)
+    n = len(plan.sections)
+    return list(
+        await asyncio.gather(*(_write_section(span, blocks, transcript, llm, sem, last=i == n - 1) for i, span in enumerate(plan.sections)))
+    )

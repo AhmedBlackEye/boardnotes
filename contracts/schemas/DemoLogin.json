@@ -1,0 +1,15 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "user_id": {
+      "description": "One of the seeded demo users",
+      "title": "User Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "user_id"
+  ],
+  "title": "DemoLogin",
+  "type": "object"
+}

@@ -1,0 +1,21 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "at_s": {
+      "minimum": 0,
+      "title": "At S",
+      "type": "number"
+    },
+    "text": {
+      "description": "Something the lecturer explained out loud that is not on the board",
+      "title": "Text",
+      "type": "string"
+    }
+  },
+  "required": [
+    "text",
+    "at_s"
+  ],
+  "title": "SaidNotWritten",
+  "type": "object"
+}

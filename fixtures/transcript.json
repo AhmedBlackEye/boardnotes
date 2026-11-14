@@ -1,0 +1,7 @@
+[
+ {"start_s": 4.0, "end_s": 18.5, "speaker": "lecturer", "text": "Today we want to solve this system: two x plus y equals three, and x minus two y equals minus one."},
+ {"start_s": 30.0, "end_s": 42.0, "speaker": "lecturer", "text": "We'll look at it two ways, the row picture and the column picture, and they give the same answer."},
+ {"start_s": 60.0, "end_s": 72.0, "speaker": "lecturer", "text": "From the second equation, x equals two y minus one."},
+ {"start_s": 75.0, "end_s": 79.0, "speaker": "student_1", "text": "Can we also eliminate x first?"},
+ {"start_s": 110.0, "end_s": 128.0, "speaker": "lecturer", "text": "In the row picture each equation is a line in the plane, and the solution is where they cross."}
+]

@@ -1,0 +1,82 @@
+/* Design tokens mirrored from the Figma file "BoardNotes Prototype" (Foundations page).
+   Names match the Figma variables' code syntax, e.g. Figma "accent/default" = var(--color-accent-default).
+   If you change a value, change it in Figma too (or ask the lead to). */
+
+:root {
+  /* Color · Light */
+  --color-bg-canvas: #f5f7fb;
+  --color-bg-surface: #ffffff;
+  --color-bg-subtle: #f8fafc;
+  --color-bg-muted: #eef1f5;
+  --color-bg-sidebar: #0f1a2b;
+  --color-bg-sidebar-raised: #1a2740;
+  --color-bg-sidebar-active: #22324f;
+  --color-text-primary: #16202e;
+  --color-text-secondary: #5b6676;
+  --color-text-tertiary: #8a94a3;
+  --color-text-on-accent: #ffffff;
+  --color-text-sidebar: #c9d3e1;
+  --color-text-sidebar-muted: #7f8ba0;
+  --color-text-sidebar-strong: #ffffff;
+  --color-border-default: #e1e6ee;
+  --color-border-strong: #c9d1dc;
+  --color-accent-default: #1f5fd1;
+  --color-accent-hover: #164aa6;
+  --color-accent-subtle: #e8effc;
+  --color-accent-border: #c4d5f5;
+  --color-success-default: #1d8a57;
+  --color-success-subtle: #e3f4ea;
+  --color-warning-default: #a96400;
+  --color-warning-subtle: #fdf1dc;
+  --color-danger-default: #c2372f;
+  --color-danger-subtle: #fbe5e3;
+  --color-board-bg: #2e3336;
+  --color-board-ink: #f1efe8;
+  --color-board-ink-dim: #b9bab4;
+
+  /* Spacing & radius */
+  --spacing-2xs: 4px;
+  --spacing-xs: 6px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 20px;
+  --spacing-2xl: 24px;
+  --spacing-3xl: 32px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 999px;
+
+  /* Elevation */
+  --elevation-card: 0 1px 2px rgb(15 26 43 / 0.04), 0 4px 12px -2px rgb(15 26 43 / 0.06);
+  --elevation-panel: 0 12px 32px -8px rgb(15 26 43 / 0.1);
+  --focus-ring: 0 0 0 3px rgb(31 95 209 / 0.22);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-bg-canvas: #11161e;
+    --color-bg-surface: #18202b;
+    --color-bg-subtle: #1c2430;
+    --color-bg-muted: #2a3442;
+    --color-text-primary: #e8edf4;
+    --color-text-secondary: #9aa6b6;
+    --color-text-on-accent: #11161e;
+    --color-border-default: #2a3442;
+    --color-border-strong: #3a4558;
+    --color-accent-default: #7aa7ff;
+    --color-accent-hover: #c4d5f5;
+    --color-accent-subtle: #1d2b45;
+    --color-accent-border: #1d2b45;
+    --color-success-default: #5cc98f;
+    --color-success-subtle: #173326;
+    --color-warning-default: #f0b04f;
+    --color-warning-subtle: #3a2c14;
+    --color-danger-default: #f07b72;
+    --color-danger-subtle: #3d1c1a;
+    --color-board-bg: #23272a;
+    color-scheme: dark;
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "filename": {
+      "title": "Filename",
+      "type": "string"
+    },
+    "size_bytes": {
+      "exclusiveMinimum": 0,
+      "title": "Size Bytes",
+      "type": "integer"
+    },
+    "title": {
+      "title": "Title",
+      "type": "string"
+    }
+  },
+  "required": [
+    "filename",
+    "size_bytes",
+    "title"
+  ],
+  "title": "UploadInit",
+  "type": "object"
+}

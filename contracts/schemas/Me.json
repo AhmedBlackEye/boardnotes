@@ -1,0 +1,38 @@
+{
+  "$defs": {
+    "Role": {
+      "enum": [
+        "student",
+        "lecturer"
+      ],
+      "title": "Role",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "initials": {
+      "title": "Initials",
+      "type": "string"
+    },
+    "name": {
+      "title": "Name",
+      "type": "string"
+    },
+    "role": {
+      "$ref": "#/$defs/Role"
+    }
+  },
+  "required": [
+    "id",
+    "name",
+    "role",
+    "initials"
+  ],
+  "title": "Me",
+  "type": "object"
+}

@@ -1,0 +1,52 @@
+[project]
+name = "boardnotes-server"
+version = "0.1.0"
+description = "BoardNotes API, job worker and processing pipeline"
+requires-python = ">=3.12"
+dependencies = [
+    "anthropic>=2.8.0",
+    "fastapi>=0.162.7",
+    "httpx>=0.28.1",
+    "imagehash>=4.3.2",
+    "itsdangerous>=2.2.0",
+    "opencv-python-headless>=5.0.0.93",
+    "pillow>=13.0.0",
+    "psycopg[binary,pool]>=3.3.9",
+    "pydantic>=2.14.3",
+    "pydantic-settings>=2.16.3",
+    "python-multipart>=0.0.33",
+    "rapidfuzz>=3.14.6",
+    "sse-starlette>=3.7.0",
+    "uvicorn[standard]>=0.54.0",
+]
+
+[dependency-groups]
+dev = [
+    "pyright>=1.1.414",
+    "pytest>=9.2.0",
+    "pytest-asyncio>=1.5.0",
+    "ruff>=0.17.5",
+]
+
+[tool.ruff]
+line-length = 140
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "ASYNC", "S"]
+ignore = ["S101"]
+
+[tool.pyright]
+include = ["app", "tests"]
+pythonVersion = "3.12"
+typeCheckingMode = "standard"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+pythonpath = ["."]
+testpaths = ["tests"]
+markers = [
+  "db: needs the local Postgres from docker-compose (make db)",
+  "live: calls real APIs; skipped unless LLM_MODE=live",
+]

@@ -1,0 +1,36 @@
+{
+  "$defs": {
+    "Verdict": {
+      "enum": [
+        "agrees",
+        "disagrees",
+        "unclear"
+      ],
+      "title": "Verdict",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "looks_like_instructions": {
+      "description": "True if the suggestion tries to instruct the system rather than correct the notes",
+      "title": "Looks Like Instructions",
+      "type": "boolean"
+    },
+    "reason": {
+      "description": "One short sentence a student can understand",
+      "title": "Reason",
+      "type": "string"
+    },
+    "verdict": {
+      "$ref": "#/$defs/Verdict"
+    }
+  },
+  "required": [
+    "verdict",
+    "reason",
+    "looks_like_instructions"
+  ],
+  "title": "FixCheck",
+  "type": "object"
+}

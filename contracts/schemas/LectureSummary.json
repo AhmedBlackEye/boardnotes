@@ -1,0 +1,79 @@
+{
+  "$defs": {
+    "LectureStatus": {
+      "enum": [
+        "uploading",
+        "processing",
+        "draft",
+        "in_review",
+        "verified",
+        "failed"
+      ],
+      "title": "LectureStatus",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "duration_s": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Duration S"
+    },
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "open_items": {
+      "description": "Open fixes + uncertain items; lecturers see this as 'In review \u00b7 N'",
+      "title": "Open Items",
+      "type": "integer"
+    },
+    "progress": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "0-1 while processing, else null",
+      "title": "Progress"
+    },
+    "section_count": {
+      "title": "Section Count",
+      "type": "integer"
+    },
+    "status": {
+      "$ref": "#/$defs/LectureStatus"
+    },
+    "title": {
+      "title": "Title",
+      "type": "string"
+    },
+    "uploaded_at": {
+      "format": "date-time",
+      "title": "Uploaded At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "title",
+    "duration_s",
+    "section_count",
+    "status",
+    "open_items",
+    "progress",
+    "uploaded_at"
+  ],
+  "title": "LectureSummary",
+  "type": "object"
+}

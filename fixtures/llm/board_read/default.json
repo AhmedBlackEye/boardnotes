@@ -1,0 +1,5 @@
+{"frame_quality": "partly_hidden", "blocks": [
+  {"type": "math", "text": "Solve 2x + y = 3, x - 2y = -1", "latex": "\\begin{cases} 2x + y = 3 \\\\ x - 2y = -1 \\end{cases}", "bbox": [0.06, 0.0, 0.36, 0.2], "confidence": 0.82},
+  {"type": "text", "text": "and find out its \"row picture\" and \"column picture\"", "latex": null, "bbox": [0.06, 0.04, 0.68, 0.38], "confidence": 0.95},
+  {"type": "math", "text": "x = 2y - 1", "latex": "x = 2y - 1", "bbox": [0.09, 0.46, 0.22, 0.56], "confidence": 0.97}
+]}

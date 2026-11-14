@@ -1,0 +1,147 @@
+{
+  "$defs": {
+    "BlockType": {
+      "enum": [
+        "text",
+        "math",
+        "diagram"
+      ],
+      "title": "BlockType",
+      "type": "string"
+    },
+    "BoardBlock": {
+      "additionalProperties": false,
+      "properties": {
+        "bbox": {
+          "description": "Position within the best frame, normalised 0-1",
+          "items": {
+            "type": "number"
+          },
+          "maxItems": 4,
+          "minItems": 4,
+          "title": "Bbox",
+          "type": "array"
+        },
+        "best_frame_s": {
+          "description": "Time of the clearest frame showing it; used for the snapshot crop",
+          "minimum": 0,
+          "title": "Best Frame S",
+          "type": "number"
+        },
+        "confidence": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "first_seen_s": {
+          "description": "When this writing first appeared",
+          "minimum": 0,
+          "title": "First Seen S",
+          "type": "number"
+        },
+        "id": {
+          "description": "Stable id, e.g. 'b_0412'",
+          "title": "Id",
+          "type": "string"
+        },
+        "latex": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Latex"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/$defs/BlockType"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "text",
+        "latex",
+        "confidence",
+        "first_seen_s",
+        "best_frame_s",
+        "bbox"
+      ],
+      "title": "BoardBlock",
+      "type": "object"
+    },
+    "TranscriptLine": {
+      "additionalProperties": false,
+      "properties": {
+        "end_s": {
+          "title": "End S",
+          "type": "number"
+        },
+        "speaker": {
+          "title": "Speaker",
+          "type": "string"
+        },
+        "start_s": {
+          "title": "Start S",
+          "type": "number"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "start_s",
+        "end_s",
+        "speaker",
+        "text"
+      ],
+      "title": "TranscriptLine",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "What the Source panel shows for one bullet.",
+  "properties": {
+    "board_blocks": {
+      "items": {
+        "$ref": "#/$defs/BoardBlock"
+      },
+      "title": "Board Blocks",
+      "type": "array"
+    },
+    "bullet_id": {
+      "title": "Bullet Id",
+      "type": "string"
+    },
+    "snapshot_urls": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Snapshot Urls",
+      "type": "array"
+    },
+    "transcript": {
+      "items": {
+        "$ref": "#/$defs/TranscriptLine"
+      },
+      "title": "Transcript",
+      "type": "array"
+    }
+  },
+  "required": [
+    "bullet_id",
+    "board_blocks",
+    "snapshot_urls",
+    "transcript"
+  ],
+  "title": "SourceView",
+  "type": "object"
+}

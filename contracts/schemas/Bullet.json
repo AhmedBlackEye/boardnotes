@@ -1,0 +1,90 @@
+{
+  "$defs": {
+    "TimeRange": {
+      "additionalProperties": false,
+      "properties": {
+        "end_s": {
+          "minimum": 0,
+          "title": "End S",
+          "type": "number"
+        },
+        "start_s": {
+          "minimum": 0,
+          "title": "Start S",
+          "type": "number"
+        }
+      },
+      "required": [
+        "start_s",
+        "end_s"
+      ],
+      "title": "TimeRange",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "board_block_ids": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Board Block Ids",
+      "type": "array"
+    },
+    "confidence": {
+      "title": "Confidence",
+      "type": "number"
+    },
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "latex": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Latex"
+    },
+    "open_suggestions": {
+      "title": "Open Suggestions",
+      "type": "integer"
+    },
+    "order": {
+      "title": "Order",
+      "type": "integer"
+    },
+    "text": {
+      "title": "Text",
+      "type": "string"
+    },
+    "transcript_ranges": {
+      "items": {
+        "$ref": "#/$defs/TimeRange"
+      },
+      "title": "Transcript Ranges",
+      "type": "array"
+    },
+    "uncertain": {
+      "title": "Uncertain",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "id",
+    "order",
+    "text",
+    "latex",
+    "confidence",
+    "uncertain",
+    "board_block_ids",
+    "transcript_ranges",
+    "open_suggestions"
+  ],
+  "title": "Bullet",
+  "type": "object"
+}

@@ -1,0 +1,71 @@
+{
+  "$defs": {
+    "AnswerCitation": {
+      "additionalProperties": false,
+      "properties": {
+        "at_s": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Video time for transcript/board citations",
+          "title": "At S"
+        },
+        "kind": {
+          "$ref": "#/$defs/CitationKind"
+        },
+        "ref": {
+          "description": "Section id, board block id, or 'transcript'",
+          "title": "Ref",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "ref",
+        "at_s"
+      ],
+      "title": "AnswerCitation",
+      "type": "object"
+    },
+    "CitationKind": {
+      "enum": [
+        "transcript",
+        "board",
+        "section"
+      ],
+      "title": "CitationKind",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "answer": {
+      "title": "Answer",
+      "type": "string"
+    },
+    "citations": {
+      "items": {
+        "$ref": "#/$defs/AnswerCitation"
+      },
+      "title": "Citations",
+      "type": "array"
+    },
+    "covered": {
+      "description": "False if this lecture does not contain the answer",
+      "title": "Covered",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "covered",
+    "answer",
+    "citations"
+  ],
+  "title": "LectureAnswer",
+  "type": "object"
+}

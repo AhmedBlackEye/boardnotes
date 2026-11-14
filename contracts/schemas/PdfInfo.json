@@ -1,0 +1,61 @@
+{
+  "$defs": {
+    "LectureStatus": {
+      "enum": [
+        "uploading",
+        "processing",
+        "draft",
+        "in_review",
+        "verified",
+        "failed"
+      ],
+      "title": "LectureStatus",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "generated_at": {
+      "format": "date-time",
+      "title": "Generated At",
+      "type": "string"
+    },
+    "lecture_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Null for the whole-module PDF",
+      "title": "Lecture Id"
+    },
+    "pages": {
+      "title": "Pages",
+      "type": "integer"
+    },
+    "status": {
+      "$ref": "#/$defs/LectureStatus"
+    },
+    "title": {
+      "title": "Title",
+      "type": "string"
+    },
+    "url": {
+      "title": "Url",
+      "type": "string"
+    }
+  },
+  "required": [
+    "lecture_id",
+    "title",
+    "pages",
+    "status",
+    "generated_at",
+    "url"
+  ],
+  "title": "PdfInfo",
+  "type": "object"
+}

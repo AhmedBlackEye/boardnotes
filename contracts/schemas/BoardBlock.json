@@ -1,0 +1,79 @@
+{
+  "$defs": {
+    "BlockType": {
+      "enum": [
+        "text",
+        "math",
+        "diagram"
+      ],
+      "title": "BlockType",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "bbox": {
+      "description": "Position within the best frame, normalised 0-1",
+      "items": {
+        "type": "number"
+      },
+      "maxItems": 4,
+      "minItems": 4,
+      "title": "Bbox",
+      "type": "array"
+    },
+    "best_frame_s": {
+      "description": "Time of the clearest frame showing it; used for the snapshot crop",
+      "minimum": 0,
+      "title": "Best Frame S",
+      "type": "number"
+    },
+    "confidence": {
+      "maximum": 1,
+      "minimum": 0,
+      "title": "Confidence",
+      "type": "number"
+    },
+    "first_seen_s": {
+      "description": "When this writing first appeared",
+      "minimum": 0,
+      "title": "First Seen S",
+      "type": "number"
+    },
+    "id": {
+      "description": "Stable id, e.g. 'b_0412'",
+      "title": "Id",
+      "type": "string"
+    },
+    "latex": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Latex"
+    },
+    "text": {
+      "title": "Text",
+      "type": "string"
+    },
+    "type": {
+      "$ref": "#/$defs/BlockType"
+    }
+  },
+  "required": [
+    "id",
+    "type",
+    "text",
+    "latex",
+    "confidence",
+    "first_seen_s",
+    "best_frame_s",
+    "bbox"
+  ],
+  "title": "BoardBlock",
+  "type": "object"
+}

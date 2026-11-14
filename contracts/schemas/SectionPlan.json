@@ -1,0 +1,46 @@
+{
+  "$defs": {
+    "Span": {
+      "additionalProperties": false,
+      "properties": {
+        "end_s": {
+          "minimum": 0,
+          "title": "End S",
+          "type": "number"
+        },
+        "heading": {
+          "title": "Heading",
+          "type": "string"
+        },
+        "start_s": {
+          "minimum": 0,
+          "title": "Start S",
+          "type": "number"
+        }
+      },
+      "required": [
+        "heading",
+        "start_s",
+        "end_s"
+      ],
+      "title": "Span",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Output of the sectioning step: where to cut the lecture.",
+  "properties": {
+    "sections": {
+      "items": {
+        "$ref": "#/$defs/Span"
+      },
+      "title": "Sections",
+      "type": "array"
+    }
+  },
+  "required": [
+    "sections"
+  ],
+  "title": "SectionPlan",
+  "type": "object"
+}

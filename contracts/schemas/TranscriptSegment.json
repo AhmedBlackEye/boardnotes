@@ -1,0 +1,32 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "end_s": {
+      "minimum": 0,
+      "title": "End S",
+      "type": "number"
+    },
+    "speaker": {
+      "description": "'lecturer' for the main speaker, otherwise 'student_1', 'student_2', ...",
+      "title": "Speaker",
+      "type": "string"
+    },
+    "start_s": {
+      "minimum": 0,
+      "title": "Start S",
+      "type": "number"
+    },
+    "text": {
+      "title": "Text",
+      "type": "string"
+    }
+  },
+  "required": [
+    "start_s",
+    "end_s",
+    "speaker",
+    "text"
+  ],
+  "title": "TranscriptSegment",
+  "type": "object"
+}

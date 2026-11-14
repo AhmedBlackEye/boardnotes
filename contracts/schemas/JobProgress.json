@@ -1,0 +1,64 @@
+{
+  "$defs": {
+    "JobStage": {
+      "enum": [
+        "check_video",
+        "transcribe",
+        "select_frames",
+        "read_board",
+        "merge_blocks",
+        "section",
+        "write_notes",
+        "render_pdf",
+        "done"
+      ],
+      "title": "JobStage",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "detail": {
+      "title": "Detail",
+      "type": "string"
+    },
+    "error": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Error"
+    },
+    "lecture_id": {
+      "title": "Lecture Id",
+      "type": "string"
+    },
+    "progress": {
+      "maximum": 1,
+      "minimum": 0,
+      "title": "Progress",
+      "type": "number"
+    },
+    "sections_ready": {
+      "title": "Sections Ready",
+      "type": "integer"
+    },
+    "stage": {
+      "$ref": "#/$defs/JobStage"
+    }
+  },
+  "required": [
+    "lecture_id",
+    "stage",
+    "progress",
+    "detail",
+    "sections_ready",
+    "error"
+  ],
+  "title": "JobProgress",
+  "type": "object"
+}

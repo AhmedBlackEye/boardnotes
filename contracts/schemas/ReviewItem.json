@@ -1,0 +1,265 @@
+{
+  "$defs": {
+    "BlockType": {
+      "enum": [
+        "text",
+        "math",
+        "diagram"
+      ],
+      "title": "BlockType",
+      "type": "string"
+    },
+    "BoardBlock": {
+      "additionalProperties": false,
+      "properties": {
+        "bbox": {
+          "description": "Position within the best frame, normalised 0-1",
+          "items": {
+            "type": "number"
+          },
+          "maxItems": 4,
+          "minItems": 4,
+          "title": "Bbox",
+          "type": "array"
+        },
+        "best_frame_s": {
+          "description": "Time of the clearest frame showing it; used for the snapshot crop",
+          "minimum": 0,
+          "title": "Best Frame S",
+          "type": "number"
+        },
+        "confidence": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "first_seen_s": {
+          "description": "When this writing first appeared",
+          "minimum": 0,
+          "title": "First Seen S",
+          "type": "number"
+        },
+        "id": {
+          "description": "Stable id, e.g. 'b_0412'",
+          "title": "Id",
+          "type": "string"
+        },
+        "latex": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Latex"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/$defs/BlockType"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "text",
+        "latex",
+        "confidence",
+        "first_seen_s",
+        "best_frame_s",
+        "bbox"
+      ],
+      "title": "BoardBlock",
+      "type": "object"
+    },
+    "Suggestion": {
+      "additionalProperties": false,
+      "properties": {
+        "anonymous": {
+          "title": "Anonymous",
+          "type": "boolean"
+        },
+        "author_initials": {
+          "title": "Author Initials",
+          "type": "string"
+        },
+        "author_name": {
+          "title": "Author Name",
+          "type": "string"
+        },
+        "bullet_id": {
+          "title": "Bullet Id",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "flagged": {
+          "title": "Flagged",
+          "type": "boolean"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "proposed_text": {
+          "title": "Proposed Text",
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/$defs/SuggestionStatus"
+        },
+        "upvotes": {
+          "title": "Upvotes",
+          "type": "integer"
+        },
+        "verdict": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Verdict"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Null while the AI check is running"
+        },
+        "verdict_reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Verdict Reason"
+        },
+        "voted_by_me": {
+          "title": "Voted By Me",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "bullet_id",
+        "author_name",
+        "author_initials",
+        "anonymous",
+        "proposed_text",
+        "created_at",
+        "verdict",
+        "verdict_reason",
+        "flagged",
+        "upvotes",
+        "voted_by_me",
+        "status"
+      ],
+      "title": "Suggestion",
+      "type": "object"
+    },
+    "SuggestionStatus": {
+      "enum": [
+        "open",
+        "approved",
+        "rejected"
+      ],
+      "title": "SuggestionStatus",
+      "type": "string"
+    },
+    "Verdict": {
+      "enum": [
+        "agrees",
+        "disagrees",
+        "unclear"
+      ],
+      "title": "Verdict",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "board_block": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/BoardBlock"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "bullet_id": {
+      "title": "Bullet Id",
+      "type": "string"
+    },
+    "current_text": {
+      "title": "Current Text",
+      "type": "string"
+    },
+    "id": {
+      "description": "Suggestion id, or 'bullet:<id>' for an uncertain reading with no fix",
+      "title": "Id",
+      "type": "string"
+    },
+    "lecture_id": {
+      "title": "Lecture Id",
+      "type": "string"
+    },
+    "priority": {
+      "description": "See docs/architecture.md#review-priority",
+      "title": "Priority",
+      "type": "number"
+    },
+    "section_heading": {
+      "title": "Section Heading",
+      "type": "string"
+    },
+    "section_id": {
+      "title": "Section Id",
+      "type": "string"
+    },
+    "snapshot_url": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Snapshot Url"
+    },
+    "suggestion": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Suggestion"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "id",
+    "lecture_id",
+    "section_id",
+    "section_heading",
+    "bullet_id",
+    "current_text",
+    "suggestion",
+    "board_block",
+    "snapshot_url",
+    "priority"
+  ],
+  "title": "ReviewItem",
+  "type": "object"
+}

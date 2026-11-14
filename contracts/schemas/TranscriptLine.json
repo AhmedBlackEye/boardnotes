@@ -1,0 +1,29 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "end_s": {
+      "title": "End S",
+      "type": "number"
+    },
+    "speaker": {
+      "title": "Speaker",
+      "type": "string"
+    },
+    "start_s": {
+      "title": "Start S",
+      "type": "number"
+    },
+    "text": {
+      "title": "Text",
+      "type": "string"
+    }
+  },
+  "required": [
+    "start_s",
+    "end_s",
+    "speaker",
+    "text"
+  ],
+  "title": "TranscriptLine",
+  "type": "object"
+}

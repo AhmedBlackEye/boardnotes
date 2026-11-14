@@ -1,0 +1,32 @@
+{
+  "additionalProperties": false,
+  "description": "Result of the cheap read of a small frame. Used to pick keyframes.",
+  "properties": {
+    "lines": {
+      "description": "Each line of board writing visible, in reading order, plain text",
+      "items": {
+        "type": "string"
+      },
+      "title": "Lines",
+      "type": "array"
+    },
+    "readable": {
+      "description": "How legible the board writing is in this frame",
+      "maximum": 1,
+      "minimum": 0,
+      "title": "Readable",
+      "type": "number"
+    },
+    "shows_board": {
+      "title": "Shows Board",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "shows_board",
+    "readable",
+    "lines"
+  ],
+  "title": "FrameGlance",
+  "type": "object"
+}

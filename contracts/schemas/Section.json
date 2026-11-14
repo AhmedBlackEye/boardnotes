@@ -1,0 +1,174 @@
+{
+  "$defs": {
+    "Bullet": {
+      "additionalProperties": false,
+      "properties": {
+        "board_block_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Board Block Ids",
+          "type": "array"
+        },
+        "confidence": {
+          "title": "Confidence",
+          "type": "number"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "latex": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Latex"
+        },
+        "open_suggestions": {
+          "title": "Open Suggestions",
+          "type": "integer"
+        },
+        "order": {
+          "title": "Order",
+          "type": "integer"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "transcript_ranges": {
+          "items": {
+            "$ref": "#/$defs/TimeRange"
+          },
+          "title": "Transcript Ranges",
+          "type": "array"
+        },
+        "uncertain": {
+          "title": "Uncertain",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "order",
+        "text",
+        "latex",
+        "confidence",
+        "uncertain",
+        "board_block_ids",
+        "transcript_ranges",
+        "open_suggestions"
+      ],
+      "title": "Bullet",
+      "type": "object"
+    },
+    "SaidNotWritten": {
+      "additionalProperties": false,
+      "properties": {
+        "at_s": {
+          "minimum": 0,
+          "title": "At S",
+          "type": "number"
+        },
+        "text": {
+          "description": "Something the lecturer explained out loud that is not on the board",
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "text",
+        "at_s"
+      ],
+      "title": "SaidNotWritten",
+      "type": "object"
+    },
+    "SectionStatus": {
+      "enum": [
+        "draft",
+        "uncertain",
+        "verified"
+      ],
+      "title": "SectionStatus",
+      "type": "string"
+    },
+    "TimeRange": {
+      "additionalProperties": false,
+      "properties": {
+        "end_s": {
+          "minimum": 0,
+          "title": "End S",
+          "type": "number"
+        },
+        "start_s": {
+          "minimum": 0,
+          "title": "Start S",
+          "type": "number"
+        }
+      },
+      "required": [
+        "start_s",
+        "end_s"
+      ],
+      "title": "TimeRange",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "bullets": {
+      "items": {
+        "$ref": "#/$defs/Bullet"
+      },
+      "title": "Bullets",
+      "type": "array"
+    },
+    "end_s": {
+      "title": "End S",
+      "type": "number"
+    },
+    "heading": {
+      "title": "Heading",
+      "type": "string"
+    },
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "order": {
+      "title": "Order",
+      "type": "integer"
+    },
+    "said_not_written": {
+      "items": {
+        "$ref": "#/$defs/SaidNotWritten"
+      },
+      "title": "Said Not Written",
+      "type": "array"
+    },
+    "start_s": {
+      "title": "Start S",
+      "type": "number"
+    },
+    "status": {
+      "$ref": "#/$defs/SectionStatus"
+    }
+  },
+  "required": [
+    "id",
+    "order",
+    "heading",
+    "start_s",
+    "end_s",
+    "status",
+    "bullets",
+    "said_not_written"
+  ],
+  "title": "Section",
+  "type": "object"
+}

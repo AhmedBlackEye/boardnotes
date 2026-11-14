@@ -1,0 +1,84 @@
+{
+  "$defs": {
+    "BlockType": {
+      "enum": [
+        "text",
+        "math",
+        "diagram"
+      ],
+      "title": "BlockType",
+      "type": "string"
+    },
+    "BoardReadBlock": {
+      "additionalProperties": false,
+      "properties": {
+        "bbox": {
+          "description": "[x0, y0, x1, y1] normalised 0-1 within this frame",
+          "items": {
+            "type": "number"
+          },
+          "maxItems": 4,
+          "minItems": 4,
+          "title": "Bbox",
+          "type": "array"
+        },
+        "confidence": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "latex": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "LaTeX for math blocks, otherwise null",
+          "title": "Latex"
+        },
+        "text": {
+          "description": "Plain-text reading of the block",
+          "title": "Text",
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/$defs/BlockType"
+        }
+      },
+      "required": [
+        "type",
+        "text",
+        "latex",
+        "bbox",
+        "confidence"
+      ],
+      "title": "BoardReadBlock",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "blocks": {
+      "items": {
+        "$ref": "#/$defs/BoardReadBlock"
+      },
+      "title": "Blocks",
+      "type": "array"
+    },
+    "frame_quality": {
+      "description": "'good', 'partly_hidden' or 'poor'",
+      "title": "Frame Quality",
+      "type": "string"
+    }
+  },
+  "required": [
+    "blocks",
+    "frame_quality"
+  ],
+  "title": "BoardRead",
+  "type": "object"
+}

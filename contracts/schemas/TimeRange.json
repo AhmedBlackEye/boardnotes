@@ -1,0 +1,21 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "end_s": {
+      "minimum": 0,
+      "title": "End S",
+      "type": "number"
+    },
+    "start_s": {
+      "minimum": 0,
+      "title": "Start S",
+      "type": "number"
+    }
+  },
+  "required": [
+    "start_s",
+    "end_s"
+  ],
+  "title": "TimeRange",
+  "type": "object"
+}

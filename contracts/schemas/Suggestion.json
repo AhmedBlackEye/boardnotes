@@ -1,0 +1,108 @@
+{
+  "$defs": {
+    "SuggestionStatus": {
+      "enum": [
+        "open",
+        "approved",
+        "rejected"
+      ],
+      "title": "SuggestionStatus",
+      "type": "string"
+    },
+    "Verdict": {
+      "enum": [
+        "agrees",
+        "disagrees",
+        "unclear"
+      ],
+      "title": "Verdict",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "anonymous": {
+      "title": "Anonymous",
+      "type": "boolean"
+    },
+    "author_initials": {
+      "title": "Author Initials",
+      "type": "string"
+    },
+    "author_name": {
+      "title": "Author Name",
+      "type": "string"
+    },
+    "bullet_id": {
+      "title": "Bullet Id",
+      "type": "string"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "flagged": {
+      "title": "Flagged",
+      "type": "boolean"
+    },
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "proposed_text": {
+      "title": "Proposed Text",
+      "type": "string"
+    },
+    "status": {
+      "$ref": "#/$defs/SuggestionStatus"
+    },
+    "upvotes": {
+      "title": "Upvotes",
+      "type": "integer"
+    },
+    "verdict": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Verdict"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Null while the AI check is running"
+    },
+    "verdict_reason": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Verdict Reason"
+    },
+    "voted_by_me": {
+      "title": "Voted By Me",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "id",
+    "bullet_id",
+    "author_name",
+    "author_initials",
+    "anonymous",
+    "proposed_text",
+    "created_at",
+    "verdict",
+    "verdict_reason",
+    "flagged",
+    "upvotes",
+    "voted_by_me",
+    "status"
+  ],
+  "title": "Suggestion",
+  "type": "object"
+}

@@ -1,0 +1,6 @@
+{"heading": "The problem: two equations, two unknowns", "start_s": 0.0, "end_s": 95.0,
+ "bullets": [
+  {"text": "We solve the system 2x + y = 3 and x − 2y = −1.", "latex": "\\begin{cases} 2x + y = 3 \\\\ x - 2y = -1 \\end{cases}", "board_block_ids": ["b_0001"], "transcript_ranges": [{"start_s": 4.0, "end_s": 18.5}], "confidence": 0.9},
+  {"text": "Rearranging the second equation gives x in terms of y.", "latex": "x = 2y - 1", "board_block_ids": ["b_0003"], "transcript_ranges": [{"start_s": 60.0, "end_s": 72.0}], "confidence": 0.95}
+ ],
+ "said_not_written": [{"text": "The row picture and column picture give the same answer, seen two different ways.", "at_s": 35.0}]}

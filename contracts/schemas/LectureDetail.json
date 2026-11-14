@@ -1,0 +1,374 @@
+{
+  "$defs": {
+    "BlockType": {
+      "enum": [
+        "text",
+        "math",
+        "diagram"
+      ],
+      "title": "BlockType",
+      "type": "string"
+    },
+    "BoardBlock": {
+      "additionalProperties": false,
+      "properties": {
+        "bbox": {
+          "description": "Position within the best frame, normalised 0-1",
+          "items": {
+            "type": "number"
+          },
+          "maxItems": 4,
+          "minItems": 4,
+          "title": "Bbox",
+          "type": "array"
+        },
+        "best_frame_s": {
+          "description": "Time of the clearest frame showing it; used for the snapshot crop",
+          "minimum": 0,
+          "title": "Best Frame S",
+          "type": "number"
+        },
+        "confidence": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "first_seen_s": {
+          "description": "When this writing first appeared",
+          "minimum": 0,
+          "title": "First Seen S",
+          "type": "number"
+        },
+        "id": {
+          "description": "Stable id, e.g. 'b_0412'",
+          "title": "Id",
+          "type": "string"
+        },
+        "latex": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Latex"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/$defs/BlockType"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "text",
+        "latex",
+        "confidence",
+        "first_seen_s",
+        "best_frame_s",
+        "bbox"
+      ],
+      "title": "BoardBlock",
+      "type": "object"
+    },
+    "Bullet": {
+      "additionalProperties": false,
+      "properties": {
+        "board_block_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Board Block Ids",
+          "type": "array"
+        },
+        "confidence": {
+          "title": "Confidence",
+          "type": "number"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "latex": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Latex"
+        },
+        "open_suggestions": {
+          "title": "Open Suggestions",
+          "type": "integer"
+        },
+        "order": {
+          "title": "Order",
+          "type": "integer"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "transcript_ranges": {
+          "items": {
+            "$ref": "#/$defs/TimeRange"
+          },
+          "title": "Transcript Ranges",
+          "type": "array"
+        },
+        "uncertain": {
+          "title": "Uncertain",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "order",
+        "text",
+        "latex",
+        "confidence",
+        "uncertain",
+        "board_block_ids",
+        "transcript_ranges",
+        "open_suggestions"
+      ],
+      "title": "Bullet",
+      "type": "object"
+    },
+    "LectureStatus": {
+      "enum": [
+        "uploading",
+        "processing",
+        "draft",
+        "in_review",
+        "verified",
+        "failed"
+      ],
+      "title": "LectureStatus",
+      "type": "string"
+    },
+    "LectureSummary": {
+      "additionalProperties": false,
+      "properties": {
+        "duration_s": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Duration S"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "open_items": {
+          "description": "Open fixes + uncertain items; lecturers see this as 'In review \u00b7 N'",
+          "title": "Open Items",
+          "type": "integer"
+        },
+        "progress": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "0-1 while processing, else null",
+          "title": "Progress"
+        },
+        "section_count": {
+          "title": "Section Count",
+          "type": "integer"
+        },
+        "status": {
+          "$ref": "#/$defs/LectureStatus"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "uploaded_at": {
+          "format": "date-time",
+          "title": "Uploaded At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "duration_s",
+        "section_count",
+        "status",
+        "open_items",
+        "progress",
+        "uploaded_at"
+      ],
+      "title": "LectureSummary",
+      "type": "object"
+    },
+    "SaidNotWritten": {
+      "additionalProperties": false,
+      "properties": {
+        "at_s": {
+          "minimum": 0,
+          "title": "At S",
+          "type": "number"
+        },
+        "text": {
+          "description": "Something the lecturer explained out loud that is not on the board",
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "text",
+        "at_s"
+      ],
+      "title": "SaidNotWritten",
+      "type": "object"
+    },
+    "Section": {
+      "additionalProperties": false,
+      "properties": {
+        "bullets": {
+          "items": {
+            "$ref": "#/$defs/Bullet"
+          },
+          "title": "Bullets",
+          "type": "array"
+        },
+        "end_s": {
+          "title": "End S",
+          "type": "number"
+        },
+        "heading": {
+          "title": "Heading",
+          "type": "string"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "order": {
+          "title": "Order",
+          "type": "integer"
+        },
+        "said_not_written": {
+          "items": {
+            "$ref": "#/$defs/SaidNotWritten"
+          },
+          "title": "Said Not Written",
+          "type": "array"
+        },
+        "start_s": {
+          "title": "Start S",
+          "type": "number"
+        },
+        "status": {
+          "$ref": "#/$defs/SectionStatus"
+        }
+      },
+      "required": [
+        "id",
+        "order",
+        "heading",
+        "start_s",
+        "end_s",
+        "status",
+        "bullets",
+        "said_not_written"
+      ],
+      "title": "Section",
+      "type": "object"
+    },
+    "SectionStatus": {
+      "enum": [
+        "draft",
+        "uncertain",
+        "verified"
+      ],
+      "title": "SectionStatus",
+      "type": "string"
+    },
+    "TimeRange": {
+      "additionalProperties": false,
+      "properties": {
+        "end_s": {
+          "minimum": 0,
+          "title": "End S",
+          "type": "number"
+        },
+        "start_s": {
+          "minimum": 0,
+          "title": "Start S",
+          "type": "number"
+        }
+      },
+      "required": [
+        "start_s",
+        "end_s"
+      ],
+      "title": "TimeRange",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "board_blocks": {
+      "items": {
+        "$ref": "#/$defs/BoardBlock"
+      },
+      "title": "Board Blocks",
+      "type": "array"
+    },
+    "pdf_url": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Pdf Url"
+    },
+    "sections": {
+      "items": {
+        "$ref": "#/$defs/Section"
+      },
+      "title": "Sections",
+      "type": "array"
+    },
+    "summary": {
+      "$ref": "#/$defs/LectureSummary"
+    },
+    "video_url": {
+      "title": "Video Url",
+      "type": "string"
+    }
+  },
+  "required": [
+    "summary",
+    "sections",
+    "board_blocks",
+    "video_url",
+    "pdf_url"
+  ],
+  "title": "LectureDetail",
+  "type": "object"
+}

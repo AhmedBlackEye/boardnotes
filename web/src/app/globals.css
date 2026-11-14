@@ -1,0 +1,46 @@
+@import "tailwindcss";
+@import "../styles/tokens.css";
+@import "katex/dist/katex.min.css";
+
+/* Expose Figma tokens to Tailwind: bg-surface, text-secondary, border-default, rounded-lg, etc. */
+@theme inline {
+  --color-canvas: var(--color-bg-canvas);
+  --color-surface: var(--color-bg-surface);
+  --color-subtle: var(--color-bg-subtle);
+  --color-muted: var(--color-bg-muted);
+  --color-sidebar: var(--color-bg-sidebar);
+  --color-sidebar-raised: var(--color-bg-sidebar-raised);
+  --color-sidebar-active: var(--color-bg-sidebar-active);
+  --color-primary: var(--color-text-primary);
+  --color-secondary: var(--color-text-secondary);
+  --color-tertiary: var(--color-text-tertiary);
+  --color-on-accent: var(--color-text-on-accent);
+  --color-default: var(--color-border-default);
+  --color-strong: var(--color-border-strong);
+  --color-accent: var(--color-accent-default);
+  --color-accent-hover: var(--color-accent-hover);
+  --color-accent-subtle: var(--color-accent-subtle);
+  --color-success: var(--color-success-default);
+  --color-success-subtle: var(--color-success-subtle);
+  --color-warning: var(--color-warning-default);
+  --color-warning-subtle: var(--color-warning-subtle);
+  --color-danger: var(--color-danger-default);
+  --color-danger-subtle: var(--color-danger-subtle);
+  --color-board: var(--color-board-bg);
+  --color-chalk: var(--color-board-ink);
+  --color-chalk-dim: var(--color-board-ink-dim);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-space-grotesk);
+  --font-chalk: var(--font-kalam);
+  --font-mono: var(--font-jetbrains);
+}
+
+body {
+  background: var(--color-bg-canvas);
+  color: var(--color-text-primary);
+  font-family: var(--font-inter), system-ui, sans-serif;
+}

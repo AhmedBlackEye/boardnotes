@@ -21,10 +21,39 @@ def raw_commands(body: str) -> set[str]:
     return set(re.findall(r"(?<!\\)\\([A-Za-z]+)", body))
 
 
-FORBIDDEN = {"input", "include", "write", "immediate", "openin", "openout", "read", "catcode", "def", "edef", "gdef",
-             "xdef", "let", "csname", "usepackage", "newcommand", "renewcommand", "verbatiminput", "lstinputlisting",
-             "directlua", "scantokens", "expandafter", "newwrite", "closeout", "special", "jobname",
-             "verb", "makeatletter", "endinput", "everyeof", "IfFileExists"}
+FORBIDDEN = {
+    "input",
+    "include",
+    "write",
+    "immediate",
+    "openin",
+    "openout",
+    "read",
+    "catcode",
+    "def",
+    "edef",
+    "gdef",
+    "xdef",
+    "let",
+    "csname",
+    "usepackage",
+    "newcommand",
+    "renewcommand",
+    "verbatiminput",
+    "lstinputlisting",
+    "directlua",
+    "scantokens",
+    "expandafter",
+    "newwrite",
+    "closeout",
+    "special",
+    "jobname",
+    "verb",
+    "makeatletter",
+    "endinput",
+    "everyeof",
+    "IfFileExists",
+}
 
 
 @pytest.mark.parametrize(
@@ -76,8 +105,13 @@ def test_formula_cannot_close_document_early():
 
 
 def test_benign_formulas_are_kept_as_math():
-    for f in [r"\frac{a}{b}", r"\lambda_1 + \cdots + \lambda_n = \operatorname{tr}(A)", r"x^2 + y^2 = r^2",
-              r"\begin{pmatrix} a & b \\ c & d \end{pmatrix}", r"\sum_{i=1}^{n} i"]:
+    for f in [
+        r"\frac{a}{b}",
+        r"\lambda_1 + \cdots + \lambda_n = \operatorname{tr}(A)",
+        r"x^2 + y^2 = r^2",
+        r"\begin{pmatrix} a & b \\ c & d \end{pmatrix}",
+        r"\sum_{i=1}^{n} i",
+    ]:
         body = tex_with_latex(f)
         assert f in body, (f, body)
 
@@ -90,9 +124,7 @@ def test_href_url_cannot_break_out():
         assert " " not in m.group(1)
 
 
-@pytest.mark.parametrize(
-    "url", ["javascript:alert(1)", "data:text/html,x", "file:///etc/passwd", "vbscript:x", "JaVaScRiPt:x", ""]
-)
+@pytest.mark.parametrize("url", ["javascript:alert(1)", "data:text/html,x", "file:///etc/passwd", "vbscript:x", "JaVaScRiPt:x", ""])
 def test_unsafe_video_urls_never_linked(url):
     l = sample_lecture().model_copy(update={"video_url": url})
     out = X.export_tex(l)

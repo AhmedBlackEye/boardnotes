@@ -162,3 +162,17 @@ async def test_render_module_pdf(chromium_ok: None) -> None:
     assert "Contents" in reader.pages[1].extract_text()
     text = pdf_text(data)
     assert "Lecture 2 · Eigenvalues" in text and "1 of 2 lectures verified" in text
+
+
+async def test_render_module_pdf_caps_lecture_count() -> None:
+    with pytest.raises(ValueError, match="at most"):
+        await pdf.render_module_pdf([sample_lecture()] * (pdf.MAX_MODULE_LECTURES + 1), "Too big")
+
+
+def test_missing_tokens_css_emits_no_link(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:  # noqa: ANN001
+    monkeypatch.setattr(pdf, "TOKENS_CSS", tmp_path / "missing.css")
+    pdf.design_tokens.cache_clear()
+    html = pdf.build_lecture_html(sample_lecture())
+    assert 'href="None"' not in html
+    assert pdf.design_tokens() == {}
+    pdf.design_tokens.cache_clear()

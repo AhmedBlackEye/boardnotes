@@ -1,7 +1,8 @@
 """Stage: transcribe the lecture audio with ElevenLabs Scribe (word timestamps + speaker diarization).
 
-`transcribe(audio)` is the pipeline entry point. In fake mode, or when no ELEVENLABS_API_KEY is set, it
-returns the recorded transcript from fixtures/transcript.json so the pipeline runs offline.
+`transcribe(audio)` is the pipeline entry point. In fake mode (LLM_MODE=fake) it returns the recorded transcript
+from fixtures/transcript.json so the pipeline runs offline. In live mode ELEVENLABS_API_KEY is required: without it
+`transcribe` raises rather than silently using the fixture.
 
 The response-to-segments logic lives in the pure function `segments_from_response`.
 """

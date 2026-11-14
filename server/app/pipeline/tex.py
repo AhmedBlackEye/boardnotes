@@ -2,10 +2,15 @@
 
 Plain text is escaped for LaTeX (note text is untrusted). Formulas go in display maths verbatim, but only if they
 pass a conservative check: anything that could run commands (\\input, \\write, ...) falls back to an escaped
-monospace line instead.
+monospace line instead. Timestamp link URLs are percent-encoded, and dropped if they hold characters TeX could
+reinterpret (^, whitespace, control or non-ASCII characters).
+
+Compile the exported file with shell escape off and file reads restricted to the working directory, e.g.
+`openin_any=p pdflatex -no-shell-escape notes.tex`: the text is escaped, but this is the second line of defence.
 """
 
 import re
+from urllib.parse import quote
 
 from app.contracts.api import LectureDetail
 from app.contracts.enums import LectureStatus, SectionStatus
@@ -85,8 +90,8 @@ def escape_tex(text: str) -> str:
             out.append(_SPECIAL[ch])
         elif ch in _UNICODE:
             out.append(_UNICODE[ch])
-        elif ord(ch) < 32:
-            out.append(" ")
+        elif ord(ch) < 32 or 0x7F <= ord(ch) <= 0x9F:
+            out.append(" ")  # C0 / DEL / C1 control characters
         elif ord(ch) > 0x17F:
             out.append("?")  # outside what pdflatex (T1 + utf8) can print without extra setup
         else:
@@ -115,22 +120,36 @@ def safe_math(latex: str) -> str | None:
     envs = [m.group(1) for m in _BEGIN_END_ENV.finditer(latex)]
     if any(e not in _MATH_ENVS for e in envs) or len(envs) != len(_BEGIN_END.findall(latex)):
         return None  # unknown environment, or \begin / \end without a plain {env} argument
-    depth = 0
-    for m in re.finditer(r"\\.|[{}]", latex):
+    stack: list[str] = []
+    for m in re.finditer(r"\\(?:begin|end)\s*\{([^{}]*)\}|\\(left|right)(?![A-Za-z])|\\.|[{}]", latex):
         tok = m.group(0)
-        depth += (tok == "{") - (tok == "}")
-        if depth < 0:
+        if tok.startswith(("\\begin", "\\left")):
+            stack.append(m.group(1) or "left")
+        elif tok.startswith(("\\end", "\\right")):
+            if not stack or stack.pop() != (m.group(1) or "left"):
+                return None  # \end{x} without a matching \begin{x}, or \right without \left
+        elif tok == "{":
+            stack.append("{")
+        elif tok == "}" and (not stack or stack.pop() != "{"):
             return None
-    return latex if depth == 0 else None
+    return latex if not stack else None
 
 
-def _href(url: str) -> str:
-    """URL for \\href: drop or escape the characters that are special inside its argument."""
-    return url.replace("\\", "").replace("{", "").replace("}", "").replace("%", r"\%").replace("#", r"\#")
+def _href(url: str) -> str | None:
+    """URL for \\href, or None if it is unsafe to link.
+
+    `^` (TeX's ^^5c escape), whitespace (a blank line is \\par), control and non-ASCII characters mean no link.
+    Everything else outside a small safe set is percent-encoded, then `%` and `#` are escaped for hyperref.
+    """
+    if any(ch == "^" or ch.isspace() or not (" " < ch < "\x7f") for ch in url):
+        return None
+    encoded = quote(url, safe=":/?=&.-_#%+,;@!*'()")
+    return encoded.replace("%", r"\%").replace("#", r"\#")
 
 
 def _stamp(link: str | None, seconds: float) -> str:
-    return f" \\href{{{_href(link)}}}{{[{format_time(seconds)}]}}" if link else ""
+    href = _href(link) if link else None
+    return f" \\href{{{href}}}{{[{format_time(seconds)}]}}" if href else ""
 
 
 def export_tex(lecture: LectureDetail, include_drafts: bool = True) -> str:
@@ -162,7 +181,7 @@ def export_tex(lecture: LectureDetail, include_drafts: bool = True) -> str:
             lines.append(r"\noindent\draftmark")
         lines.append(r"\begin{itemize}")
         for b in sorted(section.bullets, key=lambda b: b.order):
-            item = r"\item " + escape_tex(b.text)
+            item = r"\item{} " + escape_tex(b.text)  # {} stops a leading "[" becoming an \item label
             if b.uncertain:
                 item += r" \textit{(uncertain)}"
             t = bullet_time(b, first_seen)

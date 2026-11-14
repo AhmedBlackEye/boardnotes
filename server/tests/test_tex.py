@@ -1,3 +1,4 @@
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -6,7 +7,7 @@ import pytest
 
 from app.contracts.enums import LectureStatus
 from app.pipeline.tex import escape_tex, export_tex, safe_math
-from tests.factories import sample_lecture
+from tests.factories import bullet, sample_lecture
 
 
 def test_escape_specials() -> None:
@@ -75,3 +76,62 @@ def test_safe_math_rejects(evil: str) -> None:
 def test_safe_math_accepts_normal_formulas() -> None:
     for f in [r"\det(A - \lambda I) = 0", r"\frac{a}{b} \, x^2", r"\begin{pmatrix} a & b \\ c & d \end{pmatrix}"]:
         assert safe_math(f) == f
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "https://example.com/a^^5cinput/x",
+        "https://example.com/a b.mp4",
+        "https://example.com/a\n\nb.mp4",
+        "https://example.com/a\tb.mp4",
+        "https://example.com/caf\u00e9.mp4",
+        "https://example.com/a\x85b.mp4",
+    ],
+)
+def test_unsafe_href_url_is_not_linked(url: str) -> None:
+    tex = export_tex(sample_lecture().model_copy(update={"video_url": url}))
+    assert r"\href" not in tex
+    assert "5cinput" not in tex
+
+
+def test_href_url_is_percent_encoded() -> None:
+    url = "https://example.com/v?a=1&b=x}{\\input{y}~z"
+    tex = export_tex(sample_lecture().model_copy(update={"video_url": url}))
+    hrefs = re.findall(r"\\href\{([^}]*)\}", tex)
+    assert hrefs
+    for h in hrefs:
+        assert h.startswith(r"https://example.com/v?a=1&b=x\%7D\%7B\%5Cinput\%7By\%7D~z\#t="), h
+
+
+@pytest.mark.parametrize(
+    "bad",
+    [
+        r"\left( x",
+        r"x \right)",
+        r"\left( x \right) \right)",
+        r"\begin{pmatrix} a \end{bmatrix}",
+        r"\end{matrix}",
+        r"\begin{cases} x",
+        r"\left( \begin{matrix} a \right) \end{matrix}",
+        r"{ \left( } \right)",
+    ],
+)
+def test_safe_math_rejects_unbalanced(bad: str) -> None:
+    assert safe_math(bad) is None
+
+
+def test_safe_math_accepts_nested_delimiters() -> None:
+    f = r"\left( \begin{pmatrix} \left\{ a \right\} & b \end{pmatrix} \right) + \left. x \right|"
+    assert safe_math(f) == f
+
+
+def test_c1_controls_become_spaces() -> None:
+    assert escape_tex("a\x85b\x9fc\x7fd") == "a b c d"
+
+
+def test_item_with_leading_bracket_is_not_an_item_label() -> None:
+    lec = sample_lecture()
+    s = lec.sections[0].model_copy(update={"bullets": [bullet("b", 1, "[label] text", ranges=[(1.0, 2.0)])]})
+    tex = export_tex(lec.model_copy(update={"sections": [s]}))
+    assert r"\item{} [label] text" in tex

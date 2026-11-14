@@ -18,8 +18,14 @@ from app.contracts.api import LectureDetail
 from app.llm.fake import FakeLLM
 from app.main import create_app
 from app.pdfs import PdfRenderers
+from app.pipeline import board
 
 Db = AsyncConnection[DictRow]
+
+
+@pytest.fixture(autouse=True)
+def _no_retry_backoff(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(board, "RETRY_BACKOFF_S", 0.0)
 
 
 @pytest.fixture

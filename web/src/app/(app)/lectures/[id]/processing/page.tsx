@@ -26,7 +26,7 @@ const ORDER: JobStage[] = ["check_video", "transcribe", "select_frames", "read_b
 
 type StepState = "done" | "active" | "waiting";
 
-export function stepState(step: number, stage: JobStage): StepState {
+function stepState(step: number, stage: JobStage): StepState {
   const idx = ORDER.indexOf(stage);
   if (stage === "done") return "done";
   const first = ORDER.indexOf(STEPS[step]!.stages[0]!);

@@ -72,7 +72,7 @@ function suggestionItems(): ReviewItem[] {
       section_id: loc.section.id,
       section_heading: `${loc.section.order} · ${loc.section.heading}`,
       bullet_id: loc.bullet.id,
-      current_text: loc.bullet.latex ?? loc.bullet.text,
+      current_text: loc.bullet.text,
       board_block: block,
       snapshot_url: null,
       suggestion: s,

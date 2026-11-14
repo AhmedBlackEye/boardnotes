@@ -94,7 +94,9 @@ def probe_video(video: Path) -> VideoInfo:
     if _rotated(picture):
         width, height = height, width
 
-    duration = _float(data["format"].get("duration")) or _float(picture.get("duration"))
+    # Take the longest duration reported anywhere: a forged short container duration must not hide a long stream.
+    durations = [_float(data["format"].get("duration"))] + [_float(st.get("duration")) for st in data.get("streams", [])]
+    duration = max((d for d in durations if d is not None), default=None)
     if duration is None or duration <= 0:
         raise VideoCheckError(UNREADABLE)
 
@@ -111,7 +113,7 @@ def extract_audio(video: Path, out_dir: Path) -> Path:
     """Write the soundtrack as mono 16 kHz 16-bit WAV (what speech-to-text expects). Matches `AudioExtractor`."""
     out_dir.mkdir(parents=True, exist_ok=True)
     out = out_dir / "audio.wav"
-    args = ["ffmpeg", "-nostdin", "-v", "error", "-y", *safe_input(video), "-map", "0:a:0", "-vn"]
+    args = ["ffmpeg", "-nostdin", "-v", "error", "-y", *safe_input(video), "-t", str(settings.max_duration_s), "-map", "0:a:0", "-vn"]
     args += ["-ac", "1", "-ar", "16000", "-c:a", "pcm_s16le", str(out)]
     try:
         run_tool(args)

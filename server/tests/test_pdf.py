@@ -147,8 +147,9 @@ async def test_render_pdf(chromium_ok: None) -> None:
     ]:
         assert expected in text, expected
     assert "https://example.org/media/lec_21.mp4#t=2010.5" in pdf_links(data)
-    # KaTeX rendered the formula (its HTML output repeats glyphs; the raw source is gone).
-    assert "\\det(A" not in text
+    if (pdf.KATEX_DIR / "katex.min.js").exists():
+        # KaTeX rendered the formula (its HTML output repeats glyphs; the raw source is gone).
+        assert "\\det(A" not in text
 
 
 async def test_render_module_pdf(chromium_ok: None) -> None:

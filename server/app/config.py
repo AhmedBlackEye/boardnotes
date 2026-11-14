@@ -11,6 +11,8 @@ class Settings(BaseSettings):
 
     database_url: str = "postgresql://boardnotes:boardnotes@localhost:5433/boardnotes"
     data_dir: Path = REPO_ROOT / "data"
+    # Absolute origin of the web app; site-relative links (e.g. in PDFs) are resolved against it.
+    public_base_url: str = "http://localhost:3000"
     session_secret: str = "dev-only-change-me"  # noqa: S105 - overridden by SESSION_SECRET outside local dev
 
     # "fake" replays recorded responses from fixtures/llm (no keys needed); "live" calls the real APIs.

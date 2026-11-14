@@ -1,6 +1,6 @@
 {
  "project": "BoardNotes",
- "updated": "2026-11-14T22:10Z",
+ "updated": "2026-11-14T22:50Z",
  "status_flow": [
   "todo",
   "building",
@@ -271,169 +271,169 @@
    "title": "Transcription with ElevenLabs (fake mode reads fixtures)",
    "phase": "P1",
    "owner": "agent-C",
-   "status": "changes_requested",
+   "status": "merged",
    "depends_on": [],
    "acceptance": "Word timestamps grouped into segments; main speaker labelled lecturer; works offline",
    "checks": {
     "make_check": "pass",
-    "V1_review": "changes requested (round 3)",
+    "V1_review": "pass",
     "V2_tests": "pass",
     "V3_security": "pass"
    },
    "branch": "task/C-audio-pdf",
    "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/2",
    "notes": "",
-   "updated": "2026-11-14T21:40Z"
+   "updated": "2026-11-14T22:50Z"
   },
   {
    "id": "C-2",
    "title": "PDF rendering: per lecture and whole module",
    "phase": "P1",
    "owner": "agent-C",
-   "status": "changes_requested",
+   "status": "merged",
    "depends_on": [],
    "acceptance": "HTML template matching Figma S6; Draft marks; clickable timestamps; real PDF from fixture data",
    "checks": {
     "make_check": "pass",
-    "V1_review": "changes requested (round 3)",
+    "V1_review": "pass",
     "V2_tests": "pass",
     "V3_security": "pass"
    },
    "branch": "task/C-audio-pdf",
    "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/2",
-   "notes": "Lead fix before merge (automated scan): PDF link sanitiser must reject backslashes, whitespace and control characters, and turn site-relative paths into absolute https URLs on a configured origin.",
-   "updated": "2026-11-14T21:40Z"
+   "notes": "Lead hardened PDF link checks before merge.",
+   "updated": "2026-11-14T22:50Z"
   },
   {
    "id": "C-3",
    "title": "LaTeX (.tex) export",
    "phase": "P1",
    "owner": "agent-C",
-   "status": "changes_requested",
+   "status": "merged",
    "depends_on": [
     "C-2"
    ],
    "acceptance": "Compilable .tex from LectureDetail",
    "checks": {
     "make_check": "pass",
-    "V1_review": "changes requested (round 3)",
+    "V1_review": "pass",
     "V2_tests": "pass",
     "V3_security": "pass"
    },
    "branch": "task/C-audio-pdf",
    "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/2",
    "notes": "Security follow-up (automated scan): tex.py must use an allowlist for maths commands (reject ^^, @, \\[ \\( etc.) and percent-encode \\href URLs. Lead verifies before merge.",
-   "updated": "2026-11-14T21:40Z"
+   "updated": "2026-11-14T22:50Z"
   },
   {
    "id": "D-1",
    "title": "API skeleton: app, DB pool, demo login, role checks",
    "phase": "P1",
    "owner": "agent-D",
-   "status": "changes_requested",
+   "status": "in_review",
    "depends_on": [],
    "acceptance": "Session cookie login as seeded users; students get 403 on lecturer routes",
    "checks": {
     "make_check": "pass",
-    "V1_review": "changes requested",
-    "V2_tests": "pass",
-    "V3_security": "changes requested"
+    "V1_review": "re-reviewing",
+    "V2_tests": "pass (round 2)",
+    "V3_security": "pass (round 2)"
    },
    "branch": "task/D-backend-api",
    "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/4",
    "notes": "",
-   "updated": "2026-11-14T21:40Z"
+   "updated": "2026-11-14T22:50Z"
   },
   {
    "id": "D-2",
    "title": "Lecture endpoints, source view, snapshots, video streaming",
    "phase": "P1",
    "owner": "agent-D",
-   "status": "changes_requested",
+   "status": "in_review",
    "depends_on": [
     "D-1"
    ],
    "acceptance": "Matches contracts.api; video supports Range requests",
    "checks": {
     "make_check": "pass",
-    "V1_review": "changes requested",
-    "V2_tests": "pass",
-    "V3_security": "changes requested"
+    "V1_review": "re-reviewing",
+    "V2_tests": "pass (round 2)",
+    "V3_security": "pass (round 2)"
    },
    "branch": "task/D-backend-api",
    "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/4",
    "notes": "",
-   "updated": "2026-11-14T21:40Z"
+   "updated": "2026-11-14T22:50Z"
   },
   {
    "id": "D-3",
    "title": "Resumable upload, job runner, progress stream",
    "phase": "P1",
    "owner": "agent-D",
-   "status": "changes_requested",
+   "status": "in_review",
    "depends_on": [
     "D-1"
    ],
    "acceptance": "Chunked upload with size/type limits; job runs pipeline stages via interfaces; progress over SSE",
    "checks": {
     "make_check": "pass",
-    "V1_review": "changes requested",
-    "V2_tests": "pass",
-    "V3_security": "changes requested"
+    "V1_review": "re-reviewing",
+    "V2_tests": "pass (round 2)",
+    "V3_security": "pass (round 2)"
    },
    "branch": "task/D-backend-api",
    "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/4",
    "notes": "",
-   "updated": "2026-11-14T21:40Z"
+   "updated": "2026-11-14T22:50Z"
   },
   {
    "id": "D-4",
    "title": "Suggestions, AI fix check, upvotes, review queue, decisions",
    "phase": "P1",
    "owner": "agent-D",
-   "status": "changes_requested",
+   "status": "in_review",
    "depends_on": [
     "D-1"
    ],
    "acceptance": "Priority formula per docs; approve writes training_examples; injection-style fixes flagged",
    "checks": {
     "make_check": "pass",
-    "V1_review": "changes requested",
-    "V2_tests": "pass",
-    "V3_security": "changes requested"
+    "V1_review": "re-reviewing",
+    "V2_tests": "pass (round 2)",
+    "V3_security": "pass (round 2)"
    },
    "branch": "task/D-backend-api",
    "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/4",
    "notes": "",
-   "updated": "2026-11-14T21:40Z"
+   "updated": "2026-11-14T22:50Z"
   },
   {
    "id": "D-5",
    "title": "Ask the lecture (streamed, cached, cited)",
    "phase": "P1",
    "owner": "agent-D",
-   "status": "changes_requested",
+   "status": "in_review",
    "depends_on": [
     "D-1"
    ],
    "acceptance": "Answers cite the lecture or say not covered; question passed as untrusted",
    "checks": {
     "make_check": "pass",
-    "V1_review": "changes requested",
-    "V2_tests": "pass",
-    "V3_security": "changes requested"
+    "V1_review": "re-reviewing",
+    "V2_tests": "pass (round 2)",
+    "V3_security": "pass (round 2)"
    },
    "branch": "task/D-backend-api",
    "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/4",
    "notes": "",
-   "updated": "2026-11-14T21:40Z"
+   "updated": "2026-11-14T22:50Z"
   },
   {
    "id": "D-6",
    "title": "PDF endpoints + regenerate on approval",
    "phase": "P1",
    "owner": "agent-D",
-   "status": "changes_requested",
+   "status": "in_review",
    "depends_on": [
     "D-4",
     "C-2"
@@ -441,117 +441,117 @@
    "acceptance": "Download per lecture/module; regenerated after approvals",
    "checks": {
     "make_check": "pass",
-    "V1_review": "changes requested",
-    "V2_tests": "pass",
-    "V3_security": "changes requested"
+    "V1_review": "re-reviewing",
+    "V2_tests": "pass (round 2)",
+    "V3_security": "pass (round 2)"
    },
    "branch": "task/D-backend-api",
    "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/4",
    "notes": "",
-   "updated": "2026-11-14T21:40Z"
+   "updated": "2026-11-14T22:50Z"
   },
   {
    "id": "E-1",
    "title": "App shell: sidebar, top bar, view switch, roles, API client with mock mode",
    "phase": "P1",
    "owner": "agent-E",
-   "status": "in_review",
+   "status": "changes_requested",
    "depends_on": [],
    "acceptance": "Student/lecturer navigation as in Figma; works on mock data without the API",
    "checks": {
     "make_check": "pass",
-    "V1_review": "pending",
-    "V2_tests": "pending",
-    "V3_security": "pending"
+    "V1_review": "changes requested",
+    "V2_tests": "failing",
+    "V3_security": "pass"
    },
    "branch": "task/E-frontend",
    "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/5",
    "notes": "",
-   "updated": "2026-11-14T22:10Z"
+   "updated": "2026-11-14T22:50Z"
   },
   {
    "id": "E-2",
    "title": "UI components matching Figma",
    "phase": "P1",
    "owner": "agent-E",
-   "status": "in_review",
+   "status": "changes_requested",
    "depends_on": [
     "E-1"
    ],
    "acceptance": "Button, Status pill, Source chip, Note bullet, Board snapshot, Video player, Suggestion card, Chat message, etc.",
    "checks": {
     "make_check": "pass",
-    "V1_review": "pending",
-    "V2_tests": "pending",
-    "V3_security": "pending"
+    "V1_review": "changes requested",
+    "V2_tests": "failing",
+    "V3_security": "pass"
    },
    "branch": "task/E-frontend",
    "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/5",
    "notes": "",
-   "updated": "2026-11-14T22:10Z"
+   "updated": "2026-11-14T22:50Z"
   },
   {
    "id": "E-3",
    "title": "Student pages S1–S6",
    "phase": "P1",
    "owner": "agent-E",
-   "status": "in_review",
+   "status": "changes_requested",
    "depends_on": [
     "E-2"
    ],
    "acceptance": "Matches Figma frames; KaTeX formulas; source panel; suggest fix; ask; course notes; PDF preview",
    "checks": {
     "make_check": "pass",
-    "V1_review": "pending",
-    "V2_tests": "pending",
-    "V3_security": "pending"
+    "V1_review": "changes requested",
+    "V2_tests": "failing",
+    "V3_security": "pass"
    },
    "branch": "task/E-frontend",
    "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/5",
    "notes": "",
-   "updated": "2026-11-14T22:10Z"
+   "updated": "2026-11-14T22:50Z"
   },
   {
    "id": "E-4",
    "title": "Lecturer pages L1–L5",
    "phase": "P1",
    "owner": "agent-E",
-   "status": "in_review",
+   "status": "changes_requested",
    "depends_on": [
     "E-2"
    ],
    "acceptance": "Upload, processing, review queue, lecturer notes, view-as-student",
    "checks": {
     "make_check": "pass",
-    "V1_review": "pending",
-    "V2_tests": "pending",
-    "V3_security": "pending"
+    "V1_review": "changes requested",
+    "V2_tests": "failing",
+    "V3_security": "pass"
    },
    "branch": "task/E-frontend",
    "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/5",
    "notes": "",
-   "updated": "2026-11-14T22:10Z"
+   "updated": "2026-11-14T22:50Z"
   },
   {
    "id": "E-5",
    "title": "Figma Code Connect for the main components",
    "phase": "P1",
    "owner": "agent-E",
-   "status": "in_review",
+   "status": "changes_requested",
    "depends_on": [
     "E-2"
    ],
    "acceptance": "Main Figma components mapped to React components",
    "checks": {
     "make_check": "pass",
-    "V1_review": "pending",
-    "V2_tests": "pending",
-    "V3_security": "pending"
+    "V1_review": "changes requested",
+    "V2_tests": "failing",
+    "V3_security": "pass"
    },
    "branch": "task/E-frontend",
    "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/5",
    "notes": "Code Connect files committed; publishing needs an Org/Enterprise Figma plan (npx figma connect publish).",
-   "updated": "2026-11-14T22:10Z"
+   "updated": "2026-11-14T22:50Z"
   },
   {
    "id": "I-1",

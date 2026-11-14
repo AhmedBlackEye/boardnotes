@@ -1,0 +1,140 @@
+<!doctype html>
+{#- Printable notes, styled after Figma "S6 · PDF preview". All note text is autoescaped (it is untrusted).
+    Formulas are put in data-latex attributes and rendered by KaTeX (trust off) after load. -#}
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>{{ doc_title }}</title>
+{% if tokens_css %}<link rel="stylesheet" href="{{ tokens_css }}">{% endif %}
+{% if katex_css %}<link rel="stylesheet" href="{{ katex_css }}">{% endif %}
+<style>
+  @page { size: A4; }
+  * { box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body {
+    margin: 0;
+    font-family: "Inter", "Helvetica Neue", Arial, system-ui, sans-serif;
+    font-size: 10.5pt;
+    line-height: 1.55;
+    color: var(--color-text-primary);
+    background: var(--color-bg-surface);
+  }
+  a { color: inherit; text-decoration: none; }
+
+  /* Module cover + contents */
+  .cover { height: 240mm; display: flex; flex-direction: column; justify-content: center; break-after: page; }
+  .eyebrow { font-size: 9pt; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--color-text-tertiary); }
+  .cover h1 { font-size: 30pt; line-height: 1.15; margin: var(--spacing-sm) 0 var(--spacing-lg); }
+  .cover .meta { color: var(--color-text-secondary); font-size: 11pt; }
+  .track { margin-top: var(--spacing-md); width: 110mm; height: 6px; border-radius: var(--radius-full); background: var(--color-bg-muted); overflow: hidden; }
+  .track > div { height: 100%; background: var(--color-success-default); }
+  .contents { break-after: page; }
+  .contents h2 { font-size: 16pt; margin: 0 0 var(--spacing-lg); }
+  .contents ol { list-style: none; padding: 0; margin: 0; }
+  .contents > ol > li { padding: var(--spacing-sm) 0; border-bottom: 1px solid var(--color-border-default); }
+  .contents .row { display: flex; justify-content: space-between; gap: var(--spacing-lg); font-weight: 600; }
+  .contents .sections { color: var(--color-text-secondary); font-size: 9.5pt; margin-top: var(--spacing-2xs); }
+
+  /* Lecture */
+  .lecture + .lecture { break-before: page; }
+  .lecture-head { margin-bottom: var(--spacing-lg); padding-bottom: var(--spacing-md); border-bottom: 1px solid var(--color-border-default); }
+  .lecture-head h1 { font-size: 18pt; line-height: 1.25; margin: 0 0 var(--spacing-2xs); }
+  .lecture-head .meta { color: var(--color-text-secondary); font-size: 9.5pt; }
+  .empty { color: var(--color-text-secondary); font-style: italic; }
+
+  section.notes { margin: 0 0 var(--spacing-xl); }
+  .section-head { display: flex; align-items: center; justify-content: space-between; gap: var(--spacing-md); margin-bottom: var(--spacing-sm); break-after: avoid; }
+  .section-head h2 { font-size: 13pt; font-weight: 600; margin: 0; }
+  .section-head .num { margin-right: var(--spacing-sm); }
+  .draft-mark {
+    flex: none; font-size: 7.5pt; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--color-warning-default); background: var(--color-bg-surface);
+    border: 1px solid var(--color-warning-default); border-radius: var(--radius-sm); padding: 2px var(--spacing-sm);
+  }
+
+  ul.bullets { list-style: none; margin: 0; padding: 0; }
+  ul.bullets > li { display: flex; gap: var(--spacing-md); align-items: flex-start; margin-bottom: var(--spacing-sm); break-inside: avoid; }
+  .item { flex: 1; min-width: 0; }
+  .item p { margin: 0; }
+  .math { margin: var(--spacing-xs) 0 var(--spacing-2xs); text-align: center; font-size: 11.5pt; }
+  .math code { font-family: "JetBrains Mono", Menlo, monospace; font-size: 9.5pt; }
+  .uncertain { color: var(--color-warning-default); font-size: 8.5pt; font-weight: 600; margin-left: var(--spacing-2xs); }
+  .chip {
+    flex: none; display: inline-block; font-size: 8.5pt; font-weight: 600; white-space: nowrap;
+    color: var(--color-accent-default); background: var(--color-accent-subtle);
+    border-radius: var(--radius-sm); padding: 1px var(--spacing-sm);
+  }
+  .said { margin-top: var(--spacing-sm); padding: var(--spacing-sm) var(--spacing-md); background: var(--color-bg-subtle); border-radius: var(--radius-md); break-inside: avoid; }
+  .said .eyebrow { font-size: 7.5pt; }
+  .said p { margin: var(--spacing-2xs) 0 0; color: var(--color-text-secondary); }
+</style>
+</head>
+<body>
+{% if cover %}
+<section class="cover">
+  <div class="eyebrow">{{ cover.title }}</div>
+  <h1>{{ cover.title }} · complete notes</h1>
+  <div class="meta">{{ cover.lecture_count }} lecture{{ "" if cover.lecture_count == 1 else "s" }} · {{ cover.verified_count }} of {{ cover.lecture_count }} verified by the lecturer</div>
+  <div class="track"><div style="width: {{ cover.verified_percent }}%"></div></div>
+</section>
+<nav class="contents">
+  <h2>Contents</h2>
+  <ol>
+  {% for lec in lectures %}
+    <li>
+      <div class="row"><span>{{ lec.title }}</span><span class="eyebrow">{{ lec.status_label }}</span></div>
+      {% if lec.sections %}<div class="sections">{% for s in lec.sections %}{{ s.number }} {{ s.heading }}{% if not loop.last %} · {% endif %}{% endfor %}</div>{% endif %}
+    </li>
+  {% endfor %}
+  </ol>
+</nav>
+{% endif %}
+
+{% for lec in lectures %}
+<article class="lecture">
+  <header class="lecture-head">
+    <h1>{{ lec.title }}</h1>
+    <div class="meta">{{ lec.status_label }}{% if lec.duration %} · {{ lec.duration }}{% endif %} · {{ lec.verified_sections }} of {{ lec.total_sections }} sections verified</div>
+  </header>
+  {% for s in lec.sections %}
+  <section class="notes">
+    <div class="section-head">
+      <h2><span class="num">{{ s.number }}</span>{{ s.heading }}</h2>
+      {% if s.draft %}<span class="draft-mark">Draft · not yet verified</span>{% endif %}
+    </div>
+    <ul class="bullets">
+    {% for b in s.bullets %}
+      <li>
+        <div class="item">
+          <p>{{ b.text }}{% if b.uncertain %}<span class="uncertain">(uncertain)</span>{% endif %}</p>
+          {% if b.latex %}<div class="math" data-latex="{{ b.latex }}"><code>{{ b.latex }}</code></div>{% endif %}
+        </div>
+        {% if b.link %}<a class="chip" href="{{ b.link }}">&#9654; {{ b.time }}</a>{% endif %}
+      </li>
+    {% endfor %}
+    </ul>
+    {% for n in s.said %}
+    <div class="said">
+      <div class="eyebrow">Said but not written{% if n.link %} · <a href="{{ n.link }}">{{ n.time }}</a>{% endif %}</div>
+      <p>{{ n.text }}</p>
+    </div>
+    {% endfor %}
+  </section>
+  {% else %}
+  <p class="empty">No sections to show yet.</p>
+  {% endfor %}
+</article>
+{% endfor %}
+
+{% if katex_js %}
+<script src="{{ katex_js }}"></script>
+<script>
+  document.querySelectorAll("[data-latex]").forEach(function (el) {
+    try {
+      katex.render(el.getAttribute("data-latex"), el, { displayMode: true, throwOnError: false, trust: false, strict: "ignore", maxExpand: 500 });
+    } catch (e) { /* keep the plain LaTeX fallback */ }
+  });
+</script>
+{% endif %}
+</body>
+</html>

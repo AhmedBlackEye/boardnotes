@@ -32,5 +32,7 @@ jobs:
       - name: Load schema
         run: psql postgresql://boardnotes:boardnotes@localhost:5433/boardnotes -f supabase/migrations/0001_init.sql
       - run: make setup
+      - name: Install Chromium for PDF rendering
+        run: cd server && uv run playwright install --with-deps chromium
       - run: make contracts
       - run: make check

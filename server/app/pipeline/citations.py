@@ -4,7 +4,8 @@
   overlaps a real transcript segment. Invalid citations are removed; bullets left with none are dropped.
 - A bullet can't be more confident than the board blocks it cites.
 - Bullets with weak support are kept but marked uncertain (confidence below LOW_CONFIDENCE).
-- check_latex validates LaTeX with KaTeX (the web renderer) through scripts/katex_check.mjs.
+- Bullet LaTeX is checked with KaTeX (the web renderer) through scripts/katex_check.mjs: LaTeX that won't render is
+  removed and the bullet marked uncertain. If KaTeX can't run, the report says the LaTeX was not checked.
 """
 
 import json
@@ -80,7 +81,6 @@ def validate_citations(notes: list[SectionNotes], blocks: list[BoardBlock], tran
     by_id = {b.id: b for b in blocks}
     valid: list[SectionNotes] = []
     dropped: list[str] = []
-    flagged = 0
     for section in notes:
         kept: list[NoteBullet] = []
         for bullet in section.bullets:
@@ -91,8 +91,6 @@ def validate_citations(notes: list[SectionNotes], blocks: list[BoardBlock], tran
                 continue
             if problems:
                 dropped.append(f"Removed citations from {where}: {'; '.join(problems)}")
-            if checked.confidence < LOW_CONFIDENCE:
-                flagged += 1
             kept.append(checked)
         said = []
         for item in section.said_not_written:
@@ -102,6 +100,8 @@ def validate_citations(notes: list[SectionNotes], blocks: list[BoardBlock], tran
                 where = f"[{section.heading}] {item.text[:80]!r}"
                 dropped.append(f"Dropped said-not-written {where}: {item.at_s:.1f}s is not in this section's transcript")
         valid.append(section.model_copy(update={"bullets": kept, "said_not_written": said}))
+    valid = _check_bullet_latex(valid, dropped)
+    flagged = sum(1 for section in valid for b in section.bullets if b.confidence < LOW_CONFIDENCE)
     for reason in dropped:
         log.info("citations: %s", reason)
     return CitationReport(valid=valid, dropped=dropped, flagged_bullets=flagged)
@@ -118,11 +118,45 @@ class LatexError:
 LatexResult = Literal[True, "unknown"] | LatexError
 KATEX_SCRIPT = REPO_ROOT / "scripts" / "katex_check.mjs"
 KATEX_TIMEOUT_S = 30
+MAX_LATEX_CHARS = 2000  # longer expressions are rejected without being parsed
+MAX_LATEX_BATCH = 500  # expressions per KaTeX process
+
+
+def _check_bullet_latex(sections: list[SectionNotes], dropped: list[str]) -> list[SectionNotes]:
+    """Remove bullet LaTeX that KaTeX can't render (the bullet is kept but marked uncertain)."""
+    latex = [b.latex for s in sections for b in s.bullets if b.latex is not None]
+    results = iter(check_latex(latex))
+    unknown = False
+    out: list[SectionNotes] = []
+    for section in sections:
+        bullets: list[NoteBullet] = []
+        for b in section.bullets:
+            result = next(results) if b.latex is not None else True
+            if result == "unknown":
+                unknown = True
+            elif isinstance(result, LatexError):
+                dropped.append(f"Removed LaTeX from [{section.heading}] {b.text[:80]!r}: {result.message[:200]}")
+                b = b.model_copy(update={"latex": None, "confidence": min(b.confidence, UNCERTAIN_CAP)})
+            bullets.append(b)
+        out.append(section.model_copy(update={"bullets": bullets}))
+    if unknown:
+        dropped.append("LaTeX not checked: KaTeX is not available on this server")
+    return out
 
 
 def check_latex(latex_list: list[str]) -> list[LatexResult]:
-    """Validate each expression with KaTeX in one batch: True if it renders, LatexError if not,
-    "unknown" for all of them if node or KaTeX isn't available."""
+    """Validate each expression with KaTeX: True if it renders, LatexError if not (or if longer than
+    MAX_LATEX_CHARS), "unknown" if node or KaTeX isn't available. Runs one KaTeX process per MAX_LATEX_BATCH."""
+    results: list[LatexResult] = [LatexError(f"longer than {MAX_LATEX_CHARS} characters") for _ in latex_list]
+    todo = [i for i, expr in enumerate(latex_list) if len(expr) <= MAX_LATEX_CHARS]
+    for n in range(0, len(todo), MAX_LATEX_BATCH):
+        chunk = todo[n : n + MAX_LATEX_BATCH]
+        for i, result in zip(chunk, _katex_batch([latex_list[i] for i in chunk]), strict=True):
+            results[i] = result
+    return results
+
+
+def _katex_batch(latex_list: list[str]) -> list[LatexResult]:
     if not latex_list:
         return []
     unknown: list[LatexResult] = ["unknown"] * len(latex_list)

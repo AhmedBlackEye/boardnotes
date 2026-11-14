@@ -117,7 +117,7 @@ def test_fixture_notes_pass_against_fixture_transcript() -> None:
     blocks = [block("b_0001", 0.95), block("b_0003", 0.97)]
     report = validate_citations([notes], blocks, transcript())
     assert report.valid[0].bullets == notes.bullets
-    assert report.dropped == []
+    assert [d for d in report.dropped if not d.startswith("LaTeX not checked")] == []
 
 
 # ---------- check_latex ----------
@@ -152,3 +152,41 @@ def test_check_latex_unknown_when_script_fails(monkeypatch: pytest.MonkeyPatch, 
     if citations.shutil.which("node") is None:
         pytest.skip("node not installed")
     assert check_latex(["x"]) == ["unknown"]
+
+
+def test_check_latex_rejects_overlong_expressions_without_running_katex(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(citations.shutil, "which", lambda _: None)
+    out = check_latex(["x" * (citations.MAX_LATEX_CHARS + 1), "x"])
+    assert isinstance(out[0], LatexError) and "longer than" in out[0].message
+    assert out[1] == "unknown"
+
+
+def test_check_latex_splits_large_batches(monkeypatch: pytest.MonkeyPatch) -> None:
+    batches: list[int] = []
+
+    def fake_batch(latex_list: list[str]) -> list[citations.LatexResult]:
+        batches.append(len(latex_list))
+        return [True] * len(latex_list)
+
+    monkeypatch.setattr(citations, "_katex_batch", fake_batch)
+    monkeypatch.setattr(citations, "MAX_LATEX_BATCH", 3)
+    assert check_latex(["x"] * 7) == [True] * 7
+    assert batches == [3, 3, 1]
+
+
+def test_validate_citations_removes_latex_that_does_not_render(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(citations, "_katex_batch", lambda xs: [True if x == "ok" else LatexError("KaTeX parse error") for x in xs])
+    good, bad = bullet(["b_0001"], latex="ok"), bullet(["b_0001"], latex="\\frac{1}{")
+    report = validate_citations([section(good, bad)], [block("b_0001", 0.95)], transcript())
+    kept_good, kept_bad = report.valid[0].bullets
+    assert kept_good.latex == "ok"
+    assert kept_bad.latex is None and kept_bad.confidence < LOW_CONFIDENCE
+    assert report.flagged_bullets == 1
+    assert any("Removed LaTeX" in d for d in report.dropped)
+
+
+def test_validate_citations_reports_when_latex_cannot_be_checked(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(citations.shutil, "which", lambda _: None)
+    report = run(bullet(["b_0001"], latex="x"))
+    assert report.valid[0].bullets[0].latex == "x"
+    assert "LaTeX not checked: KaTeX is not available on this server" in report.dropped

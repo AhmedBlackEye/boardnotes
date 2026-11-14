@@ -322,7 +322,7 @@
    },
    "branch": "task/C-audio-pdf",
    "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/2",
-   "notes": "",
+   "notes": "Security follow-up (automated scan): tex.py must use an allowlist for maths commands (reject ^^, @, \\[ \\( etc.) and percent-encode \\href URLs. Lead verifies before merge.",
    "updated": "2026-11-14T18:40Z"
   },
   {

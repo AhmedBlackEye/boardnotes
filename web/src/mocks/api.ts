@@ -1,5 +1,5 @@
 /** In-memory implementation of BoardNotesApi so every page works without the server (NEXT_PUBLIC_API_MODE=mock). */
-import { ApiError, type BoardNotesApi, type Unsubscribe } from "@/lib/api";
+import { ApiError, verifyByReview, type BoardNotesApi, type Unsubscribe } from "@/lib/api";
 import type { AskOut } from "@/contracts/AskOut";
 import type { JobProgress, JobStage } from "@/contracts/JobProgress";
 import type { LectureDetail } from "@/contracts/LectureDetail";
@@ -7,7 +7,7 @@ import type { LectureSummary } from "@/contracts/LectureSummary";
 import type { ReviewItem } from "@/contracts/ReviewItem";
 import type { Suggestion } from "@/contracts/Suggestion";
 import type { UploadSession } from "@/contracts/UploadSession";
-import { DETAILS, LECTURES, PDFS, QUOTES, REVIEW_SEED, SUGGESTIONS, USERS } from "@/mocks/data";
+import { DETAILS, LECTURES, PDFS, QUOTES, SUGGESTIONS, USERS, reviewItem, uncertainItems } from "@/mocks/data";
 
 const USER_KEY = "bn.mock.user";
 const delay = <T>(value: T, ms = 120): Promise<T> => new Promise((r) => setTimeout(() => r(structuredClone(value)), ms));
@@ -16,7 +16,6 @@ const state = {
   lectures: structuredClone(LECTURES),
   details: structuredClone(DETAILS),
   suggestions: structuredClone(SUGGESTIONS),
-  review: structuredClone(REVIEW_SEED),
   uploads: new Map<string, { size: number; received: number; title: string }>(),
   /** Overall progress (0..1) per processing lecture. */
   jobs: new Map<string, number>([["lec_24", 0.64]]),
@@ -48,38 +47,29 @@ function bulletLocation(bulletId: string) {
 }
 
 function refreshCounts(detail: LectureDetail) {
-  const open = state.suggestions.filter(
-    (s) => s.status === "open" && detail.sections.some((sec) => sec.bullets.some((b) => b.id === s.bullet_id)),
-  ).length;
   for (const sec of detail.sections) {
     for (const b of sec.bullets) b.open_suggestions = state.suggestions.filter((s) => s.bullet_id === b.id && s.status === "open").length;
   }
-  detail.summary.open_items = open + detail.sections.filter((s) => s.status === "uncertain").length;
+  detail.summary.open_items = reviewItems().filter((i) => i.lecture_id === detail.summary.id).length;
   const l = state.lectures.find((x) => x.id === detail.summary.id);
   if (l) l.open_items = detail.summary.open_items;
 }
 
-function suggestionItems(): ReviewItem[] {
-  const out: ReviewItem[] = [];
-  for (const s of state.suggestions) {
-    if (s.status !== "open") continue;
-    const loc = bulletLocation(s.bullet_id);
-    if (!loc) continue;
-    const block = loc.detail.board_blocks.find((b) => loc.bullet.board_block_ids.includes(b.id)) ?? null;
-    out.push({
-      id: `ri_${s.id}`,
-      lecture_id: loc.detail.summary.id,
-      section_id: loc.section.id,
-      section_heading: `${loc.section.order} · ${loc.section.heading}`,
-      bullet_id: loc.bullet.id,
-      current_text: loc.bullet.text,
-      board_block: block,
-      snapshot_url: null,
-      suggestion: s,
-      priority: 2 * (1 - loc.bullet.confidence) + Math.log2(1 + s.upvotes) + (s.verdict === "agrees" ? 1 : 0) - (s.flagged ? 2 : 0),
-    });
+/** The review queue as the server builds it: open student fixes, then uncertain readings with no open fix. */
+function reviewItems(): ReviewItem[] {
+  const fixes: ReviewItem[] = [];
+  for (const sug of state.suggestions) {
+    if (sug.status !== "open") continue;
+    const loc = bulletLocation(sug.bullet_id);
+    if (loc) fixes.push(reviewItem(loc.detail, loc.section, loc.bullet, sug));
   }
-  return out;
+  return [...fixes, ...uncertainItems(state.details, state.suggestions)];
+}
+
+/** A section is verified once it has no uncertain reading and no open fix (as the server's status refresh). */
+function refreshSection(section: LectureDetail["sections"][number]) {
+  const open = section.bullets.some((b) => b.uncertain || state.suggestions.some((x) => x.bullet_id === b.id && x.status === "open"));
+  section.status = open ? "uncertain" : "verified";
 }
 
 function checkFix(text: string): Pick<Suggestion, "verdict" | "verdict_reason" | "flagged"> {
@@ -140,6 +130,15 @@ function jobEvent(lectureId: string, progress: number): JobProgress {
     sections_ready: progress >= 1 ? total : sectionsReady,
     error: null,
   };
+}
+
+/** The lecture is verified once every section is, else in review. */
+function markLecture(d: LectureDetail) {
+  refreshCounts(d);
+  const status = d.sections.every((s) => s.status === "verified") ? "verified" : "in_review";
+  d.summary.status = status;
+  const l = state.lectures.find((x) => x.id === d.summary.id);
+  if (l) l.status = status;
 }
 
 // ---------------------------------------------------------------- The API
@@ -212,56 +211,67 @@ export const mockApi: BoardNotesApi = {
     if (loc) refreshCounts(loc.detail);
     return delay(s, 500);
   },
-  async vote(suggestionId) {
+  async vote(suggestionId, on) {
     const s = state.suggestions.find((x) => x.id === suggestionId);
     if (!s) throw new ApiError(404, "Suggestion not found");
-    s.voted_by_me = !s.voted_by_me;
-    s.upvotes += s.voted_by_me ? 1 : -1;
+    const me = USERS[storedUser() ?? ""];
+    if (me && !s.anonymous && s.author_name === me.name) throw new ApiError(403, "You can't vote on your own suggestion");
+    const next = on ?? !s.voted_by_me;
+    if (next !== s.voted_by_me) s.upvotes += next ? 1 : -1;
+    s.voted_by_me = next;
     return delay({ suggestion_id: s.id, upvotes: s.upvotes, voted_by_me: s.voted_by_me }, 40);
   },
   async listReview(lectureId) {
-    const items = [...state.review, ...suggestionItems()].filter((i) => !lectureId || i.lecture_id === lectureId);
-    return delay(items.sort((a, b) => b.priority - a.priority));
+    const items = reviewItems().filter((i) => !lectureId || i.lecture_id === lectureId);
+    return delay(items.sort((a, b) => b.priority - a.priority || a.id.localeCompare(b.id)));
   },
   async decide(itemId, body) {
-    const dynamic = suggestionItems().find((i) => i.id === itemId);
-    const item = dynamic ?? state.review.find((i) => i.id === itemId);
+    const item = reviewItems().find((i) => i.id === itemId);
     if (!item) throw new ApiError(404, "Review item not found");
     const loc = bulletLocation(item.bullet_id);
-    if (loc && body.decision !== "reject") {
+    if (loc && !item.suggestion && body.decision === "reject") {
+      // As on the server: rejecting an uncertain reading removes that line from the notes.
+      loc.section.bullets = loc.section.bullets.filter((b) => b.id !== item.bullet_id);
+    } else if (loc && body.decision !== "reject") {
       const text = body.decision === "edit" ? (body.edited_text ?? item.current_text) : (item.suggestion?.proposed_text ?? item.current_text);
       loc.bullet.text = text;
       loc.bullet.latex = null;
       loc.bullet.uncertain = false;
       loc.bullet.confidence = 1;
-      if (loc.section.bullets.every((b) => !b.uncertain)) loc.section.status = "verified";
     }
-    if (dynamic && item.suggestion) {
-      const s = state.suggestions.find((x) => x.id === item.suggestion?.id);
-      if (s) s.status = body.decision === "reject" ? "rejected" : "approved";
-    } else {
-      state.review = state.review.filter((i) => i.id !== itemId);
-    }
-    if (loc) refreshCounts(loc.detail);
-    return delay(undefined, 80);
-  },
-  async verifySection(sectionId) {
-    for (const d of Object.values(state.details)) {
-      const s = d.sections.find((x) => x.id === sectionId);
-      if (s) {
-        s.status = "verified";
-        refreshCounts(d);
+    if (item.suggestion) {
+      const approved = body.decision !== "reject";
+      for (const x of state.suggestions) {
+        if (x.id === item.suggestion.id) x.status = approved ? "approved" : "rejected";
+        else if (approved && x.bullet_id === item.bullet_id && x.status === "open") x.status = "rejected"; // now out of date
+      }
+      if (!approved && loc && !state.suggestions.some((x) => x.bullet_id === item.bullet_id && x.status === "open")) {
+        loc.bullet.uncertain = false; // the lecturer saw the evidence and kept the reading
       }
     }
-    return delay(undefined, 60);
+    if (loc) {
+      refreshSection(loc.section);
+      markLecture(loc.detail);
+    }
+    return delay(undefined, 80);
+  },
+  // Same approach as the HTTP client: confirm uncertain readings through the review queue. A section (or lecture)
+  // counts as verified once nothing in it is waiting.
+  async verifySection(lectureId, sectionId) {
+    const result = await verifyByReview(mockApi, lectureId, sectionId);
+    const d = lecture(lectureId);
+    const s = d.sections.find((x) => x.id === sectionId);
+    if (!s) throw new ApiError(404, "Section not found");
+    refreshSection(s);
+    markLecture(d);
+    return result;
   },
   async verifyLecture(lectureId) {
+    const result = await verifyByReview(mockApi, lectureId, null);
     const d = lecture(lectureId);
-    for (const s of d.sections) s.status = "verified";
-    d.summary.status = "verified";
-    const l = state.lectures.find((x) => x.id === lectureId);
-    if (l) l.status = "verified";
-    return delay(undefined, 60);
+    for (const s of d.sections) refreshSection(s);
+    markLecture(d);
+    return result;
   },
   ask: (lectureId, question) => delay(answerFor(lectureId, question), 700),
   listPdfs: () => delay(PDFS),

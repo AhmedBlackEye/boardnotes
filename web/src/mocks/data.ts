@@ -5,6 +5,7 @@ import type { LectureSummary } from "@/contracts/LectureSummary";
 import type { Me } from "@/contracts/Me";
 import type { PdfInfo } from "@/contracts/PdfInfo";
 import type { ReviewItem } from "@/contracts/ReviewItem";
+import type { Bullet } from "@/contracts/Bullet";
 import type { Section } from "@/contracts/Section";
 import type { Suggestion } from "@/contracts/Suggestion";
 
@@ -21,7 +22,7 @@ const ago = (days: number, hours = 0) => new Date(Date.now() - days * DAY - hour
 export const LECTURES: LectureSummary[] = [
   { id: "lec_24", title: "L24 · Positive definite matrices", status: "processing", progress: 0.64, duration_s: 6900, section_count: 0, open_items: 0, uploaded_at: ago(0, 2) },
   { id: "lec_23", title: "L23 · Symmetric matrices", status: "draft", progress: null, duration_s: 6720, section_count: 15, open_items: 3, uploaded_at: ago(1) },
-  { id: "lec_22", title: "L22 · Diagonalisation", status: "in_review", progress: null, duration_s: 6480, section_count: 12, open_items: 6, uploaded_at: ago(3) },
+  { id: "lec_22", title: "L22 · Diagonalisation", status: "in_review", progress: null, duration_s: 6480, section_count: 4, open_items: 3, uploaded_at: ago(3) },
   { id: "lec_21", title: "L21 · Eigenvalues and eigenvectors", status: "in_review", progress: null, duration_s: 6740, section_count: 8, open_items: 3, uploaded_at: ago(7) },
   { id: "lec_20", title: "L20 · Determinants", status: "verified", progress: null, duration_s: 6600, section_count: 13, open_items: 0, uploaded_at: ago(8) },
   { id: "lec_19", title: "L19 · Orthogonal projections", status: "verified", progress: null, duration_s: 6360, section_count: 11, open_items: 0, uploaded_at: ago(14) },
@@ -147,6 +148,34 @@ export const L24: LectureDetail = {
   sections: L24_SECTIONS,
 };
 
+const L22_BLOCKS: BoardBlock[] = [
+  block("b_22_1", "A = SΛS⁻¹", "A = S\\Lambda S^{-1}", 300),
+  block("b_22_3", "A = S Λ S⁻¹", "A = S\\Lambda S^{-1}", 760, 0.7),
+  block("b_22_5", "needs n indep. eigenvectors", "\\text{needs } n \\text{ indep. eigenvectors}", 1625, 0.7),
+  block("b_22_8", "Aᵏ = S Λᵏ S⁻¹", "A^k = S\\Lambda^k S^{-1}", 3090, 0.7),
+];
+
+export const L22: LectureDetail = {
+  summary: LECTURES[2]!,
+  video_url: "",
+  pdf_url: "/mock/notes.pdf",
+  board_blocks: L22_BLOCKS,
+  sections: [
+    section("sec_22_1", 1, "What diagonalising means", 0, 700, "verified", [
+      bullet("bl_22_1a", 1, "Put the eigenvectors of A in the columns of S; then S⁻¹AS is the diagonal matrix Λ of eigenvalues.", "S^{-1}AS = \\Lambda", ["b_22_1"], 280, 330),
+    ]),
+    section("sec_22_3", 2, "Building S", 700, 1500, "uncertain", [
+      bullet("bl_22_3a", 1, "A = SAS", null, ["b_22_3"], 745, 790, 0.45, 1),
+    ]),
+    section("sec_22_5", 3, "Distinct eigenvalues", 1500, 3000, "uncertain", [
+      bullet("bl_22_5a", 1, "Works for every square matrix.", null, ["b_22_5"], 1610, 1640, 0.55, 1),
+    ]),
+    section("sec_22_8", 4, "Fibonacci example", 3000, 6480, "uncertain", [
+      bullet("bl_22_8a", 1, "A^k = S Λ^k S⁻¹", null, ["b_22_8"], 3080, 3110, 0.5),
+    ]),
+  ],
+};
+
 /** Detail for lectures that only appear in lists. Sections are thin: just enough to open the notes. */
 function stub(summary: LectureSummary): LectureDetail {
   return {
@@ -166,7 +195,8 @@ export const DETAILS: Record<string, LectureDetail> = {
   lec_21: L21,
   lec_demo: DEMO,
   lec_24: L24,
-  ...Object.fromEntries(LECTURES.filter((l) => !["lec_21", "lec_demo", "lec_24"].includes(l.id)).map((l) => [l.id, stub(l)])),
+  lec_22: L22,
+  ...Object.fromEntries(LECTURES.filter((l) => !["lec_21", "lec_demo", "lec_24", "lec_22"].includes(l.id)).map((l) => [l.id, stub(l)])),
 };
 
 /** What the lecturer said at each bullet, shown in the source panel. */
@@ -195,8 +225,6 @@ export const SUGGESTIONS: Suggestion[] = [
   },
 ];
 
-const l22Block = (id: string, text: string, latex: string, at: number): BoardBlock => block(id, text, latex, at, 0.7);
-
 function l22Sug(id: string, bullet: string, name: string, initials: string, text: string, up: number, reason: string): Suggestion {
   return {
     id, bullet_id: bullet, author_name: name, author_initials: initials, anonymous: false, proposed_text: text, status: "open",
@@ -204,23 +232,43 @@ function l22Sug(id: string, bullet: string, name: string, initials: string, text
   };
 }
 
-export const REVIEW_SEED: ReviewItem[] = [
-  {
-    id: "ri_22_3", lecture_id: "lec_22", section_id: "sec_22_3", section_heading: "Building S", bullet_id: "bl_22_3a",
-    current_text: "A = SAS", board_block: l22Block("b_22_3", "A = S Λ S⁻¹", "A = S\\Lambda S^{-1}", 760), snapshot_url: null, priority: 4.6,
-    suggestion: l22Sug("sg_22_a", "bl_22_3a", "Riya K.", "RK", "A = SΛS⁻¹", 4, "AI agrees: the board shows S⁻¹."),
-  },
-  {
-    id: "ri_22_5", lecture_id: "lec_22", section_id: "sec_22_5", section_heading: "Distinct eigenvalues", bullet_id: "bl_22_5a",
-    current_text: "Works for every square matrix.", board_block: l22Block("b_22_5", "needs n indep. eigenvectors", "\\text{needs } n \\text{ indep. eigenvectors}", 1625), snapshot_url: null, priority: 3.1,
-    suggestion: l22Sug("sg_22_b", "bl_22_5a", "Tom W.", "TW", "Only works if A has n independent eigenvectors.", 2, "AI agrees: said at 27:10."),
-  },
-  {
-    id: "ri_22_8", lecture_id: "lec_22", section_id: "sec_22_8", section_heading: "Fibonacci example", bullet_id: "bl_22_8a",
-    current_text: "A^k = S Λ^k S⁻¹", board_block: l22Block("b_22_8", "Aᵏ = S Λᵏ S⁻¹", "A^k = S\\Lambda^k S^{-1}", 3090), snapshot_url: null, priority: 1.9,
-    suggestion: null,
-  },
-];
+SUGGESTIONS.push(
+  l22Sug("sg_22_a", "bl_22_3a", "Riya Kapoor", "RK", "A = SΛS⁻¹", 4, "AI agrees: the board shows S⁻¹."),
+  l22Sug("sg_22_b", "bl_22_5a", "Tom Wells", "TW", "Only works if A has n independent eigenvectors.", 2, "AI agrees: said at 27:10."),
+);
+
+/** docs/architecture.md#review-priority */
+export function reviewPriority(confidence: number, s: Suggestion | null): number {
+  if (!s) return 2 * (1 - confidence);
+  return 2 * (1 - confidence) + Math.log2(1 + s.upvotes) + (s.verdict === "agrees" ? 1 : 0) - (s.flagged ? 2 : 0);
+}
+
+/** A review item shaped like the server's: id is the suggestion id, or "bullet:<id>" for an uncertain reading. */
+export function reviewItem(detail: LectureDetail, section: Section, bullet: Bullet, suggestion: Suggestion | null): ReviewItem {
+  return {
+    id: suggestion ? suggestion.id : `bullet:${bullet.id}`,
+    lecture_id: detail.summary.id,
+    section_id: section.id,
+    section_heading: section.heading,
+    bullet_id: bullet.id,
+    current_text: bullet.text,
+    board_block: detail.board_blocks.find((b) => bullet.board_block_ids.includes(b.id)) ?? null,
+    snapshot_url: null,
+    suggestion,
+    priority: reviewPriority(bullet.confidence, suggestion),
+  };
+}
+
+/** Uncertain readings with no open fix, as the server lists them. */
+export function uncertainItems(details: Record<string, LectureDetail>, suggestions: Suggestion[]): ReviewItem[] {
+  const fixed = new Set(suggestions.filter((x) => x.status === "open").map((x) => x.bullet_id));
+  return Object.values(details).flatMap((d) =>
+    d.sections.flatMap((sec) => sec.bullets.filter((b) => b.uncertain && !fixed.has(b.id)).map((b) => reviewItem(d, sec, b, null))),
+  );
+}
+
+/** The uncertain readings the review queue starts with. */
+export const REVIEW_SEED: ReviewItem[] = uncertainItems(DETAILS, SUGGESTIONS);
 
 export const PDFS: PdfInfo[] = [
   { lecture_id: null, title: "Linear Algebra · complete notes", status: "in_review", pages: 186, generated_at: ago(0, 1), url: "/mock/notes.pdf" },

@@ -13,7 +13,7 @@ import { ViewSwitch } from "@/components/ViewSwitch";
 import type { SeekRequest } from "@/components/VideoPlayer";
 import type { LectureDetail } from "@/contracts/LectureDetail";
 import type { Section } from "@/contracts/Section";
-import { assetUrl } from "@/lib/api";
+import { assetUrl, type VerifyResult } from "@/lib/api";
 import { api } from "@/lib/client";
 import { cx } from "@/lib/cx";
 import { plural } from "@/lib/format";
@@ -21,7 +21,7 @@ import { useSession } from "@/lib/session";
 import { AskPanel } from "@/components/notes/AskPanel";
 import { FixPanel } from "@/components/notes/FixPanel";
 import { SourcePanel } from "@/components/notes/SourcePanel";
-import { boardLabel, bulletAt, findBullet, firstStart, uncertainCount } from "@/components/notes/helpers";
+import { boardLabel, bulletAt, errorText, findBullet, firstStart, uncertainCount, verifyMessage } from "@/components/notes/helpers";
 
 type PanelName = "source" | "fix" | "ask";
 
@@ -48,6 +48,7 @@ export function LectureNotes({ lecture, mode, preview, onChanged }: { lecture: L
     return params.get("t") && Number.isFinite(t) ? { t, n: 0 } : null;
   });
   const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState<{ at: string; error: boolean; text: string } | null>(null);
   const [activeSection, setActiveSection] = useState<string | null>(null);
 
   const bulletId = params.get("bullet");
@@ -83,15 +84,26 @@ export function LectureNotes({ lecture, mode, preview, onChanged }: { lecture: L
   const uncertainTotal = lecture.sections.reduce((n, s) => n + uncertainCount(s), 0);
   const pdf = assetUrl(lecture.pdf_url);
 
-  async function act(fn: () => Promise<void>) {
+  /** Approve a section (or "lecture") and say what happened next to the button. */
+  async function verify(at: string, fn: () => Promise<VerifyResult>) {
     setBusy(true);
+    setNotice(null);
     try {
-      await fn();
-      onChanged();
+      const r = await fn();
+      setNotice({ at, error: r.failed > 0, text: verifyMessage(r) });
+    } catch (e) {
+      setNotice({ at, error: true, text: errorText(e, "Could not approve. Try again.") });
     } finally {
       setBusy(false);
+      onChanged();
     }
   }
+  const noticeFor = (at: string) =>
+    notice?.at === at ? (
+      <p role="status" className={cx("text-[13px]", notice.error ? "text-danger" : "text-secondary")}>
+        {notice.text}
+      </p>
+    ) : null;
 
   const actions = (
     <>
@@ -111,7 +123,7 @@ export function LectureNotes({ lecture, mode, preview, onChanged }: { lecture: L
         </Button>
       )}
       {lecturer ? (
-        <Button variant="success" disabled={busy || lecture.summary.status === "verified"} onClick={() => act(() => api.verifyLecture(lecture.summary.id))}>
+        <Button variant="success" disabled={busy || lecture.summary.status === "verified"} onClick={() => verify("lecture", () => api.verifyLecture(lecture.summary.id))}>
           {lecture.summary.status === "verified" ? "Lecture approved" : "Approve lecture"}
         </Button>
       ) : (
@@ -155,6 +167,7 @@ export function LectureNotes({ lecture, mode, preview, onChanged }: { lecture: L
         </nav>
 
         <div ref={notesRef} className="min-w-[340px] flex-1 overflow-y-auto rounded-lg border border-default bg-surface px-8 py-6 shadow-card" data-testid="notes">
+          {notice?.at === "lecture" && <div className="mb-4">{noticeFor("lecture")}</div>}
           {lecturer && (waiting > 0 || uncertainTotal > 0) && (
             <div className="mb-4 flex items-center justify-between gap-3 rounded-lg bg-warning-subtle px-4 py-3 text-[13px] font-semibold text-warning">
               <span>
@@ -174,12 +187,13 @@ export function LectureNotes({ lecture, mode, preview, onChanged }: { lecture: L
                 <div className="flex items-center gap-2">
                   {sectionPill(s)}
                   {lecturer && s.status !== "verified" && (
-                    <Button variant="success" className="px-3 py-1" disabled={busy} onClick={() => act(() => api.verifySection(s.id))}>
+                    <Button variant="success" className="px-3 py-1" disabled={busy} onClick={() => verify(s.id, () => api.verifySection(lecture.summary.id, s.id))}>
                       Approve section
                     </Button>
                   )}
                 </div>
               </div>
+              {noticeFor(s.id)}
               {s.bullets.map((b) => (
                 <NoteBullet
                   key={b.id}

@@ -1,6 +1,8 @@
 import type { Bullet } from "@/contracts/Bullet";
 import type { LectureDetail } from "@/contracts/LectureDetail";
 import type { Section } from "@/contracts/Section";
+import type { VerifyResult } from "@/lib/api";
+import { plural } from "@/lib/format";
 
 /** "Board 6": the 1-based position of a board block in the lecture. */
 export function boardLabel(lecture: LectureDetail, blockId: string): string {
@@ -33,4 +35,18 @@ export function uncertainCount(section: Section): number {
 
 export function firstStart(bullet: Bullet): number {
   return bullet.transcript_ranges[0]?.start_s ?? 0;
+}
+
+/** What happened when the lecturer approved a section or lecture, in one or two sentences for the UI. */
+export function verifyMessage(r: VerifyResult): string {
+  const parts: string[] = [];
+  if (r.approved) parts.push(`Confirmed ${plural(r.approved, "uncertain reading")}.`);
+  if (r.waiting) parts.push(`${plural(r.waiting, "student fix", "student fixes")} still ${r.waiting === 1 ? "needs" : "need"} a decision in the review queue.`);
+  if (r.failed) parts.push(`${plural(r.failed, "item")} could not be saved. Try again.`);
+  return parts.length ? parts.join(" ") : "Nothing was waiting here.";
+}
+
+/** Text for a failed request. */
+export function errorText(e: unknown, fallback: string): string {
+  return e instanceof Error && e.message ? e.message : fallback;
 }

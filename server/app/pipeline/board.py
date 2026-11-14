@@ -3,10 +3,13 @@
 import asyncio
 import io
 import logging
+import re
+from dataclasses import dataclass, field
 
 from PIL import Image as PILImage
+from rapidfuzz import fuzz
 
-from app.contracts.ai import BoardRead
+from app.contracts.ai import BoardBlock, BoardRead, BoardReadBlock
 from app.llm.client import LLM, Image, LLMRequest
 
 from .interfaces import FrameReading, Keyframe
@@ -105,3 +108,125 @@ async def read_board(keyframes: list[Keyframe], llm: LLM) -> list[FrameReading]:
     sem = asyncio.Semaphore(READ_CONCURRENCY)
     results = await asyncio.gather(*(_read_one(kf, llm, sem) for kf in keyframes))
     return sorted((r for r in results if r is not None), key=lambda r: r.keyframe.time_s)
+
+
+# ---------- B-2: merge readings across frames ----------
+
+SAME_RATIO = 85.0  # full-string similarity (0-100) for two readings of the same writing
+PARTIAL_RATIO = 92.0  # similarity of the shorter reading to the best-matching part of the longer one
+PARTIAL_MIN_CHARS = 6  # shorter readings can't be matched as fragments (too many false hits)
+PARTIAL_MIN_SHARE = 0.4  # ... nor can fragments shorter than this share of the longer reading
+FULLER_SHARE = 0.9  # a reading under this share of a matching reading's length is treated as partial
+
+_LATEX_NOISE = re.compile(r"\\(left|right|big|Big|bigg|Bigg|displaystyle|,|;|:|!|quad|qquad)(?![a-zA-Z])")
+_NON_KEY = re.compile(r"[^\w\\{}^_=+\-*/<>()\[\]|]")
+
+
+def normalise(text: str) -> str:
+    """Comparison key for a reading: lowercase, no spacing commands, whitespace or decorative punctuation."""
+    key = _LATEX_NOISE.sub("", text.lower())
+    key = key.replace("\u2212", "-").replace("\u00d7", "*").replace("\\cdot", "*").replace("\\times", "*")
+    return _NON_KEY.sub("", key)
+
+
+def _keys(block: BoardReadBlock) -> list[str]:
+    keys = [normalise(block.text)]
+    if block.latex:
+        keys.append(normalise(block.latex))
+    return [k for k in keys if k]
+
+
+def _is_fragment(short: str, long: str) -> bool:
+    if len(short) < PARTIAL_MIN_CHARS or len(short) < PARTIAL_MIN_SHARE * len(long):
+        return False
+    return fuzz.partial_ratio(short, long) >= PARTIAL_RATIO
+
+
+def similarity(a: list[str], b: list[str]) -> float:
+    """Best match score (0-100) between two readings over their text/LaTeX keys; 0 if they look different."""
+    best = 0.0
+    for ka in a:
+        for kb in b:
+            score = fuzz.ratio(ka, kb)
+            if score < SAME_RATIO:
+                short, long = sorted((ka, kb), key=len)
+                score = fuzz.partial_ratio(short, long) if _is_fragment(short, long) else 0.0
+            best = max(best, score)
+    return best if best >= SAME_RATIO else 0.0
+
+
+@dataclass
+class _Sighting:
+    time_s: float
+    block: BoardReadBlock
+    keys: list[str]
+
+    @property
+    def length(self) -> int:
+        return max(len(k) for k in self.keys)
+
+
+def is_better(a: _Sighting, b: _Sighting) -> bool:
+    """True if `a` is a better reading of the writing than `b`: fuller first, then more confident, then earlier."""
+    if a.length < FULLER_SHARE * b.length:
+        return False
+    if b.length < FULLER_SHARE * a.length:
+        return True
+    return (a.block.confidence, a.length, -a.time_s) > (b.block.confidence, b.length, -b.time_s)
+
+
+@dataclass
+class _Cluster:
+    best: _Sighting
+    first_seen_s: float
+    frames: set[float] = field(default_factory=set)
+
+    def add(self, s: _Sighting) -> None:
+        self.first_seen_s = min(self.first_seen_s, s.time_s)
+        self.frames.add(s.time_s)
+        if is_better(s, self.best):
+            self.best = s
+
+
+def _clamp_bbox(bbox: list[float]) -> list[float]:
+    x0, y0, x1, y1 = (min(max(v, 0.0), 1.0) for v in bbox)
+    return [min(x0, x1), min(y0, y1), max(x0, x1), max(y0, y1)]
+
+
+def merge_blocks(readings: list[FrameReading]) -> list[BoardBlock]:
+    """Collapse the same writing seen in many frames into one block per piece of writing.
+
+    Readings are matched by normalised text/LaTeX (not position, since the camera moves). A reading that is a fragment
+    of a longer one (cut off by the frame edge, or still being written) joins the same block; the fullest, most
+    confident reading wins. Ids are assigned b_0001, b_0002, ... in order of first appearance.
+    """
+    clusters: list[_Cluster] = []
+    for reading in sorted(readings, key=lambda r: r.keyframe.time_s):
+        t = reading.keyframe.time_s
+        for block in reading.read.blocks:
+            keys = _keys(block)
+            if not keys:
+                continue
+            sighting = _Sighting(time_s=t, block=block, keys=keys)
+            # Two blocks in the same frame are different writing, so a cluster takes at most one block per frame.
+            candidates = [(similarity(keys, c.best.keys), i) for i, c in enumerate(clusters) if t not in c.frames]
+            score, index = max(candidates, default=(0.0, -1))
+            if score > 0:
+                clusters[index].add(sighting)
+            else:
+                clusters.append(_Cluster(best=sighting, first_seen_s=t, frames={t}))
+
+    clusters.sort(key=lambda c: (c.first_seen_s, c.best.block.bbox[1], c.best.block.bbox[0]))
+    return [
+        BoardBlock(
+            id=f"b_{n:04d}",
+            type=c.best.block.type,
+            text=c.best.block.text,
+            latex=c.best.block.latex,
+            confidence=c.best.block.confidence,
+            first_seen_s=c.first_seen_s,
+            best_frame_s=c.best.time_s,
+            bbox=_clamp_bbox(c.best.block.bbox),
+        )
+        for n, c in enumerate(clusters, start=1)
+    ]

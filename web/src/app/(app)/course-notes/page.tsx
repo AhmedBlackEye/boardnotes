@@ -36,7 +36,7 @@ export default function CourseNotesPage() {
   const done = (lectures.data ?? []).filter((l) => l.status !== "processing" && l.status !== "uploading");
   const verified = done.filter((l) => l.status === "verified").length;
   const pct = done.length ? (verified / done.length) * 100 : 0;
-  const texHref = (id: string | null) => assetUrl(api.texUrl(id)) ?? "#";
+  const tex = assetUrl(api.texUrl(null)); // null in live mode until the server has a .tex route
 
   return (
     <>
@@ -45,9 +45,11 @@ export default function CourseNotesPage() {
         title="Course notes"
         actions={
           <>
-            <a href={texHref(null)} download>
-              <Button variant="secondary">Download LaTeX</Button>
-            </a>
+            {tex && (
+              <a href={tex} download>
+                <Button variant="secondary">Download LaTeX</Button>
+              </a>
+            )}
             {whole && (
               <a href={assetUrl(whole.url) ?? "#"} download>
                 <Button>Download module PDF</Button>

@@ -12,6 +12,8 @@ import type { Suggestion } from "@/contracts/Suggestion";
 import { api } from "@/lib/client";
 import { formatTime } from "@/lib/format";
 import { useAsync } from "@/lib/hooks";
+import { useSession } from "@/lib/session";
+import { errorText } from "@/components/notes/helpers";
 
 /** Suggest a fix: current text, your fix, the AI check once sent, and other students' suggestions to upvote. */
 export function FixPanel({ lecture, bullet, preview, onChanged }: { lecture: LectureDetail; bullet: Bullet; preview: boolean; onChanged: () => void }) {
@@ -22,6 +24,8 @@ export function FixPanel({ lecture, bullet, preview, onChanged }: { lecture: Lec
   const [sent, setSent] = useState<Suggestion | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [voteError, setVoteError] = useState<string | null>(null);
+  const { me } = useSession();
   const block = source.data?.board_blocks[0];
 
   async function send() {
@@ -41,10 +45,19 @@ export function FixPanel({ lecture, bullet, preview, onChanged }: { lecture: Lec
     }
   }
 
-  async function vote(id: string) {
-    await api.vote(id);
-    others.reload();
+  async function vote(s: Suggestion) {
+    setVoteError(null);
+    try {
+      await api.vote(s.id, !s.voted_by_me);
+    } catch (e) {
+      setVoteError(errorText(e, "Could not save your vote"));
+    } finally {
+      others.reload();
+    }
   }
+
+  /** You can't upvote your own fix (the server refuses it too). */
+  const mine = (s: Suggestion) => !s.anonymous && !!me && s.author_name === me.name;
 
   const list = (others.data ?? []).filter((s) => s.id !== sent?.id);
   return (
@@ -59,12 +72,13 @@ export function FixPanel({ lecture, bullet, preview, onChanged }: { lecture: Lec
       <TextField
         multiline
         label="Your fix"
+        maxLength={500}
         placeholder="Type the corrected text or formula"
         value={text}
         onChange={(e) => setText(e.target.value)}
         disabled={preview}
       />
-      <TextField label="Why? (optional)" value={reason} onChange={(e) => setReason(e.target.value)} disabled={preview} />
+      <TextField label="Why? (optional)" maxLength={300} value={reason} onChange={(e) => setReason(e.target.value)} disabled={preview} />
       {sent && <AiVerdict verdict={sent.verdict ?? "unclear"} reason={sent.flagged ? "Flagged: this reads like instructions, so it will be checked by the lecturer." : (sent.verdict_reason ?? "Sent to your lecturer.")} />}
       {error && <p className="text-[13px] text-danger">{error}</p>}
       <Button block disabled={preview || busy || !text.trim()} onClick={send}>
@@ -75,8 +89,9 @@ export function FixPanel({ lecture, bullet, preview, onChanged }: { lecture: Lec
         <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.08em] text-tertiary">Other suggestions for this line · {list.length}</p>
         <div className="flex flex-col gap-3">
           {list.map((s) => (
-            <SuggestionCard key={s.id} suggestion={s} onVote={() => vote(s.id)} voteDisabled={preview} />
+            <SuggestionCard key={s.id} suggestion={s} onVote={() => vote(s)} voteDisabled={preview || mine(s)} />
           ))}
+          {voteError && <p className="text-[13px] text-danger">{voteError}</p>}
           {list.length === 0 && <p className="text-[13px] text-secondary">No other suggestions yet.</p>}
         </div>
       </div>

@@ -10,7 +10,7 @@ import { UploadPanel } from "@/components/UploadPanel";
 import { ViewSwitch } from "@/components/ViewSwitch";
 import type { LectureSummary } from "@/contracts/LectureSummary";
 import { api } from "@/lib/client";
-import { formatRelativeDay } from "@/lib/format";
+import { formatRelativeDay, lectureCode } from "@/lib/format";
 import { useAsync } from "@/lib/hooks";
 import { cx } from "@/lib/cx";
 import { useSession } from "@/lib/session";
@@ -96,7 +96,7 @@ export default function LecturesPage() {
         ) : (
           latest && (
             <div className="flex flex-wrap items-center gap-6 rounded-xl border border-default bg-surface p-4 shadow-card">
-              <BoardSnapshot size="large" text="A = Aᵀ ⇒ real λ" className="h-[100px] w-[200px] justify-center" />
+              <BoardSnapshot size="large" text={api.mode === "mock" ? "A = Aᵀ ⇒ real λ" : lectureCode(latest.title)} className="h-[100px] w-[200px] justify-center" />
               <div className="min-w-[200px] flex-1">
                 <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-accent">Continue where you left off</p>
                 <p className="font-display text-[19px] font-medium text-primary">{latest.title}</p>

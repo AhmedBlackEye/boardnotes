@@ -92,6 +92,7 @@ export function AskPanel({ lecture, onSeek, initialQuestion }: { lecture: Lectur
             className="min-w-0 flex-1 bg-transparent px-2 text-[14px] text-primary placeholder:text-tertiary focus:outline-none"
             placeholder="Ask a question about this lecture…"
             aria-label="Your question"
+            maxLength={500}
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />

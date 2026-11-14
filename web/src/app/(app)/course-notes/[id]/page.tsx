@@ -78,6 +78,7 @@ export default function PdfPreviewPage() {
   const pages = d ? paginate(d.sections) : [];
   const title = isModule ? "Linear Algebra · complete notes.pdf" : `${d?.summary.title ?? "Notes"}.pdf`;
   const url = assetUrl(info?.url) ?? "#";
+  const tex = assetUrl(api.texUrl(isModule ? null : id)); // null in live mode until the server has a .tex route
   const verified = d ? d.sections.filter((s) => s.status === "verified").length : 0;
 
   return (
@@ -87,9 +88,11 @@ export default function PdfPreviewPage() {
         title={title}
         actions={
           <>
-            <a href={assetUrl(api.texUrl(isModule ? null : id)) ?? "#"} download>
-              <Button variant="secondary">Download LaTeX</Button>
-            </a>
+            {tex && (
+              <a href={tex} download>
+                <Button variant="secondary">Download LaTeX</Button>
+              </a>
+            )}
             <a href={url} download>
               <Button>Download PDF</Button>
             </a>

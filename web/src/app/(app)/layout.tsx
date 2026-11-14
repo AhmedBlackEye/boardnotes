@@ -13,9 +13,9 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   }, [ready, me, router]);
   if (!me) return <div className="min-h-screen bg-canvas" />;
   return (
-    <div className="flex min-h-screen bg-canvas">
+    <div className="flex h-screen bg-canvas">
       <ConnectedSidebar />
-      <main className="flex min-w-0 flex-1 flex-col">{children}</main>
+      <main className="flex min-w-0 flex-1 flex-col overflow-y-auto">{children}</main>
     </div>
   );
 }

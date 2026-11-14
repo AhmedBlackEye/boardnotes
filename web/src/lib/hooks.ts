@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export interface Async<T> {
   data: T | null;
@@ -38,5 +38,7 @@ export function useAsync<T>(load: () => Promise<T>, deps: readonly unknown[]): A
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [...deps, tick]);
-  return { data, error, loading, reload: () => setTick((t) => t + 1), set: setData };
+  // Stable identity: pages put reload in effect deps.
+  const reload = useCallback(() => setTick((t) => t + 1), []);
+  return { data, error, loading, reload, set: setData };
 }

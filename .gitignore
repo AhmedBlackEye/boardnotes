@@ -12,3 +12,7 @@ fixtures/**/*.mp4
 fixtures/**/*.mkv
 data/
 .DS_Store
+
+# Agent worktrees and local Claude settings
+.claude/worktrees/
+.claude/settings.local.json

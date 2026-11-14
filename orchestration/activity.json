@@ -1,5 +1,54 @@
 [
- {"at": "2026-11-14T17:40:00Z", "text": "Phase 0 committed: contracts, offline AI fakes, pipeline interfaces, schema, CI, docs."},
- {"at": "2026-11-14T17:05:00Z", "text": "Private GitHub repo created: AhmedBlackEye/boardnotes."},
- {"at": "2026-11-14T16:20:00Z", "text": "Figma design system and prototype finished (21 components, 11 screens, 2 flows)."}
+ {
+  "at": "2026-11-14T21:00:00Z",
+  "text": "Merged A (video & frames) and B (board AI & notes) into main: 179 tests pass. Remaining work restarted on Opus (Sonnet only writes the independent tests): C security fix, D review, E frontend."
+ },
+ {
+  "at": "2026-11-14T20:50:00Z",
+  "text": "Build session stopped again; unfinished work saved. B passed all re-checks; D backend built (PR #4)."
+ },
+ {
+  "at": "2026-11-14T19:45:00Z",
+  "text": "A (video & frames) verified after one fix round: code review, 31 independent tests and security review all pass. Ready to merge."
+ },
+ {
+  "at": "2026-11-14T19:20:00Z",
+  "text": "First reviews done for A, B, C: 130 independent tests written (A and B all pass; C 3 failing on LaTeX injection). All three in fix round 1, mainly medium security findings."
+ },
+ {
+  "at": "2026-11-14T18:55:00Z",
+  "text": "A (video & frames) built: PR #3, make check passes; now in review."
+ },
+ {
+  "at": "2026-11-14T18:40:00Z",
+  "text": "C (audio & PDF) built: PR #2, make check passes; now in review. B: first checks asked for changes, fix round starting."
+ },
+ {
+  "at": "2026-11-14T18:10:00Z",
+  "text": "Build resumed with tiered models: Sonnet builders and reviewers, Opus security review and escalation. Frontend running separately for an early test version."
+ },
+ {
+  "at": "2026-11-14T18:00:00Z",
+  "text": "Previous build session stopped mid-run; all unfinished work saved as WIP commits. B (board AI & notes) finished: PR #1."
+ },
+ {
+  "at": "2026-11-14T17:05:00Z",
+  "text": "Phase 1 started: agents A–E building in parallel, each followed by code review, independent tests and security review."
+ },
+ {
+  "at": "2026-11-14T16:55:00Z",
+  "text": "Progress dashboard live; local Postgres running via Podman."
+ },
+ {
+  "at": "2026-11-14T17:40:00Z",
+  "text": "Phase 0 committed: contracts, offline AI fakes, pipeline interfaces, schema, CI, docs."
+ },
+ {
+  "at": "2026-11-14T17:05:00Z",
+  "text": "Private GitHub repo created: AhmedBlackEye/boardnotes."
+ },
+ {
+  "at": "2026-11-14T16:20:00Z",
+  "text": "Figma design system and prototype finished (21 components, 11 screens, 2 flows)."
+ }
 ]

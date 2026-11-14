@@ -50,7 +50,13 @@ def sample_lecture(status: LectureStatus = LectureStatus.IN_REVIEW, title: str =
                 end_s=2800.0,
                 status=SectionStatus.DRAFT,
                 bullets=[
-                    bullet("b_4_1", 1, "The sum of the eigenvalues equals the trace:", r"\lambda_1 + \cdots + \lambda_n = \operatorname{tr}(A)", [(2512.0, 2530.0)]),
+                    bullet(
+                        "b_4_1",
+                        1,
+                        "The sum of the eigenvalues equals the trace:",
+                        r"\lambda_1 + \cdots + \lambda_n = \operatorname{tr}(A)",
+                        [(2512.0, 2530.0)],
+                    ),
                     bullet("b_4_2", 2, "Watch out: <script>alert('x')</script> & 50% of #cases_{1}", None, None, ["blk_7"], uncertain=True),
                 ],
                 said_not_written=[SaidNotWritten(text="For a triangular matrix the eigenvalues are on the diagonal.", at_s=2700.0)],
@@ -63,7 +69,13 @@ def sample_lecture(status: LectureStatus = LectureStatus.IN_REVIEW, title: str =
                 end_s=2500.0,
                 status=SectionStatus.VERIFIED,
                 bullets=[
-                    bullet("b_3_1", 1, "λ is an eigenvalue of A exactly when A − λI has no inverse:", r"\det(A - \lambda I) = 0", [(2050.0, 2064.0), (2010.5, 2020.0)]),
+                    bullet(
+                        "b_3_1",
+                        1,
+                        "λ is an eigenvalue of A exactly when A − λI has no inverse:",
+                        r"\det(A - \lambda I) = 0",
+                        [(2050.0, 2064.0), (2010.5, 2020.0)],
+                    ),
                     bullet("b_3_2", 2, "Its roots are the eigenvalues.", None, None, ["blk_2"]),
                 ],
                 said_not_written=[],

@@ -121,13 +121,17 @@ def bullet_from_row(row: dict[str, Any]) -> Bullet:
     )
 
 
-async def sections(conn: Conn, lecture_id: str) -> list[Section]:
+async def sections(conn: Conn, lecture_id: str, viewer: Me | None = None) -> list[Section]:
+    """Sections with their bullets. For a student `viewer`, open_suggestions leaves out other students' flagged fixes
+    (hidden from that student's list too); without a viewer, or for a lecturer, every open fix counts."""
+    see_flagged = viewer is None or viewer.role == Role.LECTURER
     section_rows = await fetch_all(conn, "select * from sections where lecture_id = %(lec)s order by ord, id", {"lec": lecture_id})
     bullet_rows = await fetch_all(
         conn,
-        """select b.*, (select count(*) from suggestions g where g.bullet_id = b.id and g.status = 'open') as open_suggestions
+        """select b.*, (select count(*) from suggestions g where g.bullet_id = b.id and g.status = 'open'
+                          and (%(all)s or not g.flagged or g.author_id = %(me)s)) as open_suggestions
            from bullets b join sections s on s.id = b.section_id where s.lecture_id = %(lec)s order by b.ord, b.id""",
-        {"lec": lecture_id},
+        {"lec": lecture_id, "all": see_flagged, "me": viewer.id if viewer else ""},
     )
     by_section: dict[str, list[Bullet]] = {}
     for row in bullet_rows:
@@ -165,10 +169,10 @@ def pdf_url(summary: LectureSummary) -> str | None:
     return f"/lectures/{summary.id}/pdf" if summary.status in READY_STATUSES else None
 
 
-async def lecture_detail(conn: Conn, summary: LectureSummary) -> LectureDetail:
+async def lecture_detail(conn: Conn, summary: LectureSummary, viewer: Me | None = None) -> LectureDetail:
     return LectureDetail(
         summary=summary,
-        sections=await sections(conn, summary.id),
+        sections=await sections(conn, summary.id, viewer),
         board_blocks=await board_blocks(conn, summary.id),
         video_url=f"/lectures/{summary.id}/video",
         pdf_url=pdf_url(summary),

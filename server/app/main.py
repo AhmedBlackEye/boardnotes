@@ -43,7 +43,7 @@ def create_app(
             pool=pool,
             llm=llm or get_llm(),
             stages=stages or default_stages(),
-            pdfs=PdfService(pool, settings.data_dir, renderers or default_renderers()),
+            pdfs=PdfService(pool, settings.data_dir, renderers or default_renderers(settings.module_title)),
             llm_slots=asyncio.Semaphore(settings.llm_concurrency),
         )
         app.state.boardnotes = state
@@ -84,7 +84,8 @@ def _make_pdf(state: AppState):
     async def after_notes(lecture_id: str) -> None:
         async with state.pool.connection() as conn:
             stale = await state.pdfs.invalidate(conn, lecture_id)
-        await state.pdfs.refresh([lecture_id, *(k for k in stale if k is None)])  # the new lecture, and the module if cached
+        # the new lecture, and the module if it was cached
+        await state.pdfs.refresh_after_commit(lecture_id, [lecture_id, *(k for k in stale if k is None)])
 
     return after_notes
 

@@ -87,7 +87,9 @@ async def _insert_suggestion(conn: Conn, body: SuggestionCreate, user: Me) -> tu
 
     row = await fetch_one(
         conn,
-        "insert into suggestions (bullet_id, author_id, proposed_text, reason) values (%(b)s, %(me)s, %(text)s, %(reason)s) returning id",
+        # Stored flagged (hidden from other students) until the AI check has looked at it.
+        """insert into suggestions (bullet_id, author_id, proposed_text, reason, flagged)
+           values (%(b)s, %(me)s, %(text)s, %(reason)s, true) returning id""",
         {"b": body.bullet_id, "me": user.id, "text": body.proposed_text.strip(), "reason": body.reason},
     )
     assert row is not None
@@ -98,7 +100,10 @@ async def _insert_suggestion(conn: Conn, body: SuggestionCreate, user: Me) -> tu
 async def create_suggestion(body: SuggestionCreate, user: CurrentUser, state: StateDep) -> Suggestion:
     """Store the fix, run the AI check, store its verdict. No database connection is held during the model call."""
     async with state.pool.connection() as conn:
-        suggestion_id, bullet = await _insert_suggestion(conn, body, user)  # committed here: visible while the check runs
+        suggestion_id, bullet = await _insert_suggestion(conn, body, user)  # committed here, hidden until checked
+
+    # If the check itself fails, the fix is shown (unflagged, verdict "unclear") and left for the lecturer: a model
+    # outage shouldn't hide every new fix, and the lecturer reviews all open fixes anyway.
 
     verdict, reason, flagged = Verdict.UNCLEAR, "The automatic check wasn't available. A lecturer will look at this.", False
     try:

@@ -20,11 +20,19 @@ if TYPE_CHECKING:
 
 
 class AskCache:
-    """Small LRU of answers keyed by (lecture, normalised question). Cleared for a lecture when its notes change."""
+    """Small LRU of answers keyed by (lecture, normalised question). Cleared for a lecture when its notes change.
+
+    Each lecture has a generation that `invalidate` bumps; an answer is only stored if the generation read before
+    it was computed is still current, so an answer from the old notes can't land after an invalidation.
+    """
 
     def __init__(self, max_items: int = 256) -> None:
         self.max_items = max_items
         self._items: OrderedDict[tuple[str, str], AskOut] = OrderedDict()
+        self._generation: dict[str, int] = {}
+
+    def generation(self, lecture_id: str) -> int:
+        return self._generation.get(lecture_id, 0)
 
     @staticmethod
     def key(lecture_id: str, question: str) -> tuple[str, str]:
@@ -37,12 +45,16 @@ class AskCache:
             self._items.move_to_end(k)
         return hit
 
-    def put(self, lecture_id: str, question: str, answer: AskOut) -> None:
+    def put(self, lecture_id: str, question: str, answer: AskOut, generation: int | None = None) -> None:
+        """Store an answer. Pass the `generation` read before computing it; a stale answer is dropped."""
+        if generation is not None and generation != self.generation(lecture_id):
+            return
         self._items[self.key(lecture_id, question)] = answer
         while len(self._items) > self.max_items:
             self._items.popitem(last=False)
 
     def invalidate(self, lecture_id: str) -> None:
+        self._generation[lecture_id] = self.generation(lecture_id) + 1
         for k in [k for k in self._items if k[0] == lecture_id]:
             del self._items[k]
 
@@ -50,8 +62,9 @@ class AskCache:
 class RateLimiter:
     """In-memory sliding-window limits per key (one API process, so this is enough for the demo)."""
 
-    def __init__(self, clock: Callable[[], float] = time.monotonic) -> None:
+    def __init__(self, clock: Callable[[], float] = time.monotonic, prune_at: int = 10_000) -> None:
         self.clock = clock
+        self.prune_at = prune_at  # keys kept before idle ones are dropped
         self._hits: dict[str, deque[float]] = {}
 
     def allow(self, key: str, limit: int, window_s: float) -> bool:
@@ -63,7 +76,14 @@ class RateLimiter:
         if len(hits) >= limit:
             return False
         hits.append(now)
+        if len(self._hits) > self.prune_at:
+            self._prune(now)
         return True
+
+    def _prune(self, now: float) -> None:
+        """Drop keys with no hit in the last day (the longest window used), so memory stays bounded."""
+        for key in [k for k, hits in self._hits.items() if not hits or hits[-1] <= now - 24 * 3600]:
+            del self._hits[key]
 
 
 @dataclass

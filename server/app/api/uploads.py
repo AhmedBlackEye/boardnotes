@@ -104,6 +104,8 @@ async def upload_chunk(upload_id: str, request: Request, user: Lecturer, state: 
     expected = end - start + 1
     if expected > CHUNK_SIZE:
         raise HTTPException(status.HTTP_413_CONTENT_TOO_LARGE, f"Chunks can be at most {CHUNK_SIZE} bytes")
+    async with state.pool.connection() as conn:
+        await _upload_row(conn, upload_id, user)  # ownership first, so another lecturer can't hold this upload's lock
     lock = state.upload_locks.setdefault(upload_id, asyncio.Lock())
     if lock.locked():
         raise HTTPException(status.HTTP_409_CONFLICT, "Another chunk of this upload is still being written")

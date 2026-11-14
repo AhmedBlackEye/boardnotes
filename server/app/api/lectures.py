@@ -28,7 +28,7 @@ async def list_lectures(user: CurrentUser, conn: ConnDep) -> list[LectureSummary
 @router.get("/lectures/{lecture_id}")
 async def get_lecture(lecture_id: str, user: CurrentUser, conn: ConnDep) -> LectureDetail:
     summary = await repo.visible_lecture(conn, lecture_id, user)
-    return await repo.lecture_detail(conn, summary)
+    return await repo.lecture_detail(conn, summary, user)
 
 
 @router.get("/bullets/{bullet_id}/source")

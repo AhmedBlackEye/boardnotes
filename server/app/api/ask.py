@@ -78,10 +78,11 @@ async def answer_question(state: AppState, llm: LLM, lecture_id: str, question: 
 
 async def ask_events(state: AppState, lecture_id: str, question: str) -> AsyncIterator[ServerSentEvent]:
     cached = state.ask_cache.get(lecture_id, question)
+    generation = state.ask_cache.generation(lecture_id)  # read before the notes are
     try:
         out = cached or await answer_question(state, state.llm, lecture_id, question)
         if cached is None:
-            state.ask_cache.put(lecture_id, question, out)
+            state.ask_cache.put(lecture_id, question, out, generation)
     except Exception:
         log.exception("ask failed for lecture %s", lecture_id)
         yield ServerSentEvent(data="The question could not be answered", event="error")

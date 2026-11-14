@@ -1,8 +1,8 @@
 """PDF cache (D-6). Renderers are injected like the job stages; the default ones import app.pipeline.pdf lazily.
 
 A rendered PDF is stored under data_dir/pdfs/ with a generated name and recorded in the `pdfs` table. Review
-decisions call `invalidate` and then, after their transaction commits, `refresh` in the background, so the PDFs
-(and the /pdfs listing) are current again shortly after each decision.
+decisions call `invalidate` in their transaction and then, after it commits, `refresh_after_commit` in the background,
+so the PDFs (and the /pdfs listing) are current again shortly after each decision.
 """
 
 import asyncio
@@ -23,6 +23,7 @@ from app.db import Conn, Pool, execute, fetch_all, fetch_one
 
 log = logging.getLogger(__name__)
 OLD_PDF_GRACE_S = 600  # replaced files are kept this long so downloads already under way can finish
+MAX_MODULE_LECTURES = 60  # same bound as app.pipeline.pdf.MAX_MODULE_LECTURES (not imported: it loads Playwright)
 
 LectureRenderer = Callable[[LectureDetail], Awaitable[bytes]]
 ModuleRenderer = Callable[[list[LectureDetail]], Awaitable[bytes]]
@@ -49,8 +50,14 @@ class PdfRenderers:
     module: ModuleRenderer
 
 
-def default_renderers() -> PdfRenderers:
-    return PdfRenderers(lecture=_lazy("render_pdf"), module=_lazy("render_module_pdf"))
+def default_renderers(module_title: str) -> PdfRenderers:
+    """The real renderers from app.pipeline.pdf: render_pdf(lecture) and render_module_pdf(lectures, module_title)."""
+    render_module = _lazy("render_module_pdf")
+
+    async def module(lectures: list[LectureDetail]) -> bytes:
+        return await render_module(lectures, module_title)
+
+    return PdfRenderers(lecture=_lazy("render_pdf"), module=module)
 
 
 def count_pages(pdf: bytes) -> int:
@@ -77,8 +84,10 @@ def remove_unused(root: Path, current: set[str], grace_s: float = OLD_PDF_GRACE_
 class PdfService:
     """Renders and caches PDFs. Uses its own short-lived pool connections, so callers never hold one while it renders.
 
-    Each lecture (and the module, key None) has a generation number that `invalidate` bumps. A render that started
-    before an invalidation is still returned to its caller but is not stored as the current PDF.
+    Each lecture (and the module, key None) has a generation number that `invalidate` bumps, and that
+    `refresh_after_commit` bumps again once the decision is committed. A render that started before either bump is
+    still returned to its caller but is not stored as the current PDF, so a render that read the notes while the
+    decision was still uncommitted can't be kept.
     """
 
     def __init__(self, pool: Pool, data_dir: Path, renderers: PdfRenderers) -> None:
@@ -91,17 +100,32 @@ class PdfService:
     def _lock(self, key: str | None) -> asyncio.Lock:
         return self._locks.setdefault(key, asyncio.Lock())
 
-    async def invalidate(self, conn: Conn, lecture_id: str) -> list[str | None]:
-        """Forget the cached PDFs of a lecture and of the module (in the caller's transaction).
-
-        Returns the keys that had a cached PDF; pass them to `refresh` once the transaction has committed.
-        """
+    def _bump(self, lecture_id: str) -> None:
         for key in (lecture_id, None):
             self._generation[key] = self._generation.get(key, 0) + 1
+
+    @staticmethod
+    async def _delete(conn: Conn, lecture_id: str) -> list[str | None]:
         rows = await fetch_all(
             conn, "delete from pdfs where lecture_id = %(lec)s or lecture_id is null returning lecture_id", {"lec": lecture_id}
         )
-        return list(dict.fromkeys(r["lecture_id"] for r in rows))
+        return [r["lecture_id"] for r in rows]
+
+    async def invalidate(self, conn: Conn, lecture_id: str) -> list[str | None]:
+        """Forget the cached PDFs of a lecture and of the module (in the caller's transaction).
+
+        Returns the keys that had a cached PDF; pass them to `refresh_after_commit` once the transaction has committed.
+        """
+        self._bump(lecture_id)
+        return list(dict.fromkeys(await self._delete(conn, lecture_id)))
+
+    async def refresh_after_commit(self, lecture_id: str, keys: list[str | None]) -> None:
+        """Call once the invalidating transaction has committed. Renders that read the old notes become stale, any PDF
+        such a render stored meanwhile is dropped, and every PDF that was cached is rendered again."""
+        self._bump(lecture_id)
+        async with self.pool.connection() as conn:
+            stored_meanwhile = await self._delete(conn, lecture_id)
+        await self.refresh(list(dict.fromkeys([*keys, *stored_meanwhile])))
 
     async def refresh(self, keys: list[str | None]) -> None:
         """Render these PDFs again (a lecture id, or None for the module). Errors are logged, not raised."""
@@ -146,6 +170,8 @@ class PdfService:
 
     async def _render_lecture(self, lecture_id: str) -> Path:
         async with self._lock(lecture_id):
+            if cached := await self._cached(lecture_id):  # another download rendered it while we waited
+                return cached
             generation = self._generation.get(lecture_id, 0)
             async with self.pool.connection() as conn:
                 summary = await repo.get_summary(conn, lecture_id)
@@ -156,6 +182,8 @@ class PdfService:
 
     async def _render_module(self) -> Path:
         async with self._lock(None):
+            if cached := await self._cached(None):
+                return cached
             generation = self._generation.get(None, 0)
             async with self.pool.connection() as conn:
                 details = await self._ready_details(conn)
@@ -169,7 +197,11 @@ class PdfService:
 
     async def _ready_details(self, conn: Conn) -> list[LectureDetail]:
         ready = [s.value for s in repo.READY_STATUSES]
-        rows = await fetch_all(conn, "select id from lectures where status = any(%(ready)s) order by uploaded_at, id", {"ready": ready})
+        rows = await fetch_all(
+            conn,
+            "select id from lectures where status = any(%(ready)s) order by uploaded_at, id limit %(n)s",
+            {"ready": ready, "n": MAX_MODULE_LECTURES},
+        )
         details: list[LectureDetail] = []
         for row in rows:
             summary = await repo.get_summary(conn, row["id"])

@@ -1,3 +1,4 @@
+import secrets
 from pathlib import Path
 from typing import Literal
 
@@ -13,6 +14,7 @@ class Settings(BaseSettings):
     data_dir: Path = REPO_ROOT / "data"
     # Absolute origin of the web app; site-relative links (e.g. in PDFs) are resolved against it.
     public_base_url: str = "http://localhost:3000"
+    module_title: str = "Lecture notes"  # title on the cover of the all-lectures PDF
     session_secret: str = "dev-only-change-me"  # noqa: S105 - overridden by SESSION_SECRET outside local dev
 
     # "fake" replays recorded responses from fixtures/llm (no keys needed); "live" calls the real APIs.
@@ -43,9 +45,19 @@ DEFAULT_SESSION_SECRET = "dev-only-change-me"  # noqa: S105
 
 
 def check_production_settings(s: Settings) -> None:
-    """Refuse to start with the development cookie secret when real model calls are enabled."""
-    if s.llm_mode == "live" and s.session_secret in ("", DEFAULT_SESSION_SECRET):
+    """Refuse to start with an empty or development cookie secret when real model calls are enabled or demo login is
+    off (then the signed cookie is the only thing keeping students out of the lecturer routes).
+
+    With demo login on and fake models anyone can already pick any user, so an empty secret is just replaced by a
+    random one (sessions then end when the API restarts).
+    """
+    weak = s.session_secret in ("", DEFAULT_SESSION_SECRET)
+    if weak and s.llm_mode == "live":
         raise RuntimeError("Set SESSION_SECRET before running with LLM_MODE=live")
+    if weak and not s.demo_login:
+        raise RuntimeError("Set SESSION_SECRET before running with DEMO_LOGIN=false")
+    if not s.session_secret:
+        s.session_secret = secrets.token_urlsafe(32)
 
 
 settings = Settings()

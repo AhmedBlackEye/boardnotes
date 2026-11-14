@@ -171,8 +171,11 @@ async def decide(
 
     await _refresh_status(conn, lecture_id, bullet["section_id"])
     stale_pdfs = await state.pdfs.invalidate(conn, lecture_id)
-    background.add_task(state.pdfs.refresh, stale_pdfs)  # runs after this route's transaction has committed
     state.ask_cache.invalidate(lecture_id)
+    # Background tasks run after this route's transaction has committed; invalidating again then drops anything
+    # computed from the notes as they were before the commit.
+    background.add_task(state.ask_cache.invalidate, lecture_id)
+    background.add_task(state.pdfs.refresh_after_commit, lecture_id, stale_pdfs)
     summary = await repo.get_summary(conn, lecture_id)
     assert summary is not None
     return summary

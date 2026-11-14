@@ -1,6 +1,6 @@
 {
  "project": "BoardNotes",
- "updated": "2026-11-14T18:40Z",
+ "updated": "2026-11-14T18:55Z",
  "status_flow": [
   "todo",
   "building",
@@ -130,59 +130,59 @@
    "title": "Video check and audio extraction (ffprobe/ffmpeg)",
    "phase": "P1",
    "owner": "agent-A",
-   "status": "building",
+   "status": "in_review",
    "depends_on": [],
    "acceptance": "probe() reports duration, size, streams, warnings; clear VideoCheckError messages; audio is mono 16 kHz wav",
    "checks": {
-    "make_check": "pending",
+    "make_check": "pass",
     "V1_review": "pending",
     "V2_tests": "pending",
     "V3_security": "pending"
    },
    "branch": "task/A-video-frames",
-   "pr": null,
+   "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/3",
    "notes": "Security follow-up (automated scan): ffprobe/ffmpeg must use file: input + -protocol_whitelist file and a format whitelist (mov,mp4,matroska,webm,avi) to block HLS/concat playlists reading local files or URLs. Lead verifies before merge.",
-   "updated": "2026-11-14T17:05Z"
+   "updated": "2026-11-14T18:55Z"
   },
   {
    "id": "A-2",
    "title": "Frame sampling every 3 s + small copies for the cheap pass",
    "phase": "P1",
    "owner": "agent-A",
-   "status": "building",
+   "status": "in_review",
    "depends_on": [],
    "acceptance": "Correct frame count/timestamps on a generated test video; small copies ≤768px",
    "checks": {
-    "make_check": "pending",
+    "make_check": "pass",
     "V1_review": "pending",
     "V2_tests": "pending",
     "V3_security": "pending"
    },
    "branch": "task/A-video-frames",
-   "pr": null,
+   "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/3",
    "notes": "",
-   "updated": "2026-11-14T17:05Z"
+   "updated": "2026-11-14T18:55Z"
   },
   {
    "id": "A-3",
    "title": "Keyframe selection: Haiku glance + de-duplicate by text, not pixels",
    "phase": "P1",
    "owner": "agent-A",
-   "status": "building",
+   "status": "in_review",
    "depends_on": [
     "A-2"
    ],
    "acceptance": "Handles camera moves and occlusion; keeps the clearest frame per new writing; offline tests with FakeLLM",
    "checks": {
-    "make_check": "pending",
+    "make_check": "pass",
     "V1_review": "pending",
     "V2_tests": "pending",
     "V3_security": "pending"
    },
    "branch": "task/A-video-frames",
-   "pr": null,
+   "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/3",
    "notes": "",
-   "updated": "2026-11-14T17:05Z"
+   "updated": "2026-11-14T18:55Z"
   },
   {
    "id": "B-1",

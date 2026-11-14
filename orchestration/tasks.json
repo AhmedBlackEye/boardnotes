@@ -1,6 +1,6 @@
 {
  "project": "BoardNotes",
- "updated": "2026-11-14T18:10Z",
+ "updated": "2026-11-14T18:40Z",
  "status_flow": [
   "todo",
   "building",
@@ -189,141 +189,141 @@
    "title": "Board reading with Sonnet (parallel, rate-limited)",
    "phase": "P1",
    "owner": "agent-B",
-   "status": "in_review",
+   "status": "changes_requested",
    "depends_on": [],
    "acceptance": "Prompt + concurrency limit; uses untrusted= for nothing user-written; tests with FakeLLM",
    "checks": {
     "make_check": "pass",
-    "V1_review": "pending",
+    "V1_review": "changes requested",
     "V2_tests": "pending",
     "V3_security": "pending"
    },
    "branch": "task/B-board-notes",
    "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/1",
    "notes": "",
-   "updated": "2026-11-14T17:05Z"
+   "updated": "2026-11-14T18:40Z"
   },
   {
    "id": "B-2",
    "title": "Merge readings across frames into board blocks",
    "phase": "P1",
    "owner": "agent-B",
-   "status": "in_review",
+   "status": "changes_requested",
    "depends_on": [
     "B-1"
    ],
    "acceptance": "Same writing seen in many frames becomes one block; partial readings replaced by fuller ones; first_seen/best_frame correct",
    "checks": {
     "make_check": "pass",
-    "V1_review": "pending",
+    "V1_review": "changes requested",
     "V2_tests": "pending",
     "V3_security": "pending"
    },
    "branch": "task/B-board-notes",
    "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/1",
    "notes": "",
-   "updated": "2026-11-14T17:05Z"
+   "updated": "2026-11-14T18:40Z"
   },
   {
    "id": "B-3",
    "title": "Plan sections and write notes with citations (Opus)",
    "phase": "P1",
    "owner": "agent-B",
-   "status": "in_review",
+   "status": "changes_requested",
    "depends_on": [
     "B-2"
    ],
    "acceptance": "Outputs match SectionPlan/SectionNotes; transcript passed as untrusted data",
    "checks": {
     "make_check": "pass",
-    "V1_review": "pending",
+    "V1_review": "changes requested",
     "V2_tests": "pending",
     "V3_security": "pending"
    },
    "branch": "task/B-board-notes",
    "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/1",
    "notes": "",
-   "updated": "2026-11-14T17:05Z"
+   "updated": "2026-11-14T18:40Z"
   },
   {
    "id": "B-4",
    "title": "Citation checker + LaTeX render check",
    "phase": "P1",
    "owner": "agent-B",
-   "status": "in_review",
+   "status": "changes_requested",
    "depends_on": [
     "B-3"
    ],
    "acceptance": "Unsupported bullets dropped or flagged; bad LaTeX detected; pure-code tests",
    "checks": {
     "make_check": "pass",
-    "V1_review": "pending",
+    "V1_review": "changes requested",
     "V2_tests": "pending",
     "V3_security": "pending"
    },
    "branch": "task/B-board-notes",
    "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/1",
    "notes": "",
-   "updated": "2026-11-14T17:05Z"
+   "updated": "2026-11-14T18:40Z"
   },
   {
    "id": "C-1",
    "title": "Transcription with ElevenLabs (fake mode reads fixtures)",
    "phase": "P1",
    "owner": "agent-C",
-   "status": "building",
+   "status": "in_review",
    "depends_on": [],
    "acceptance": "Word timestamps grouped into segments; main speaker labelled lecturer; works offline",
    "checks": {
-    "make_check": "pending",
+    "make_check": "pass",
     "V1_review": "pending",
     "V2_tests": "pending",
     "V3_security": "pending"
    },
    "branch": "task/C-audio-pdf",
-   "pr": null,
+   "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/2",
    "notes": "",
-   "updated": "2026-11-14T17:05Z"
+   "updated": "2026-11-14T18:40Z"
   },
   {
    "id": "C-2",
    "title": "PDF rendering: per lecture and whole module",
    "phase": "P1",
    "owner": "agent-C",
-   "status": "building",
+   "status": "in_review",
    "depends_on": [],
    "acceptance": "HTML template matching Figma S6; Draft marks; clickable timestamps; real PDF from fixture data",
    "checks": {
-    "make_check": "pending",
+    "make_check": "pass",
     "V1_review": "pending",
     "V2_tests": "pending",
     "V3_security": "pending"
    },
    "branch": "task/C-audio-pdf",
-   "pr": null,
+   "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/2",
    "notes": "",
-   "updated": "2026-11-14T17:05Z"
+   "updated": "2026-11-14T18:40Z"
   },
   {
    "id": "C-3",
    "title": "LaTeX (.tex) export",
    "phase": "P1",
    "owner": "agent-C",
-   "status": "building",
+   "status": "in_review",
    "depends_on": [
     "C-2"
    ],
    "acceptance": "Compilable .tex from LectureDetail",
    "checks": {
-    "make_check": "pending",
+    "make_check": "pass",
     "V1_review": "pending",
     "V2_tests": "pending",
     "V3_security": "pending"
    },
    "branch": "task/C-audio-pdf",
-   "pr": null,
+   "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/2",
    "notes": "",
-   "updated": "2026-11-14T17:05Z"
+   "updated": "2026-11-14T18:40Z"
   },
   {
    "id": "D-1",

@@ -125,8 +125,8 @@ export function LectureNotes({ lecture, mode, preview, onChanged }: { lecture: L
   return (
     <>
       <TopBar crumb="Lectures" title={lecture.summary.title} actions={actions} />
-      <div className="flex min-h-0 flex-1 gap-6 px-8 py-6 lg:h-[calc(100vh-68px)]">
-        <nav className="hidden w-[220px] shrink-0 flex-col gap-1 overflow-y-auto lg:flex" aria-label="Sections">
+      <div className="flex min-h-0 flex-1 gap-6 px-8 py-6">
+        <nav className={cx("hidden w-[220px] shrink-0 flex-col gap-1 overflow-y-auto", panel ? "2xl:flex" : "lg:flex")} aria-label="Sections">
           <p className="text-[11px] font-bold uppercase leading-4 tracking-[0.08em] text-tertiary">Sections</p>
           {lecture.sections.map((s) => (
             <button
@@ -154,7 +154,7 @@ export function LectureNotes({ lecture, mode, preview, onChanged }: { lecture: L
           </div>
         </nav>
 
-        <div ref={notesRef} className="min-w-0 flex-1 overflow-y-auto rounded-lg border border-default bg-surface px-8 py-6 shadow-card" data-testid="notes">
+        <div ref={notesRef} className="min-w-[340px] flex-1 overflow-y-auto rounded-lg border border-default bg-surface px-8 py-6 shadow-card" data-testid="notes">
           {lecturer && (waiting > 0 || uncertainTotal > 0) && (
             <div className="mb-4 flex items-center justify-between gap-3 rounded-lg bg-warning-subtle px-4 py-3 text-[13px] font-semibold text-warning">
               <span>

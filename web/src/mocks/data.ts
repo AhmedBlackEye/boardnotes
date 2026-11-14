@@ -229,4 +229,5 @@ export const PDFS: PdfInfo[] = [
   { lecture_id: "lec_22", title: "L22 · Diagonalisation", status: "in_review", pages: 11, generated_at: ago(3), url: "/mock/notes.pdf" },
   { lecture_id: "lec_21", title: "L21 · Eigenvalues and eigenvectors", status: "in_review", pages: 12, generated_at: ago(2), url: "/mock/notes.pdf" },
   { lecture_id: "lec_20", title: "L20 · Determinants", status: "verified", pages: 10, generated_at: ago(8), url: "/mock/notes.pdf" },
+  { lecture_id: "lec_demo", title: "L1 · Solving two equations", status: "verified", pages: 2, generated_at: ago(28), url: "/mock/notes.pdf" },
 ];

@@ -19,7 +19,10 @@ export function AskPanel({ lecture, onSeek, initialQuestion }: { lecture: Lectur
   const [busy, setBusy] = useState(false);
   const end = useRef<HTMLDivElement>(null);
 
-  useEffect(() => end.current?.scrollIntoView?.({ block: "end" }), [msgs, busy]);
+  useEffect(() => {
+    // Braces matter: newer browsers return a Promise from scrollIntoView, which React rejects as a cleanup.
+    end.current?.scrollIntoView?.({ block: "end" });
+  }, [msgs, busy]);
 
   async function ask(question: string) {
     const text = question.trim();

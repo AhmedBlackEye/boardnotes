@@ -1,5 +1,9 @@
 [
  {
+  "at": "2026-11-14T21:40:00Z",
+  "text": "C: security and tests now pass; code review asked for small changes (Opus fixing). D: independent tests pass; code and security reviews asked for changes (Opus fixing)."
+ },
+ {
   "at": "2026-11-14T21:00:00Z",
   "text": "Merged A (video & frames) and B (board AI & notes) into main: 179 tests pass. Remaining work restarted on Opus (Sonnet only writes the independent tests): C security fix, D review, E frontend."
  },

@@ -1,6 +1,6 @@
 {
  "project": "BoardNotes",
- "updated": "2026-11-14T21:00Z",
+ "updated": "2026-11-14T21:40Z",
  "status_flow": [
   "todo",
   "building",
@@ -276,14 +276,14 @@
    "acceptance": "Word timestamps grouped into segments; main speaker labelled lecturer; works offline",
    "checks": {
     "make_check": "pass",
-    "V1_review": "pass (round 2)",
-    "V2_tests": "pass (round 2)",
-    "V3_security": "changes requested (round 2)"
+    "V1_review": "changes requested (round 3)",
+    "V2_tests": "pass",
+    "V3_security": "pass"
    },
    "branch": "task/C-audio-pdf",
    "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/2",
    "notes": "",
-   "updated": "2026-11-14T21:00Z"
+   "updated": "2026-11-14T21:40Z"
   },
   {
    "id": "C-2",
@@ -295,14 +295,14 @@
    "acceptance": "HTML template matching Figma S6; Draft marks; clickable timestamps; real PDF from fixture data",
    "checks": {
     "make_check": "pass",
-    "V1_review": "pass (round 2)",
-    "V2_tests": "pass (round 2)",
-    "V3_security": "changes requested (round 2)"
+    "V1_review": "changes requested (round 3)",
+    "V2_tests": "pass",
+    "V3_security": "pass"
    },
    "branch": "task/C-audio-pdf",
    "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/2",
    "notes": "",
-   "updated": "2026-11-14T21:00Z"
+   "updated": "2026-11-14T21:40Z"
   },
   {
    "id": "C-3",
@@ -316,124 +316,124 @@
    "acceptance": "Compilable .tex from LectureDetail",
    "checks": {
     "make_check": "pass",
-    "V1_review": "pass (round 2)",
-    "V2_tests": "pass (round 2)",
-    "V3_security": "changes requested (round 2)"
+    "V1_review": "changes requested (round 3)",
+    "V2_tests": "pass",
+    "V3_security": "pass"
    },
    "branch": "task/C-audio-pdf",
    "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/2",
    "notes": "Security follow-up (automated scan): tex.py must use an allowlist for maths commands (reject ^^, @, \\[ \\( etc.) and percent-encode \\href URLs. Lead verifies before merge.",
-   "updated": "2026-11-14T21:00Z"
+   "updated": "2026-11-14T21:40Z"
   },
   {
    "id": "D-1",
    "title": "API skeleton: app, DB pool, demo login, role checks",
    "phase": "P1",
    "owner": "agent-D",
-   "status": "in_review",
+   "status": "changes_requested",
    "depends_on": [],
    "acceptance": "Session cookie login as seeded users; students get 403 on lecturer routes",
    "checks": {
     "make_check": "pass",
-    "V1_review": "pending",
-    "V2_tests": "pending",
-    "V3_security": "pending"
+    "V1_review": "changes requested",
+    "V2_tests": "pass",
+    "V3_security": "changes requested"
    },
    "branch": "task/D-backend-api",
    "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/4",
    "notes": "",
-   "updated": "2026-11-14T21:00Z"
+   "updated": "2026-11-14T21:40Z"
   },
   {
    "id": "D-2",
    "title": "Lecture endpoints, source view, snapshots, video streaming",
    "phase": "P1",
    "owner": "agent-D",
-   "status": "in_review",
+   "status": "changes_requested",
    "depends_on": [
     "D-1"
    ],
    "acceptance": "Matches contracts.api; video supports Range requests",
    "checks": {
     "make_check": "pass",
-    "V1_review": "pending",
-    "V2_tests": "pending",
-    "V3_security": "pending"
+    "V1_review": "changes requested",
+    "V2_tests": "pass",
+    "V3_security": "changes requested"
    },
    "branch": "task/D-backend-api",
    "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/4",
    "notes": "",
-   "updated": "2026-11-14T21:00Z"
+   "updated": "2026-11-14T21:40Z"
   },
   {
    "id": "D-3",
    "title": "Resumable upload, job runner, progress stream",
    "phase": "P1",
    "owner": "agent-D",
-   "status": "in_review",
+   "status": "changes_requested",
    "depends_on": [
     "D-1"
    ],
    "acceptance": "Chunked upload with size/type limits; job runs pipeline stages via interfaces; progress over SSE",
    "checks": {
     "make_check": "pass",
-    "V1_review": "pending",
-    "V2_tests": "pending",
-    "V3_security": "pending"
+    "V1_review": "changes requested",
+    "V2_tests": "pass",
+    "V3_security": "changes requested"
    },
    "branch": "task/D-backend-api",
    "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/4",
    "notes": "",
-   "updated": "2026-11-14T21:00Z"
+   "updated": "2026-11-14T21:40Z"
   },
   {
    "id": "D-4",
    "title": "Suggestions, AI fix check, upvotes, review queue, decisions",
    "phase": "P1",
    "owner": "agent-D",
-   "status": "in_review",
+   "status": "changes_requested",
    "depends_on": [
     "D-1"
    ],
    "acceptance": "Priority formula per docs; approve writes training_examples; injection-style fixes flagged",
    "checks": {
     "make_check": "pass",
-    "V1_review": "pending",
-    "V2_tests": "pending",
-    "V3_security": "pending"
+    "V1_review": "changes requested",
+    "V2_tests": "pass",
+    "V3_security": "changes requested"
    },
    "branch": "task/D-backend-api",
    "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/4",
    "notes": "",
-   "updated": "2026-11-14T21:00Z"
+   "updated": "2026-11-14T21:40Z"
   },
   {
    "id": "D-5",
    "title": "Ask the lecture (streamed, cached, cited)",
    "phase": "P1",
    "owner": "agent-D",
-   "status": "in_review",
+   "status": "changes_requested",
    "depends_on": [
     "D-1"
    ],
    "acceptance": "Answers cite the lecture or say not covered; question passed as untrusted",
    "checks": {
     "make_check": "pass",
-    "V1_review": "pending",
-    "V2_tests": "pending",
-    "V3_security": "pending"
+    "V1_review": "changes requested",
+    "V2_tests": "pass",
+    "V3_security": "changes requested"
    },
    "branch": "task/D-backend-api",
    "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/4",
    "notes": "",
-   "updated": "2026-11-14T21:00Z"
+   "updated": "2026-11-14T21:40Z"
   },
   {
    "id": "D-6",
    "title": "PDF endpoints + regenerate on approval",
    "phase": "P1",
    "owner": "agent-D",
-   "status": "in_review",
+   "status": "changes_requested",
    "depends_on": [
     "D-4",
     "C-2"
@@ -441,14 +441,14 @@
    "acceptance": "Download per lecture/module; regenerated after approvals",
    "checks": {
     "make_check": "pass",
-    "V1_review": "pending",
-    "V2_tests": "pending",
-    "V3_security": "pending"
+    "V1_review": "changes requested",
+    "V2_tests": "pass",
+    "V3_security": "changes requested"
    },
    "branch": "task/D-backend-api",
    "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/4",
    "notes": "",
-   "updated": "2026-11-14T21:00Z"
+   "updated": "2026-11-14T21:40Z"
   },
   {
    "id": "E-1",

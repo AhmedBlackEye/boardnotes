@@ -1,7 +1,9 @@
 """V2 fixtures: a scripted LLM so tests control verdicts and can inspect request placement."""
 
+from collections.abc import AsyncIterator
 from pathlib import Path
 
+import httpx
 import pytest
 from PIL import Image
 from psycopg.types.json import Jsonb
@@ -35,6 +37,38 @@ class ScriptedLLM:
 @pytest.fixture
 def fake_llm() -> ScriptedLLM:  # overrides the builder's fixture of the same name
     return ScriptedLLM()
+
+
+class CapturingPdf:
+    """Replaces the builder's pdf_calls fixture: records the LectureDetail each render received."""
+
+    def __init__(self) -> None:
+        self.lectures: list[str] = []
+        self.details: list = []
+        self.modules = 0
+        self.module_details: list = []
+
+    async def lecture(self, detail) -> bytes:
+        self.lectures.append(detail.summary.id)
+        self.details.append(detail)
+        return b"%PDF-1.4\n1 0 obj << /Type /Page >> endobj\n%%EOF"
+
+    async def module(self, details) -> bytes:
+        self.modules += 1
+        self.module_details.append(details)
+        return b"%PDF-1.4\n1 0 obj << /Type /Page >> endobj\n2 0 obj << /Type /Page >> endobj\n%%EOF"
+
+
+@pytest.fixture
+def pdf_calls() -> CapturingPdf:
+    return CapturingPdf()
+
+
+@pytest.fixture
+async def tom(app) -> AsyncIterator[httpx.AsyncClient]:
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as c:
+        assert (await c.post("/auth/demo-login", json={"user_id": "u_tom"})).status_code == 200
+        yield c
 
 
 async def seed(db, data_dir: Path | None = None, status: str = "draft"):

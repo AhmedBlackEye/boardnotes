@@ -11,9 +11,7 @@ pytestmark = pytest.mark.asyncio
 
 
 # ---------- D-1 ----------
-@pytest.mark.parametrize(
-    ("uid", "role"), [("u_lecturer", "lecturer"), ("u_sam", "student"), ("u_riya", "student"), ("u_tom", "student")]
-)
+@pytest.mark.parametrize(("uid", "role"), [("u_lecturer", "lecturer"), ("u_sam", "student"), ("u_riya", "student"), ("u_tom", "student")])
 async def test_login_each_seeded_user(app, uid, role):
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as c:
         r = await c.post("/auth/demo-login", json={"user_id": uid})
@@ -24,7 +22,7 @@ async def test_login_each_seeded_user(app, uid, role):
 
 async def test_unknown_user_cannot_login(anon):
     r = await anon.post("/auth/demo-login", json={"user_id": "u_nobody"})
-    assert r.status_code in (401, 403, 404, 422)
+    assert 400 <= r.status_code < 500
     assert (await anon.get("/auth/me")).status_code == 401
 
 

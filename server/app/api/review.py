@@ -3,7 +3,7 @@
 import math
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, status
 
 from app import repo
 from app.auth import Lecturer
@@ -111,7 +111,9 @@ async def _record_training_example(conn: Conn, bullet: dict[str, Any], corrected
 
 
 @router.post("/review/{item_id}/decision")
-async def decide(item_id: str, body: ReviewDecisionIn, user: Lecturer, state: StateDep, conn: ConnDep) -> LectureSummary:
+async def decide(
+    item_id: str, body: ReviewDecisionIn, user: Lecturer, state: StateDep, conn: ConnDep, background: BackgroundTasks
+) -> LectureSummary:
     suggestion_id: str | None = None
     proposed: str | None = None
     if item_id.startswith(BULLET_PREFIX):
@@ -150,16 +152,26 @@ async def decide(item_id: str, body: ReviewDecisionIn, user: Lecturer, state: St
             await execute(
                 conn, "update bullets set text = %(t)s, latex = null, verified = true where id = %(id)s", {"t": new_text, "id": bullet_id}
             )
-        else:
+        elif body.decision != ReviewDecision.REJECT:
             await execute(conn, "update bullets set verified = true where id = %(id)s", {"id": bullet_id})
     if suggestion_id is not None:
         outcome = "rejected" if body.decision == ReviewDecision.REJECT else "approved"
         await execute(conn, "update suggestions set status = %(s)s where id = %(id)s", {"s": outcome, "id": suggestion_id})
         if outcome == "approved":  # other open fixes for this line are now out of date
             await execute(conn, "update suggestions set status = 'rejected' where bullet_id = %(b)s and status = 'open'", {"b": bullet_id})
+        else:
+            # Rejecting a fix keeps the current reading; the lecturer saw the evidence, so it counts as checked once no
+            # other fixes for this line are waiting.
+            await execute(
+                conn,
+                """update bullets set verified = true where id = %(b)s
+                   and not exists (select 1 from suggestions where bullet_id = %(b)s and status = 'open')""",
+                {"b": bullet_id},
+            )
 
     await _refresh_status(conn, lecture_id, bullet["section_id"])
-    await state.pdfs.invalidate(conn, lecture_id)
+    stale_pdfs = await state.pdfs.invalidate(conn, lecture_id)
+    background.add_task(state.pdfs.refresh, stale_pdfs)  # runs after this route's transaction has committed
     state.ask_cache.invalidate(lecture_id)
     summary = await repo.get_summary(conn, lecture_id)
     assert summary is not None

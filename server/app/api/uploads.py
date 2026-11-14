@@ -9,7 +9,7 @@ import asyncio
 import re
 from collections.abc import AsyncIterator
 from pathlib import Path
-from typing import Any
+from typing import Any, BinaryIO
 
 from fastapi import APIRouter, HTTPException, Request, status
 from sse_starlette.event import ServerSentEvent
@@ -17,7 +17,7 @@ from sse_starlette.sse import EventSourceResponse
 
 from app import repo
 from app.auth import Lecturer, authenticate_stream
-from app.contracts.api import JobProgress, UploadInit, UploadSession
+from app.contracts.api import JobProgress, Me, UploadInit, UploadSession
 from app.contracts.enums import LectureStatus, Role
 from app.db import Conn, execute, fetch_one
 from app.jobs.runner import enqueue, job_progress
@@ -79,11 +79,13 @@ async def start_upload(body: UploadInit, user: Lecturer, state: StateDep, conn: 
     return _session(row)
 
 
-_UPLOAD_SQL = """select u.*, l.status as lecture_status from uploads u join lectures l on l.id = u.lecture_id where u.id = %(id)s"""
+_UPLOAD_SQL = """select u.*, l.status as lecture_status from uploads u join lectures l on l.id = u.lecture_id
+where u.id = %(id)s and l.uploaded_by = %(me)s"""
 
 
-async def _upload_row(conn: Conn, upload_id: str, *, lock: bool = False) -> dict[str, Any]:
-    row = await fetch_one(conn, _UPLOAD_SQL + (" for update of u" if lock else ""), {"id": upload_id})
+async def _upload_row(conn: Conn, upload_id: str, user: Me, *, lock: bool = False) -> dict[str, Any]:
+    """The upload, only if this lecturer started it (anyone else gets 404)."""
+    row = await fetch_one(conn, _UPLOAD_SQL + (" for update of u" if lock else ""), {"id": upload_id, "me": user.id})
     if row is None:
         raise repo.not_found("Upload not found")
     return row
@@ -91,29 +93,57 @@ async def _upload_row(conn: Conn, upload_id: str, *, lock: bool = False) -> dict
 
 @router.get("/uploads/{upload_id}")
 async def upload_status(upload_id: str, user: Lecturer, conn: ConnDep) -> UploadSession:
-    return _session(await _upload_row(conn, upload_id))
+    return _session(await _upload_row(conn, upload_id, user))
 
 
 @router.put("/uploads/{upload_id}")
-async def upload_chunk(upload_id: str, request: Request, user: Lecturer, state: StateDep, conn: ConnDep) -> UploadSession:
+async def upload_chunk(upload_id: str, request: Request, user: Lecturer, state: StateDep) -> UploadSession:
+    """Write one chunk. No database connection is held while the body streams in; an in-process lock per upload stops
+    two chunks for the same upload being written at once."""
     start, end, total = parse_content_range(request.headers.get("content-range"))
-    row = await _upload_row(conn, upload_id, lock=True)  # the row lock stops two chunks for one upload running at once
-    if row["lecture_status"] != LectureStatus.UPLOADING.value:
-        raise HTTPException(status.HTTP_409_CONFLICT, "This upload is already finished")
-    if total != row["size_bytes"]:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Total size doesn't match the upload")
-    if start != row["received_bytes"]:
-        raise HTTPException(status.HTTP_409_CONFLICT, f"Expected the next chunk to start at byte {row['received_bytes']}")
     expected = end - start + 1
     if expected > CHUNK_SIZE:
         raise HTTPException(status.HTTP_413_CONTENT_TOO_LARGE, f"Chunks can be at most {CHUNK_SIZE} bytes")
+    lock = state.upload_locks.setdefault(upload_id, asyncio.Lock())
+    if lock.locked():
+        raise HTTPException(status.HTTP_409_CONFLICT, "Another chunk of this upload is still being written")
+    try:
+        async with lock:
+            async with state.pool.connection() as conn:
+                row = await _upload_row(conn, upload_id, user)
+            if row["lecture_status"] != LectureStatus.UPLOADING.value:
+                raise HTTPException(status.HTTP_409_CONFLICT, "This upload is already finished")
+            if total != row["size_bytes"]:
+                raise HTTPException(status.HTTP_400_BAD_REQUEST, "Total size doesn't match the upload")
+            if start != row["received_bytes"]:
+                raise HTTPException(status.HTTP_409_CONFLICT, f"Expected the next chunk to start at byte {row['received_bytes']}")
+            path = upload_path(state.settings.data_dir, row["lecture_id"], row["filename"])
+            await _write_chunk(path, request, start, expected)
+            async with state.pool.connection() as conn:
+                updated = await fetch_one(
+                    conn,
+                    "update uploads set received_bytes = %(n)s where id = %(id)s and received_bytes = %(start)s returning *",
+                    {"n": end + 1, "id": upload_id, "start": start},
+                )
+            if updated is None:
+                raise HTTPException(status.HTTP_409_CONFLICT, "The upload changed while this chunk was written; check its status")
+            return _session(updated)
+    finally:
+        if not lock.locked():
+            state.upload_locks.pop(upload_id, None)
 
-    path = upload_path(state.settings.data_dir, row["lecture_id"], row["filename"])
+
+def _open_at(path: Path, start: int) -> BinaryIO:
     path.parent.mkdir(parents=True, exist_ok=True)
+    out = path.open("r+b" if path.exists() else "wb")
+    out.seek(start)
+    out.truncate()  # drop anything left by an earlier chunk that failed half way
+    return out
+
+
+async def _write_chunk(path: Path, request: Request, start: int, expected: int) -> None:
     written = 0
-    with path.open("r+b" if path.exists() else "wb") as out:
-        out.seek(start)
-        out.truncate()  # drop anything left by an earlier chunk that failed half way
+    with await asyncio.to_thread(_open_at, path, start) as out:
         async for part in request.stream():
             written += len(part)
             if written > expected:
@@ -121,14 +151,11 @@ async def upload_chunk(upload_id: str, request: Request, user: Lecturer, state: 
             await asyncio.to_thread(out.write, part)
     if written != expected:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Chunk is shorter than its Content-Range")
-    row = await fetch_one(conn, "update uploads set received_bytes = %(n)s where id = %(id)s returning *", {"n": end + 1, "id": upload_id})
-    assert row is not None
-    return _session(row)
 
 
 @router.post("/uploads/{upload_id}/complete")
 async def complete_upload(upload_id: str, user: Lecturer, state: StateDep, conn: ConnDep) -> JobProgress:
-    row = await _upload_row(conn, upload_id, lock=True)
+    row = await _upload_row(conn, upload_id, user, lock=True)
     if row["lecture_status"] != LectureStatus.UPLOADING.value:
         raise HTTPException(status.HTTP_409_CONFLICT, "This upload is already finished")
     if row["received_bytes"] != row["size_bytes"]:
@@ -148,9 +175,14 @@ async def complete_upload(upload_id: str, user: Lecturer, state: StateDep, conn:
 
 
 # ---------- Progress (Server-Sent Events) ----------
-async def progress_events(state: AppState, lecture_id: str, poll_s: float = 1.0) -> AsyncIterator[ServerSentEvent]:
+async def progress_events(
+    state: AppState, lecture_id: str, request: Request, poll_s: float = 1.0, max_s: float | None = None
+) -> AsyncIterator[ServerSentEvent]:
+    """Job state whenever it changes, until the job ends, the client goes away or the stream reaches its maximum age."""
+    loop = asyncio.get_running_loop()
+    deadline = loop.time() + (max_s if max_s is not None else state.settings.progress_stream_max_s)
     last: JobProgress | None = None
-    while True:
+    while not await request.is_disconnected():
         async with state.pool.connection() as conn:
             current = await job_progress(conn, lecture_id)
         if current is not None and current != last:
@@ -158,6 +190,8 @@ async def progress_events(state: AppState, lecture_id: str, poll_s: float = 1.0)
             yield ServerSentEvent(data=current.model_dump_json(), event="progress")
         if current is not None and (current.error is not None or current.stage.value == "done"):
             return
+        if loop.time() >= deadline:
+            return  # the client reconnects if it still wants updates
         await asyncio.sleep(poll_s)
 
 
@@ -169,4 +203,4 @@ async def lecture_progress(lecture_id: str, request: Request, state: StateDep) -
     async with state.pool.connection() as conn:
         if await job_progress(conn, lecture_id) is None:
             raise repo.not_found("No processing job for this lecture")
-    return EventSourceResponse(progress_events(state, lecture_id))
+    return EventSourceResponse(progress_events(state, lecture_id, request))

@@ -7,7 +7,7 @@ The event shape lets real token streaming be added later without changing client
 import logging
 from collections.abc import AsyncIterator
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, HTTPException, Request, status
 from sse_starlette.event import ServerSentEvent
 from sse_starlette.sse import EventSourceResponse
 
@@ -70,7 +70,8 @@ async def answer_question(state: AppState, llm: LLM, lecture_id: str, question: 
         effort="low",
         max_tokens=1500,
     )
-    result = await llm.structured(request, LectureAnswer)
+    async with state.llm_slots:
+        result = await llm.structured(request, LectureAnswer)
     duration = max([line.end_s for line in lines] + [s.end_s for s in sections] + [0.0])
     return check_answer(result, {s.id for s in sections}, {b.id for b in blocks}, duration)
 
@@ -89,9 +90,19 @@ async def ask_events(state: AppState, lecture_id: str, question: str) -> AsyncIt
     yield ServerSentEvent(data="{}", event="done")
 
 
+def check_ask_limits(state: AppState, user_id: str, lecture_id: str) -> None:
+    """Per-student limits so scripted questions can't run up model costs (cached answers count too; they are cheap)."""
+    s = state.settings
+    if not state.limits.allow(f"ask:{user_id}", s.ask_per_minute, 60) or not state.limits.allow(
+        f"ask:{user_id}:{lecture_id}", s.ask_per_lecture_per_day, 24 * 3600
+    ):
+        raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS, "You've asked a lot of questions. Please wait a little and try again.")
+
+
 @router.post("/lectures/{lecture_id}/ask")
 async def ask(lecture_id: str, body: AskIn, request: Request, state: StateDep) -> EventSourceResponse:
     user = await authenticate_stream(request, state)
     async with state.pool.connection() as conn:
         await repo.visible_lecture(conn, lecture_id, user)
+    check_ask_limits(state, user.id, lecture_id)
     return EventSourceResponse(ask_events(state, lecture_id, body.question))

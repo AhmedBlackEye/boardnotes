@@ -19,7 +19,7 @@ from app.config import Settings
 from app.contracts.ai import LOW_CONFIDENCE, BoardBlock, SectionNotes, TranscriptSegment
 from app.contracts.api import JobProgress
 from app.contracts.enums import JobStage, LectureStatus, SectionStatus
-from app.db import Conn, Pool, execute, fetch_one
+from app.db import Conn, Pool, execute, fetch_all, fetch_one
 from app.llm.client import LLM
 from app.media import lecture_dir
 from app.pipeline.interfaces import (
@@ -342,4 +342,22 @@ async def worker_loop(pool: Pool, wake: asyncio.Event, run: Callable[[str], Awai
             except TimeoutError:
                 pass
             continue
-        await run(lecture_id)
+        try:
+            await run(lecture_id)
+        except asyncio.CancelledError:
+            raise
+        except Exception:  # run_job handles stage errors itself; this is a database failure while recording one
+            log.exception("worker: job for lecture %s ended with an unhandled error", lecture_id)
+
+
+async def requeue_interrupted(pool: Pool) -> list[str]:
+    """Put jobs that were running when the server stopped back in the queue. Call once at startup, before the worker."""
+    async with pool.connection() as conn:
+        rows = await fetch_all(
+            conn,
+            """update jobs j set stage = 'check_video', progress = 0, detail = %(q)s, sections_ready = 0, updated_at = now()
+               from lectures l where l.id = j.lecture_id and l.status = 'processing' and j.error is null and j.detail <> %(q)s
+               returning j.lecture_id""",
+            {"q": QUEUED},
+        )
+    return [r["lecture_id"] for r in rows]

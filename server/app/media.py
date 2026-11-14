@@ -4,6 +4,8 @@ Every path is built from ids we generated and checked to stay inside settings.da
 filenames never reach the filesystem.
 """
 
+import os
+import tempfile
 from pathlib import Path
 
 from PIL import Image
@@ -58,7 +60,12 @@ def make_snapshot(out: Path, bbox: list[float], frame_path: Path | None, video_p
     with image:
         crop = image.convert("RGB").crop(crop_box(bbox, image.width, image.height))
     out.parent.mkdir(parents=True, exist_ok=True)
-    tmp = out.with_suffix(".tmp")
-    crop.save(tmp, "JPEG", quality=88)
-    tmp.replace(out)
+    fd, tmp_name = tempfile.mkstemp(dir=out.parent, prefix=f".{out.stem}-", suffix=".tmp")  # unique: parallel first requests
+    tmp = Path(tmp_name)
+    try:
+        with os.fdopen(fd, "wb") as f:
+            crop.save(f, "JPEG", quality=88)
+        tmp.replace(out)
+    finally:
+        tmp.unlink(missing_ok=True)
     return True

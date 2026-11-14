@@ -1,4 +1,4 @@
-"""PDF downloads (D-6)."""
+"""PDF downloads (D-6). Rendering uses the PDF service's own connections, so no request connection is held meanwhile."""
 
 from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import FileResponse
@@ -7,7 +7,7 @@ from app import repo
 from app.auth import CurrentUser
 from app.contracts.api import PdfInfo
 from app.pdfs import PdfUnavailableError
-from app.state import ConnDep, StateDep
+from app.state import StateDep
 
 router = APIRouter(tags=["pdfs"])
 
@@ -17,26 +17,27 @@ def _file(path: object, name: str) -> FileResponse:
 
 
 @router.get("/lectures/{lecture_id}/pdf")
-async def lecture_pdf(lecture_id: str, user: CurrentUser, state: StateDep, conn: ConnDep) -> FileResponse:
-    summary = await repo.visible_lecture(conn, lecture_id, user)
+async def lecture_pdf(lecture_id: str, user: CurrentUser, state: StateDep) -> FileResponse:
+    async with state.pool.connection() as conn:
+        summary = await repo.visible_lecture(conn, lecture_id, user)
     if repo.pdf_url(summary) is None:
         raise HTTPException(status.HTTP_409_CONFLICT, "The notes aren't ready yet")
     try:
-        path = await state.pdfs.lecture_pdf(conn, lecture_id)
+        path = await state.pdfs.lecture_pdf(lecture_id)
     except PdfUnavailableError as exc:
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, str(exc)) from exc
     return _file(path, f"{lecture_id}.pdf")
 
 
 @router.get("/module/pdf")
-async def module_pdf(user: CurrentUser, state: StateDep, conn: ConnDep) -> FileResponse:
+async def module_pdf(user: CurrentUser, state: StateDep) -> FileResponse:
     try:
-        path = await state.pdfs.module_pdf(conn)
+        path = await state.pdfs.module_pdf()
     except PdfUnavailableError as exc:
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, str(exc)) from exc
     return _file(path, "module.pdf")
 
 
 @router.get("/pdfs")
-async def list_pdfs(user: CurrentUser, state: StateDep, conn: ConnDep) -> list[PdfInfo]:
-    return await state.pdfs.list_info(conn)
+async def list_pdfs(user: CurrentUser, state: StateDep) -> list[PdfInfo]:
+    return await state.pdfs.list_info()

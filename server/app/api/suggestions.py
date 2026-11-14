@@ -42,22 +42,21 @@ async def run_fix_check(llm: LLM, untrusted: dict[str, str], image: bytes | None
     return await llm.structured(request, FixCheck)
 
 
-async def _snapshot_bytes(state: AppState, conn: Conn, lecture_id: str, block_ids: list[str]) -> bytes | None:
+async def _snapshot_bytes(state: AppState, lecture_id: str, block_ids: list[str]) -> bytes | None:
     for block_id in block_ids:
-        path: Path | None = await ensure_snapshot(state, conn, lecture_id, block_id)
+        path: Path | None = await ensure_snapshot(state, lecture_id, block_id)
         if path is not None:
             return await asyncio.to_thread(path.read_bytes)
     return None
 
 
-async def _check_context(
-    state: AppState, conn: Conn, bullet: dict[str, Any], body: SuggestionCreate
-) -> tuple[dict[str, str], bytes | None]:
+async def _check_context(state: AppState, bullet: dict[str, Any], body: SuggestionCreate) -> tuple[dict[str, str], bytes | None]:
     lecture_id = bullet["lecture_id"]
     block_ids = list(bullet["board_block_ids"])
-    blocks = await repo.board_blocks(conn, lecture_id, block_ids)
     ranges = [TimeRange.model_validate(r) for r in bullet["transcript_ranges"]]
-    lines = repo.lines_in_ranges(await repo.transcript(conn, lecture_id), ranges)
+    async with state.pool.connection() as conn:
+        blocks = await repo.board_blocks(conn, lecture_id, block_ids)
+        lines = repo.lines_in_ranges(await repo.transcript(conn, lecture_id), ranges)
     untrusted = {
         "current_note": bullet["text"],
         "board_reading": "\n".join(f"[{b.id}] {b.text}" + (f" (LaTeX: {b.latex})" if b.latex else "") for b in blocks) or "(none)",
@@ -65,11 +64,10 @@ async def _check_context(
         "student_fix": body.proposed_text,
         "student_reason": body.reason or "",
     }
-    return untrusted, await _snapshot_bytes(state, conn, lecture_id, block_ids)
+    return untrusted, await _snapshot_bytes(state, lecture_id, block_ids)
 
 
-@router.post("/suggestions", status_code=status.HTTP_201_CREATED)
-async def create_suggestion(body: SuggestionCreate, user: CurrentUser, state: StateDep, conn: ConnDep) -> Suggestion:
+async def _insert_suggestion(conn: Conn, body: SuggestionCreate, user: Me) -> tuple[str, dict[str, Any]]:
     bullet = await repo.bullet_row(conn, body.bullet_id)
     if bullet is None:
         raise repo.not_found("Bullet not found")
@@ -93,22 +91,31 @@ async def create_suggestion(body: SuggestionCreate, user: CurrentUser, state: St
         {"b": body.bullet_id, "me": user.id, "text": body.proposed_text.strip(), "reason": body.reason},
     )
     assert row is not None
-    suggestion_id = row["id"]
-    await conn.commit()  # visible to others while the AI check runs
+    return row["id"], bullet
+
+
+@router.post("/suggestions", status_code=status.HTTP_201_CREATED)
+async def create_suggestion(body: SuggestionCreate, user: CurrentUser, state: StateDep) -> Suggestion:
+    """Store the fix, run the AI check, store its verdict. No database connection is held during the model call."""
+    async with state.pool.connection() as conn:
+        suggestion_id, bullet = await _insert_suggestion(conn, body, user)  # committed here: visible while the check runs
 
     verdict, reason, flagged = Verdict.UNCLEAR, "The automatic check wasn't available. A lecturer will look at this.", False
     try:
-        untrusted, image = await _check_context(state, conn, bullet, body)
-        check = await run_fix_check(state.llm, untrusted, image)
+        untrusted, image = await _check_context(state, bullet, body)
+        async with state.llm_slots:
+            check = await run_fix_check(state.llm, untrusted, image)
         verdict, reason, flagged = check.verdict, check.reason, check.looks_like_instructions
     except Exception:
         log.exception("fix check failed for suggestion %s", suggestion_id)
-    await execute(
-        conn,
-        "update suggestions set verdict = %(v)s, verdict_reason = %(r)s, flagged = %(f)s where id = %(id)s",
-        {"v": verdict.value, "r": reason, "f": flagged, "id": suggestion_id},
-    )
-    result = await repo.suggestion(conn, suggestion_id, user.id)
+
+    async with state.pool.connection() as conn:
+        await execute(
+            conn,
+            "update suggestions set verdict = %(v)s, verdict_reason = %(r)s, flagged = %(f)s where id = %(id)s",
+            {"v": verdict.value, "r": reason, "f": flagged, "id": suggestion_id},
+        )
+        result = await repo.suggestion(conn, suggestion_id, user.id)
     assert result is not None
     return result
 

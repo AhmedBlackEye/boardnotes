@@ -1,12 +1,17 @@
 """PDF cache (D-6). Renderers are injected like the job stages; the default ones import app.pipeline.pdf lazily.
 
 A rendered PDF is stored under data_dir/pdfs/ with a generated name and recorded in the `pdfs` table. Review
-decisions call `invalidate`, and the next request renders it again.
+decisions call `invalidate` and then, after their transaction commits, `refresh` in the background, so the PDFs
+(and the /pdfs listing) are current again shortly after each decision.
 """
 
 import asyncio
+import contextlib
 import importlib
+import logging
 import re
+import time
+import uuid
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from pathlib import Path
@@ -15,6 +20,9 @@ from app import repo
 from app.contracts.api import LectureDetail, PdfInfo
 from app.contracts.enums import LectureStatus
 from app.db import Conn, Pool, execute, fetch_all, fetch_one
+
+log = logging.getLogger(__name__)
+OLD_PDF_GRACE_S = 600  # replaced files are kept this long so downloads already under way can finish
 
 LectureRenderer = Callable[[LectureDetail], Awaitable[bytes]]
 ModuleRenderer = Callable[[list[LectureDetail]], Awaitable[bytes]]
@@ -57,64 +65,107 @@ def module_status(statuses: list[LectureStatus]) -> LectureStatus:
     return LectureStatus.DRAFT
 
 
+def remove_unused(root: Path, current: set[str], grace_s: float = OLD_PDF_GRACE_S) -> None:
+    """Delete PDFs in root that are no longer the cached copy and are older than the grace period."""
+    cutoff = time.time() - grace_s
+    for path in root.glob("*.pdf"):
+        with contextlib.suppress(OSError):
+            if str(path) not in current and path.stat().st_mtime < cutoff:
+                path.unlink()
+
+
 class PdfService:
+    """Renders and caches PDFs. Uses its own short-lived pool connections, so callers never hold one while it renders.
+
+    Each lecture (and the module, key None) has a generation number that `invalidate` bumps. A render that started
+    before an invalidation is still returned to its caller but is not stored as the current PDF.
+    """
+
     def __init__(self, pool: Pool, data_dir: Path, renderers: PdfRenderers) -> None:
         self.pool = pool
         self.dir = data_dir / "pdfs"
         self.renderers = renderers
         self._locks: dict[str | None, asyncio.Lock] = {}
+        self._generation: dict[str | None, int] = {}
 
-    def _lock(self, lecture_id: str | None) -> asyncio.Lock:
-        return self._locks.setdefault(lecture_id, asyncio.Lock())
+    def _lock(self, key: str | None) -> asyncio.Lock:
+        return self._locks.setdefault(key, asyncio.Lock())
 
-    async def invalidate(self, conn: Conn, lecture_id: str) -> None:
-        """Forget the cached PDFs of a lecture and of the module; they are rendered again on the next request."""
-        await execute(conn, "delete from pdfs where lecture_id = %(lec)s or lecture_id is null", {"lec": lecture_id})
+    async def invalidate(self, conn: Conn, lecture_id: str) -> list[str | None]:
+        """Forget the cached PDFs of a lecture and of the module (in the caller's transaction).
 
-    async def _cached(self, conn: Conn, lecture_id: str | None) -> Path | None:
-        row = await fetch_one(
-            conn,
-            "select path from pdfs where lecture_id is not distinct from %(lec)s order by generated_at desc limit 1",
-            {"lec": lecture_id},
+        Returns the keys that had a cached PDF; pass them to `refresh` once the transaction has committed.
+        """
+        for key in (lecture_id, None):
+            self._generation[key] = self._generation.get(key, 0) + 1
+        rows = await fetch_all(
+            conn, "delete from pdfs where lecture_id = %(lec)s or lecture_id is null returning lecture_id", {"lec": lecture_id}
         )
+        return list(dict.fromkeys(r["lecture_id"] for r in rows))
+
+    async def refresh(self, keys: list[str | None]) -> None:
+        """Render these PDFs again (a lecture id, or None for the module). Errors are logged, not raised."""
+        for key in keys:
+            try:
+                if key is None:
+                    await self._render_module()
+                else:
+                    await self._render_lecture(key)
+            except Exception:
+                log.exception("re-rendering the %s PDF failed", key or "module")
+
+    async def _cached(self, lecture_id: str | None) -> Path | None:
+        async with self.pool.connection() as conn:
+            row = await fetch_one(
+                conn,
+                "select path from pdfs where lecture_id is not distinct from %(lec)s order by generated_at desc limit 1",
+                {"lec": lecture_id},
+            )
         if row is None:
             return None
         path = Path(row["path"])
         return path if await asyncio.to_thread(path.is_file) else None
 
-    async def _store(self, lecture_id: str | None, pdf: bytes) -> Path:
+    async def _store(self, key: str | None, generation: int, pdf: bytes) -> Path:
+        """Write the file under a fresh name; record it as current only if nothing was invalidated meanwhile."""
         self.dir.mkdir(parents=True, exist_ok=True)
-        path = self.dir / f"{lecture_id or 'module'}.pdf"
-        tmp = path.with_suffix(".tmp")
-        await asyncio.to_thread(tmp.write_bytes, pdf)
-        tmp.replace(path)
+        path = self.dir / f"{key or 'module'}-{uuid.uuid4().hex[:12]}.pdf"
+        await asyncio.to_thread(path.write_bytes, pdf)
+        if self._generation.get(key, 0) != generation:
+            return path  # stale: serve it to this caller only
         async with self.pool.connection() as conn:
-            await execute(conn, "delete from pdfs where lecture_id is not distinct from %(lec)s", {"lec": lecture_id})
+            await execute(conn, "delete from pdfs where lecture_id is not distinct from %(lec)s", {"lec": key})
             await execute(
                 conn,
                 "insert into pdfs (lecture_id, path, pages) values (%(lec)s, %(path)s, %(pages)s)",
-                {"lec": lecture_id, "path": str(path), "pages": count_pages(pdf)},
+                {"lec": key, "path": str(path), "pages": count_pages(pdf)},
             )
+            current = {r["path"] for r in await fetch_all(conn, "select path from pdfs")}
+        await asyncio.to_thread(remove_unused, self.dir, current)
         return path
 
-    async def lecture_pdf(self, conn: Conn, lecture_id: str) -> Path:
-        cached = await self._cached(conn, lecture_id)
-        if cached:
-            return cached
-        summary = await repo.get_summary(conn, lecture_id)
-        if summary is None:
-            raise repo.not_found("Lecture not found")
-        detail = await repo.lecture_detail(conn, summary)
+    async def _render_lecture(self, lecture_id: str) -> Path:
         async with self._lock(lecture_id):
-            return await self._store(lecture_id, await self.renderers.lecture(detail))
+            generation = self._generation.get(lecture_id, 0)
+            async with self.pool.connection() as conn:
+                summary = await repo.get_summary(conn, lecture_id)
+                if summary is None:
+                    raise repo.not_found("Lecture not found")
+                detail = await repo.lecture_detail(conn, summary)
+            return await self._store(lecture_id, generation, await self.renderers.lecture(detail))
 
-    async def module_pdf(self, conn: Conn) -> Path:
-        cached = await self._cached(conn, None)
-        if cached:
-            return cached
-        details = await self._ready_details(conn)
+    async def _render_module(self) -> Path:
         async with self._lock(None):
-            return await self._store(None, await self.renderers.module(details))
+            generation = self._generation.get(None, 0)
+            async with self.pool.connection() as conn:
+                details = await self._ready_details(conn)
+            return await self._store(None, generation, await self.renderers.module(details))
+
+    async def lecture_pdf(self, lecture_id: str) -> Path:
+        return await self._cached(lecture_id) or await self._render_lecture(lecture_id)
+
+    async def module_pdf(self) -> Path:
+        return await self._cached(None) or await self._render_module()
 
     async def _ready_details(self, conn: Conn) -> list[LectureDetail]:
         ready = [s.value for s in repo.READY_STATUSES]
@@ -126,7 +177,11 @@ class PdfService:
                 details.append(await repo.lecture_detail(conn, summary))
         return details
 
-    async def list_info(self, conn: Conn) -> list[PdfInfo]:
+    async def list_info(self) -> list[PdfInfo]:
+        async with self.pool.connection() as conn:
+            return await self._list_info(conn)
+
+    async def _list_info(self, conn: Conn) -> list[PdfInfo]:
         """Cached PDFs: the module first, then lectures newest first."""
         rows = await fetch_all(
             conn,

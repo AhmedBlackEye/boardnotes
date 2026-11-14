@@ -12,7 +12,7 @@ from fastapi.responses import FileResponse
 from app import repo
 from app.auth import CurrentUser
 from app.contracts.api import LectureDetail, LectureSummary, SourceView
-from app.db import Conn, fetch_one
+from app.db import fetch_one
 from app.media import inside, lecture_dir, make_snapshot
 from app.state import AppState, ConnDep, StateDep
 
@@ -68,19 +68,23 @@ async def lecture_video(lecture_id: str, user: CurrentUser, state: StateDep, con
     return FileResponse(path, media_type=media_type)
 
 
-async def ensure_snapshot(state: AppState, conn: Conn, lecture_id: str, block_id: str) -> Path | None:
-    """Path of the cached crop for a board block, creating it from the best frame on first use."""
+async def ensure_snapshot(state: AppState, lecture_id: str, block_id: str) -> Path | None:
+    """Path of the cached crop for a board block, creating it from the best frame on first use.
+
+    Looks the block up with a short-lived connection; the crop itself runs without holding one.
+    """
     if not (repo.is_safe_id(lecture_id) and repo.is_safe_id(block_id)):
         return None
     out = lecture_dir(state.settings.data_dir, lecture_id) / "snapshots" / f"{block_id}.jpg"
     if out.is_file():
         return out
-    row = await fetch_one(
-        conn,
-        """select b.bbox, b.best_frame_s, b.snapshot_path, l.video_path, l.playback_path
-           from board_blocks b join lectures l on l.id = b.lecture_id where b.lecture_id = %(lec)s and b.id = %(id)s""",
-        {"lec": lecture_id, "id": block_id},
-    )
+    async with state.pool.connection() as conn:
+        row = await fetch_one(
+            conn,
+            """select b.bbox, b.best_frame_s, b.snapshot_path, l.video_path, l.playback_path
+               from board_blocks b join lectures l on l.id = b.lecture_id where b.lecture_id = %(lec)s and b.id = %(id)s""",
+            {"lec": lecture_id, "id": block_id},
+        )
     if row is None:
         return None
     frame = _stored_path(state, row["snapshot_path"])
@@ -90,15 +94,10 @@ async def ensure_snapshot(state: AppState, conn: Conn, lecture_id: str, block_id
 
 
 @router.get("/snapshots/{lecture_id}/{block_id}.jpg")
-async def snapshot(
-    user: CurrentUser,
-    state: StateDep,
-    conn: ConnDep,
-    lecture_id: SafeId,
-    block_id: SafeId,
-) -> FileResponse:
-    await repo.visible_lecture(conn, lecture_id, user)
-    path = await ensure_snapshot(state, conn, lecture_id, block_id)
+async def snapshot(user: CurrentUser, state: StateDep, lecture_id: SafeId, block_id: SafeId) -> FileResponse:
+    async with state.pool.connection() as conn:
+        await repo.visible_lecture(conn, lecture_id, user)
+    path = await ensure_snapshot(state, lecture_id, block_id)
     if path is None:
         raise repo.not_found("Snapshot not available")
     return FileResponse(path, media_type="image/jpeg", headers={"Cache-Control": "private, max-age=3600"})

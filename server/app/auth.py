@@ -8,7 +8,7 @@ from itsdangerous import BadSignature, URLSafeTimedSerializer
 from app.contracts.api import Me
 from app.contracts.enums import Role
 from app.db import Conn, fetch_one
-from app.state import AppState, ConnDep, StateDep
+from app.state import AppState, StateDep
 
 COOKIE_NAME = "bn_session"
 SESSION_MAX_AGE_S = 7 * 24 * 3600
@@ -39,16 +39,8 @@ def _session_user_id(request: Request, state: AppState) -> str | None:
     return read_session(state.settings.session_secret, token) if token else None
 
 
-async def current_user(request: Request, state: StateDep, conn: ConnDep) -> Me:
-    user_id = _session_user_id(request, state)
-    me = await load_profile(conn, user_id) if user_id else None
-    if me is None:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Please log in")
-    return me
-
-
 async def authenticate_stream(request: Request, state: AppState) -> Me:
-    """Like current_user for streaming routes: uses a short-lived connection so none is held while the stream is open."""
+    """The logged-in user, looked up with a short-lived connection so none is held by the caller afterwards."""
     user_id = _session_user_id(request, state)
     if user_id:
         async with state.pool.connection() as conn:
@@ -56,6 +48,10 @@ async def authenticate_stream(request: Request, state: AppState) -> Me:
         if me is not None:
             return me
     raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Please log in")
+
+
+async def current_user(request: Request, state: StateDep) -> Me:
+    return await authenticate_stream(request, state)
 
 
 CurrentUser = Annotated[Me, Depends(current_user)]

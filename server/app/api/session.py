@@ -18,6 +18,8 @@ async def health(conn: ConnDep) -> dict[str, str]:
 
 @router.post("/auth/demo-login", tags=["auth"])
 async def demo_login(body: DemoLogin, request: Request, response: Response, state: StateDep, conn: ConnDep) -> Me:
+    if not state.settings.demo_login:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Demo login is turned off")
     me = await load_profile(conn, body.user_id)
     if me is None:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Unknown demo user")
@@ -27,7 +29,7 @@ async def demo_login(body: DemoLogin, request: Request, response: Response, stat
         max_age=SESSION_MAX_AGE_S,
         httponly=True,
         samesite="lax",
-        secure=request.url.scheme == "https",
+        secure=state.settings.cookie_secure if state.settings.cookie_secure is not None else request.url.scheme == "https",
         path="/",
     )
     return me

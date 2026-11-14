@@ -10,10 +10,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import ask, lectures, pdfs, review, session, suggestions, uploads
-from app.config import Settings
+from app.config import Settings, check_production_settings
 from app.config import settings as default_settings
 from app.db import create_pool
-from app.jobs.runner import Stages, default_stages, run_job, worker_loop
+from app.jobs.runner import Stages, default_stages, requeue_interrupted, run_job, worker_loop
 from app.llm.client import LLM, get_llm
 from app.pdfs import PdfRenderers, PdfService, default_renderers
 from app.state import AppState
@@ -35,6 +35,7 @@ def create_app(
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+        check_production_settings(settings)
         pool = create_pool(settings.database_url)
         await pool.open()
         state = AppState(
@@ -43,6 +44,7 @@ def create_app(
             llm=llm or get_llm(),
             stages=stages or default_stages(),
             pdfs=PdfService(pool, settings.data_dir, renderers or default_renderers()),
+            llm_slots=asyncio.Semaphore(settings.llm_concurrency),
         )
         app.state.boardnotes = state
         worker: asyncio.Task[None] | None = None
@@ -51,6 +53,9 @@ def create_app(
             async def run(lecture_id: str) -> bool:
                 return await run_job(pool, lecture_id, stages=state.stages, llm=state.llm, settings=settings, after_notes=_make_pdf(state))
 
+            requeued = await requeue_interrupted(pool)
+            if requeued:
+                log.warning("re-queued %d job(s) interrupted by a restart: %s", len(requeued), ", ".join(requeued))
             worker = asyncio.create_task(worker_loop(pool, state.wake, run))
             state.wake.set()
         try:
@@ -78,8 +83,8 @@ def create_app(
 def _make_pdf(state: AppState):
     async def after_notes(lecture_id: str) -> None:
         async with state.pool.connection() as conn:
-            await state.pdfs.invalidate(conn, lecture_id)
-            await state.pdfs.lecture_pdf(conn, lecture_id)
+            stale = await state.pdfs.invalidate(conn, lecture_id)
+        await state.pdfs.refresh([lecture_id, *(k for k in stale if k is None)])  # the new lecture, and the module if cached
 
     return after_notes
 

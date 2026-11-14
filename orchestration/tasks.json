@@ -141,7 +141,7 @@
    },
    "branch": "task/A-video-frames",
    "pr": null,
-   "notes": "",
+   "notes": "Security follow-up (automated scan): ffprobe/ffmpeg must use file: input + -protocol_whitelist file and a format whitelist (mov,mp4,matroska,webm,avi) to block HLS/concat playlists reading local files or URLs. Lead verifies before merge.",
    "updated": "2026-11-14T17:05Z"
   },
   {

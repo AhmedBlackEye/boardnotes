@@ -38,10 +38,19 @@ def test_format_time(seconds: float, expected: str) -> None:
         ("file:///etc/passwd", False),
         ("//evil.org/v.mp4", False),
         ("data:text/html,hi", False),
+        ("/\\evil.org/v.mp4", False),
+        ("/media/v.mp4\n", True),  # trailing whitespace is stripped
+        ("/med ia/v.mp4", False),
+        ("/media/\x00v.mp4", False),
+        ("https://x.org/a\tb", False),
     ],
 )
 def test_safe_video_url(url: str, ok: bool) -> None:
     assert (pdf.safe_video_url(url) is not None) is ok
+
+
+def test_site_relative_url_becomes_absolute_on_public_origin() -> None:
+    assert pdf.safe_video_url("/lectures/l1/video") == "http://localhost:3000/lectures/l1/video"
 
 
 def test_timestamp_link() -> None:

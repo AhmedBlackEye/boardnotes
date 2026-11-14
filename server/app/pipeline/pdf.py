@@ -15,12 +15,12 @@ import tempfile
 from dataclasses import dataclass, field
 from functools import cache
 from pathlib import Path
-from urllib.parse import urlsplit
+from urllib.parse import urljoin, urlsplit
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from playwright.async_api import Route, async_playwright
 
-from app.config import REPO_ROOT
+from app.config import REPO_ROOT, settings
 from app.contracts.api import Bullet, LectureDetail, Section
 from app.contracts.enums import LectureStatus, SectionStatus
 
@@ -46,13 +46,23 @@ def format_time(seconds: float) -> str:
 
 
 def safe_video_url(url: str) -> str | None:
-    """Allow only http(s) URLs or site-relative paths, so a stored URL can't become a javascript:/file: link."""
+    """Return an absolute http(s) URL that is safe to put in a PDF link, or None.
+
+    Accepts http(s) URLs and site-relative paths ("/lectures/..."), which are resolved against
+    settings.public_base_url so the PDF never contains links that resolve against file://.
+    Rejects backslashes, whitespace and control characters outright: browsers and PDF viewers
+    normalise them differently from urlsplit (e.g. "/\\evil.com" becomes a host), so they're never needed.
+    """
     url = url.strip()
+    if not url or "\\" in url or any(c.isspace() or ord(c) < 32 or ord(c) == 127 for c in url):
+        return None
     parts = urlsplit(url)
     if parts.scheme in ("http", "https") and parts.netloc:
         return url
     if not parts.scheme and not parts.netloc and url.startswith("/") and not url.startswith("//"):
-        return url
+        absolute = urljoin(settings.public_base_url.rstrip("/") + "/", url.lstrip("/"))
+        resolved = urlsplit(absolute)
+        return absolute if resolved.scheme in ("http", "https") and resolved.netloc else None
     return None
 
 

@@ -86,6 +86,7 @@ def test_safe_math_accepts_normal_formulas() -> None:
         "https://example.com/a\n\nb.mp4",
         "https://example.com/a\tb.mp4",
         "https://example.com/caf\u00e9.mp4",
+        "https://example.com/v\\input{y}.mp4",  # backslashes are rejected, never escaped
         "https://example.com/a\x85b.mp4",
     ],
 )
@@ -96,12 +97,12 @@ def test_unsafe_href_url_is_not_linked(url: str) -> None:
 
 
 def test_href_url_is_percent_encoded() -> None:
-    url = "https://example.com/v?a=1&b=x}{\\input{y}~z"
+    url = "https://example.com/v?a=1&b=x}{input{y}~z"
     tex = export_tex(sample_lecture().model_copy(update={"video_url": url}))
     hrefs = re.findall(r"\\href\{([^}]*)\}", tex)
     assert hrefs
     for h in hrefs:
-        assert h.startswith(r"https://example.com/v?a=1&b=x\%7D\%7B\%5Cinput\%7By\%7D~z\#t="), h
+        assert h.startswith(r"https://example.com/v?a=1&b=x\%7D\%7Binput\%7By\%7D~z\#t="), h
 
 
 @pytest.mark.parametrize(

@@ -64,6 +64,7 @@ def sample_frames(video: Path, out_dir: Path, interval_s: float, small_edge: int
         old.unlink()  # a retried job must not mix in frames from an earlier run
 
     args = ["ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "info", "-y", *safe_input(video), "-map", "0:v:0", "-an"]
+    args += ["-t", str(settings.max_duration_s)]  # enforce the limit while decoding, not only from metadata
     args += [
         "-vf",
         select_filter(interval_s),

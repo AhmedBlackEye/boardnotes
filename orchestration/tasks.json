@@ -1,6 +1,6 @@
 {
  "project": "BoardNotes",
- "updated": "2026-11-14T18:55Z",
+ "updated": "2026-11-14T19:20Z",
  "status_flow": [
   "todo",
   "building",
@@ -130,59 +130,59 @@
    "title": "Video check and audio extraction (ffprobe/ffmpeg)",
    "phase": "P1",
    "owner": "agent-A",
-   "status": "in_review",
+   "status": "changes_requested",
    "depends_on": [],
    "acceptance": "probe() reports duration, size, streams, warnings; clear VideoCheckError messages; audio is mono 16 kHz wav",
    "checks": {
     "make_check": "pass",
-    "V1_review": "pending",
-    "V2_tests": "pending",
-    "V3_security": "pending"
+    "V1_review": "pass",
+    "V2_tests": "pass (31 tests)",
+    "V3_security": "changes requested (1 medium)"
    },
    "branch": "task/A-video-frames",
    "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/3",
    "notes": "Security follow-up (automated scan): ffprobe/ffmpeg must use file: input + -protocol_whitelist file and a format whitelist (mov,mp4,matroska,webm,avi) to block HLS/concat playlists reading local files or URLs. Lead verifies before merge.",
-   "updated": "2026-11-14T18:55Z"
+   "updated": "2026-11-14T19:20Z"
   },
   {
    "id": "A-2",
    "title": "Frame sampling every 3 s + small copies for the cheap pass",
    "phase": "P1",
    "owner": "agent-A",
-   "status": "in_review",
+   "status": "changes_requested",
    "depends_on": [],
    "acceptance": "Correct frame count/timestamps on a generated test video; small copies ≤768px",
    "checks": {
     "make_check": "pass",
-    "V1_review": "pending",
-    "V2_tests": "pending",
-    "V3_security": "pending"
+    "V1_review": "pass",
+    "V2_tests": "pass (31 tests)",
+    "V3_security": "changes requested (1 medium)"
    },
    "branch": "task/A-video-frames",
    "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/3",
    "notes": "",
-   "updated": "2026-11-14T18:55Z"
+   "updated": "2026-11-14T19:20Z"
   },
   {
    "id": "A-3",
    "title": "Keyframe selection: Haiku glance + de-duplicate by text, not pixels",
    "phase": "P1",
    "owner": "agent-A",
-   "status": "in_review",
+   "status": "changes_requested",
    "depends_on": [
     "A-2"
    ],
    "acceptance": "Handles camera moves and occlusion; keeps the clearest frame per new writing; offline tests with FakeLLM",
    "checks": {
     "make_check": "pass",
-    "V1_review": "pending",
-    "V2_tests": "pending",
-    "V3_security": "pending"
+    "V1_review": "pass",
+    "V2_tests": "pass (31 tests)",
+    "V3_security": "changes requested (1 medium)"
    },
    "branch": "task/A-video-frames",
    "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/3",
    "notes": "",
-   "updated": "2026-11-14T18:55Z"
+   "updated": "2026-11-14T19:20Z"
   },
   {
    "id": "B-1",
@@ -195,13 +195,13 @@
    "checks": {
     "make_check": "pass",
     "V1_review": "changes requested",
-    "V2_tests": "pending",
-    "V3_security": "pending"
+    "V2_tests": "pass (50 tests)",
+    "V3_security": "changes requested (1 medium)"
    },
    "branch": "task/B-board-notes",
    "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/1",
    "notes": "",
-   "updated": "2026-11-14T18:40Z"
+   "updated": "2026-11-14T19:20Z"
   },
   {
    "id": "B-2",
@@ -216,13 +216,13 @@
    "checks": {
     "make_check": "pass",
     "V1_review": "changes requested",
-    "V2_tests": "pending",
-    "V3_security": "pending"
+    "V2_tests": "pass (50 tests)",
+    "V3_security": "changes requested (1 medium)"
    },
    "branch": "task/B-board-notes",
    "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/1",
    "notes": "",
-   "updated": "2026-11-14T18:40Z"
+   "updated": "2026-11-14T19:20Z"
   },
   {
    "id": "B-3",
@@ -237,13 +237,13 @@
    "checks": {
     "make_check": "pass",
     "V1_review": "changes requested",
-    "V2_tests": "pending",
-    "V3_security": "pending"
+    "V2_tests": "pass (50 tests)",
+    "V3_security": "changes requested (1 medium)"
    },
    "branch": "task/B-board-notes",
    "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/1",
    "notes": "",
-   "updated": "2026-11-14T18:40Z"
+   "updated": "2026-11-14T19:20Z"
   },
   {
    "id": "B-4",
@@ -258,72 +258,72 @@
    "checks": {
     "make_check": "pass",
     "V1_review": "changes requested",
-    "V2_tests": "pending",
-    "V3_security": "pending"
+    "V2_tests": "pass (50 tests)",
+    "V3_security": "changes requested (1 medium)"
    },
    "branch": "task/B-board-notes",
    "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/1",
    "notes": "",
-   "updated": "2026-11-14T18:40Z"
+   "updated": "2026-11-14T19:20Z"
   },
   {
    "id": "C-1",
    "title": "Transcription with ElevenLabs (fake mode reads fixtures)",
    "phase": "P1",
    "owner": "agent-C",
-   "status": "in_review",
+   "status": "changes_requested",
    "depends_on": [],
    "acceptance": "Word timestamps grouped into segments; main speaker labelled lecturer; works offline",
    "checks": {
     "make_check": "pass",
-    "V1_review": "pending",
-    "V2_tests": "pending",
-    "V3_security": "pending"
+    "V1_review": "changes requested (2 medium)",
+    "V2_tests": "3 of 49 failing (TeX injection)",
+    "V3_security": "changes requested (1 medium)"
    },
    "branch": "task/C-audio-pdf",
    "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/2",
    "notes": "",
-   "updated": "2026-11-14T18:40Z"
+   "updated": "2026-11-14T19:20Z"
   },
   {
    "id": "C-2",
    "title": "PDF rendering: per lecture and whole module",
    "phase": "P1",
    "owner": "agent-C",
-   "status": "in_review",
+   "status": "changes_requested",
    "depends_on": [],
    "acceptance": "HTML template matching Figma S6; Draft marks; clickable timestamps; real PDF from fixture data",
    "checks": {
     "make_check": "pass",
-    "V1_review": "pending",
-    "V2_tests": "pending",
-    "V3_security": "pending"
+    "V1_review": "changes requested (2 medium)",
+    "V2_tests": "3 of 49 failing (TeX injection)",
+    "V3_security": "changes requested (1 medium)"
    },
    "branch": "task/C-audio-pdf",
    "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/2",
    "notes": "",
-   "updated": "2026-11-14T18:40Z"
+   "updated": "2026-11-14T19:20Z"
   },
   {
    "id": "C-3",
    "title": "LaTeX (.tex) export",
    "phase": "P1",
    "owner": "agent-C",
-   "status": "in_review",
+   "status": "changes_requested",
    "depends_on": [
     "C-2"
    ],
    "acceptance": "Compilable .tex from LectureDetail",
    "checks": {
     "make_check": "pass",
-    "V1_review": "pending",
-    "V2_tests": "pending",
-    "V3_security": "pending"
+    "V1_review": "changes requested (2 medium)",
+    "V2_tests": "3 of 49 failing (TeX injection)",
+    "V3_security": "changes requested (1 medium)"
    },
    "branch": "task/C-audio-pdf",
    "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/2",
    "notes": "Security follow-up (automated scan): tex.py must use an allowlist for maths commands (reject ^^, @, \\[ \\( etc.) and percent-encode \\href URLs. Lead verifies before merge.",
-   "updated": "2026-11-14T18:40Z"
+   "updated": "2026-11-14T19:20Z"
   },
   {
    "id": "D-1",

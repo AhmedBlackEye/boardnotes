@@ -132,7 +132,9 @@ async def claim_next_job(pool: Pool) -> str | None:
         )
         if row is None:
             return None
-        await execute(conn, "update jobs set detail = 'Starting', updated_at = now() where lecture_id = %(lec)s", {"lec": row["lecture_id"]})
+        await execute(
+            conn, "update jobs set detail = 'Starting', updated_at = now() where lecture_id = %(lec)s", {"lec": row["lecture_id"]}
+        )
         return row["lecture_id"]
 
 
@@ -157,7 +159,18 @@ async def save_blocks(pool: Pool, lecture_id: str, blocks: list[BoardBlock], key
     for b in blocks:
         frame = nearest_keyframe(keyframes, b.best_frame_s)
         rows.append(
-            (b.id, lecture_id, b.type.value, b.text, b.latex, b.confidence, b.first_seen_s, b.best_frame_s, b.bbox, str(frame.path) if frame else None)
+            (
+                b.id,
+                lecture_id,
+                b.type.value,
+                b.text,
+                b.latex,
+                b.confidence,
+                b.first_seen_s,
+                b.best_frame_s,
+                b.bbox,
+                str(frame.path) if frame else None,
+            )
         )
     async with pool.connection() as conn:
         await execute(conn, "delete from board_blocks where lecture_id = %(lec)s", {"lec": lecture_id})
@@ -197,7 +210,15 @@ async def save_notes(pool: Pool, lecture_id: str, notes: list[SectionNotes]) -> 
                     """insert into bullets (section_id, ord, text, latex, confidence, board_block_ids, transcript_ranges)
                        values (%s, %s, %s, %s, %s, %s, %s)""",
                     [
-                        (row["id"], i, b.text, b.latex, b.confidence, b.board_block_ids, Jsonb([r.model_dump() for r in b.transcript_ranges]))
+                        (
+                            row["id"],
+                            i,
+                            b.text,
+                            b.latex,
+                            b.confidence,
+                            b.board_block_ids,
+                            Jsonb([r.model_dump() for r in b.transcript_ranges]),
+                        )
                         for i, b in enumerate(section.bullets)
                     ],
                 )

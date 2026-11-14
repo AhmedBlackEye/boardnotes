@@ -3,8 +3,10 @@
 import asyncio
 import mimetypes
 from pathlib import Path
+from typing import Annotated
 
-from fastapi import APIRouter, Path as PathParam
+from fastapi import APIRouter
+from fastapi import Path as PathParam
 from fastapi.responses import FileResponse
 
 from app import repo
@@ -15,7 +17,7 @@ from app.media import inside, lecture_dir, make_snapshot
 from app.state import AppState, ConnDep, StateDep
 
 router = APIRouter(tags=["lectures"])
-SafeId = PathParam(pattern=repo.ID_PATTERN)
+SafeId = Annotated[str, PathParam(pattern=repo.ID_PATTERN)]
 
 
 @router.get("/lectures")
@@ -92,8 +94,8 @@ async def snapshot(
     user: CurrentUser,
     state: StateDep,
     conn: ConnDep,
-    lecture_id: str = SafeId,
-    block_id: str = SafeId,
+    lecture_id: SafeId,
+    block_id: SafeId,
 ) -> FileResponse:
     await repo.visible_lecture(conn, lecture_id, user)
     path = await ensure_snapshot(state, conn, lecture_id, block_id)

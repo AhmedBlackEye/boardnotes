@@ -149,7 +149,9 @@ async def sections(conn: Conn, lecture_id: str) -> list[Section]:
 
 async def transcript(conn: Conn, lecture_id: str) -> list[TranscriptLine]:
     rows = await fetch_all(
-        conn, "select start_s, end_s, speaker, text from transcript_segments where lecture_id = %(lec)s order by start_s", {"lec": lecture_id}
+        conn,
+        "select start_s, end_s, speaker, text from transcript_segments where lecture_id = %(lec)s order by start_s",
+        {"lec": lecture_id},
     )
     return [TranscriptLine.model_validate(r) for r in rows]
 
@@ -215,8 +217,14 @@ async def suggestion(conn: Conn, suggestion_id: str, me: str) -> Suggestion | No
     return suggestion_from_row(row) if row else None
 
 
-async def suggestions_for_bullet(conn: Conn, bullet_id: str, me: str) -> list[Suggestion]:
-    rows = await fetch_all(conn, f"{_SUGGESTION_SQL} where g.bullet_id = %(b)s order by upvotes desc, g.created_at", {"me": me, "b": bullet_id})
+async def suggestions_for_bullet(conn: Conn, bullet_id: str, me: str, *, see_flagged: bool = True) -> list[Suggestion]:
+    """Suggestions on a bullet, most upvoted first. Flagged ones are hidden from everyone but their author unless `see_flagged`."""
+    rows = await fetch_all(
+        conn,
+        f"""{_SUGGESTION_SQL} where g.bullet_id = %(b)s and (%(all)s or not g.flagged or g.author_id = %(me)s)
+            order by upvotes desc, g.created_at""",
+        {"me": me, "b": bullet_id, "all": see_flagged},
+    )
     return [suggestion_from_row(r) for r in rows]
 
 

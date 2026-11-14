@@ -1,5 +1,9 @@
 [
  {
+  "at": "2026-11-14T19:45:00Z",
+  "text": "A (video & frames) verified after one fix round: code review, 31 independent tests and security review all pass. Ready to merge."
+ },
+ {
   "at": "2026-11-14T19:20:00Z",
   "text": "First reviews done for A, B, C: 130 independent tests written (A and B all pass; C 3 failing on LaTeX injection). All three in fix round 1, mainly medium security findings."
  },

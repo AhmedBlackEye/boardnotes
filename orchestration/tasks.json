@@ -1,6 +1,6 @@
 {
  "project": "BoardNotes",
- "updated": "2026-11-14T19:20Z",
+ "updated": "2026-11-14T19:45Z",
  "status_flow": [
   "todo",
   "building",
@@ -130,45 +130,45 @@
    "title": "Video check and audio extraction (ffprobe/ffmpeg)",
    "phase": "P1",
    "owner": "agent-A",
-   "status": "changes_requested",
+   "status": "verified",
    "depends_on": [],
    "acceptance": "probe() reports duration, size, streams, warnings; clear VideoCheckError messages; audio is mono 16 kHz wav",
    "checks": {
     "make_check": "pass",
     "V1_review": "pass",
-    "V2_tests": "pass (31 tests)",
-    "V3_security": "changes requested (1 medium)"
+    "V2_tests": "pass",
+    "V3_security": "pass (round 2)"
    },
    "branch": "task/A-video-frames",
    "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/3",
-   "notes": "Security follow-up (automated scan): ffprobe/ffmpeg must use file: input + -protocol_whitelist file and a format whitelist (mov,mp4,matroska,webm,avi) to block HLS/concat playlists reading local files or URLs. Lead verifies before merge.",
-   "updated": "2026-11-14T19:20Z"
+   "notes": "ffmpeg input hardening done in fix round 1; security re-review passed.",
+   "updated": "2026-11-14T19:45Z"
   },
   {
    "id": "A-2",
    "title": "Frame sampling every 3 s + small copies for the cheap pass",
    "phase": "P1",
    "owner": "agent-A",
-   "status": "changes_requested",
+   "status": "verified",
    "depends_on": [],
    "acceptance": "Correct frame count/timestamps on a generated test video; small copies ≤768px",
    "checks": {
     "make_check": "pass",
     "V1_review": "pass",
-    "V2_tests": "pass (31 tests)",
-    "V3_security": "changes requested (1 medium)"
+    "V2_tests": "pass",
+    "V3_security": "pass (round 2)"
    },
    "branch": "task/A-video-frames",
    "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/3",
    "notes": "",
-   "updated": "2026-11-14T19:20Z"
+   "updated": "2026-11-14T19:45Z"
   },
   {
    "id": "A-3",
    "title": "Keyframe selection: Haiku glance + de-duplicate by text, not pixels",
    "phase": "P1",
    "owner": "agent-A",
-   "status": "changes_requested",
+   "status": "verified",
    "depends_on": [
     "A-2"
    ],
@@ -176,13 +176,13 @@
    "checks": {
     "make_check": "pass",
     "V1_review": "pass",
-    "V2_tests": "pass (31 tests)",
-    "V3_security": "changes requested (1 medium)"
+    "V2_tests": "pass",
+    "V3_security": "pass (round 2)"
    },
    "branch": "task/A-video-frames",
    "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/3",
    "notes": "",
-   "updated": "2026-11-14T19:20Z"
+   "updated": "2026-11-14T19:45Z"
   },
   {
    "id": "B-1",

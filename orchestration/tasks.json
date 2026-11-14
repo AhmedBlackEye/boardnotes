@@ -1,6 +1,6 @@
 {
  "project": "BoardNotes",
- "updated": "2026-11-14T17:05Z",
+ "updated": "2026-11-14T18:10Z",
  "status_flow": [
   "todo",
   "building",
@@ -189,17 +189,17 @@
    "title": "Board reading with Sonnet (parallel, rate-limited)",
    "phase": "P1",
    "owner": "agent-B",
-   "status": "building",
+   "status": "in_review",
    "depends_on": [],
    "acceptance": "Prompt + concurrency limit; uses untrusted= for nothing user-written; tests with FakeLLM",
    "checks": {
-    "make_check": "pending",
+    "make_check": "pass",
     "V1_review": "pending",
     "V2_tests": "pending",
     "V3_security": "pending"
    },
    "branch": "task/B-board-notes",
-   "pr": null,
+   "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/1",
    "notes": "",
    "updated": "2026-11-14T17:05Z"
   },
@@ -208,19 +208,19 @@
    "title": "Merge readings across frames into board blocks",
    "phase": "P1",
    "owner": "agent-B",
-   "status": "building",
+   "status": "in_review",
    "depends_on": [
     "B-1"
    ],
    "acceptance": "Same writing seen in many frames becomes one block; partial readings replaced by fuller ones; first_seen/best_frame correct",
    "checks": {
-    "make_check": "pending",
+    "make_check": "pass",
     "V1_review": "pending",
     "V2_tests": "pending",
     "V3_security": "pending"
    },
    "branch": "task/B-board-notes",
-   "pr": null,
+   "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/1",
    "notes": "",
    "updated": "2026-11-14T17:05Z"
   },
@@ -229,19 +229,19 @@
    "title": "Plan sections and write notes with citations (Opus)",
    "phase": "P1",
    "owner": "agent-B",
-   "status": "building",
+   "status": "in_review",
    "depends_on": [
     "B-2"
    ],
    "acceptance": "Outputs match SectionPlan/SectionNotes; transcript passed as untrusted data",
    "checks": {
-    "make_check": "pending",
+    "make_check": "pass",
     "V1_review": "pending",
     "V2_tests": "pending",
     "V3_security": "pending"
    },
    "branch": "task/B-board-notes",
-   "pr": null,
+   "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/1",
    "notes": "",
    "updated": "2026-11-14T17:05Z"
   },
@@ -250,19 +250,19 @@
    "title": "Citation checker + LaTeX render check",
    "phase": "P1",
    "owner": "agent-B",
-   "status": "building",
+   "status": "in_review",
    "depends_on": [
     "B-3"
    ],
    "acceptance": "Unsupported bullets dropped or flagged; bad LaTeX detected; pure-code tests",
    "checks": {
-    "make_check": "pending",
+    "make_check": "pass",
     "V1_review": "pending",
     "V2_tests": "pending",
     "V3_security": "pending"
    },
    "branch": "task/B-board-notes",
-   "pr": null,
+   "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/1",
    "notes": "",
    "updated": "2026-11-14T17:05Z"
   },

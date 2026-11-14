@@ -1,5 +1,13 @@
 [
  {
+  "at": "2026-11-14T18:10:00Z",
+  "text": "Build resumed with tiered models: Sonnet builders and reviewers, Opus security review and escalation. Frontend running separately for an early test version."
+ },
+ {
+  "at": "2026-11-14T18:00:00Z",
+  "text": "Previous build session stopped mid-run; all unfinished work saved as WIP commits. B (board AI & notes) finished: PR #1."
+ },
+ {
   "at": "2026-11-14T17:05:00Z",
   "text": "Phase 1 started: agents A–E building in parallel, each followed by code review, independent tests and security review."
  },

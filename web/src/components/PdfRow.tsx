@@ -10,7 +10,7 @@ export function PdfRow({ title, meta, status, action }: { title: string; meta: s
         <p className="text-[12px] text-tertiary">{meta}</p>
       </div>
       {status}
-      <div className="w-[110px] shrink-0 text-right">{action}</div>
+      <div className="min-w-[110px] shrink-0 text-right">{action}</div>
     </div>
   );
 }

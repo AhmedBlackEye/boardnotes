@@ -23,10 +23,10 @@ export function Button({ variant = "primary", block, className, type = "button",
     <button
       type={type}
       className={cx(
-        "inline-flex items-center justify-center gap-1.5 rounded-md px-4 py-2 text-[13px] font-semibold leading-[18px] transition-colors",
+        "inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-md px-4 py-2 text-[13px] font-semibold leading-[18px] transition-colors",
         "focus-visible:outline-none focus-visible:shadow-[var(--focus-ring)] disabled:cursor-not-allowed disabled:opacity-50",
         STYLES[variant],
-        block && "w-full flex-1",
+        block && "w-full",
         className,
       )}
       {...rest}

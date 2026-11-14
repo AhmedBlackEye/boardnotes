@@ -14,3 +14,10 @@ Newest first. Add an entry whenever you change a contract, a dependency, or how 
 - **Demo login instead of real auth.** Seeded users (one lecturer, three students) with a signed session cookie.
   University login is out of scope for the hackathon.
 - **PDF via HTML + headless Chromium**, reusing the same layout as the web notes, plus a .tex export.
+- **Local Postgres via Podman or Docker** (`make db` picks whichever works; docker compose isn't installed here).
+- **Module paths for pipeline stages** (so parallel branches line up): `pipeline/video.py` (probe_video, extract_audio),
+  `pipeline/keyframes.py` (select_keyframes), `pipeline/board.py` (read_board, merge_blocks), `pipeline/notes.py`
+  (plan_sections, write_notes), `pipeline/citations.py` (validate_citations, check_latex), `pipeline/transcribe.py`
+  (transcribe), `pipeline/pdf.py` (render_pdf, render_module_pdf), `pipeline/tex.py` (export_tex).
+- **One branch + PR per agent workstream** during the parallel build (one commit per task), instead of one PR per task,
+  to keep five agents from colliding on shared files. Only the lead edits `orchestration/tasks.json`.

@@ -4,11 +4,17 @@ setup:            ## install everything
 	cd server && uv sync
 	cd web && pnpm install
 
-db:               ## start local Postgres (schema loads from supabase/migrations on first start)
-	docker compose up -d --wait db
+DB_NAME := boardnotes-db
+CONTAINER ?= $(shell command -v podman >/dev/null 2>&1 && echo podman || echo docker)
 
-db-down:
-	docker compose down -v
+db:               ## start local Postgres on :5433 (schema loads from supabase/migrations on first start)
+	@$(CONTAINER) start $(DB_NAME) >/dev/null 2>&1 || $(CONTAINER) run -d --name $(DB_NAME) \
+		-e POSTGRES_USER=boardnotes -e POSTGRES_PASSWORD=boardnotes -e POSTGRES_DB=boardnotes \
+		-p 5433:5432 -v $(CURDIR)/supabase/migrations:/docker-entrypoint-initdb.d:ro,Z docker.io/library/postgres:16 >/dev/null
+	@until $(CONTAINER) exec $(DB_NAME) pg_isready -U boardnotes >/dev/null 2>&1; do sleep 1; done; echo "Postgres ready on localhost:5433"
+
+db-down:          ## stop and delete the local database
+	-$(CONTAINER) rm -f $(DB_NAME)
 
 contracts:        ## regenerate JSON schemas + web TypeScript types from server/app/contracts
 	cd server && uv run python ../scripts/export_contracts.py

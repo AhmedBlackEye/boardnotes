@@ -1,5 +1,22 @@
 [
- {"at": "2026-11-14T17:40:00Z", "text": "Phase 0 committed: contracts, offline AI fakes, pipeline interfaces, schema, CI, docs."},
- {"at": "2026-11-14T17:05:00Z", "text": "Private GitHub repo created: AhmedBlackEye/boardnotes."},
- {"at": "2026-11-14T16:20:00Z", "text": "Figma design system and prototype finished (21 components, 11 screens, 2 flows)."}
+ {
+  "at": "2026-11-14T17:05:00Z",
+  "text": "Phase 1 started: agents A–E building in parallel, each followed by code review, independent tests and security review."
+ },
+ {
+  "at": "2026-11-14T16:55:00Z",
+  "text": "Progress dashboard live; local Postgres running via Podman."
+ },
+ {
+  "at": "2026-11-14T17:40:00Z",
+  "text": "Phase 0 committed: contracts, offline AI fakes, pipeline interfaces, schema, CI, docs."
+ },
+ {
+  "at": "2026-11-14T17:05:00Z",
+  "text": "Private GitHub repo created: AhmedBlackEye/boardnotes."
+ },
+ {
+  "at": "2026-11-14T16:20:00Z",
+  "text": "Figma design system and prototype finished (21 components, 11 screens, 2 flows)."
+ }
 ]

@@ -5,4 +5,5 @@ Turns lecture videos into cited notes and PDFs. It reads the board, listens to t
 Built for Imperial AI Hack 2026 (Reply "AI on Campus").
 
 - Design: Figma file "BoardNotes Prototype"
-- Progress: see `orchestration/tasks.json`
+- Progress dashboard: https://claude.ai/artifact/UU933UYSd7RvH8yPPxYYX7 (ask the owner for access)
+- Task list: `orchestration/tasks.json` (`make progress`)

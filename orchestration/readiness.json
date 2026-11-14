@@ -1,0 +1,8 @@
+[
+ {"label": "Demo clip in fixtures/video", "state": "pending", "value": "Waiting for clip"},
+ {"label": "API keys (Anthropic, ElevenLabs)", "state": "pending", "value": "Not needed until integration"},
+ {"label": "Supabase cloud project", "state": "pending", "value": "Not needed until integration"},
+ {"label": "End-to-end run on demo clip", "state": "pending", "value": "Phase 2"},
+ {"label": "Student + lecturer browser tests", "state": "pending", "value": "Phase 2"},
+ {"label": "Accuracy / cost / time report", "state": "pending", "value": "Phase 2"}
+]

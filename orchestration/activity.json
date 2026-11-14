@@ -1,5 +1,9 @@
 [
  {
+  "at": "2026-11-14T23:05:00Z",
+  "text": "E (frontend) merged after one fix round. main: 350 server + 97 web tests pass. 4 of 5 workstreams merged; D in its final fix round."
+ },
+ {
   "at": "2026-11-14T22:50:00Z",
   "text": "C (audio & PDF) merged after lead security fixes; CI now installs Chromium for PDF tests. main: 350 tests pass. D: tests and security pass after fixes, code re-review running. E: fixing review findings."
  },

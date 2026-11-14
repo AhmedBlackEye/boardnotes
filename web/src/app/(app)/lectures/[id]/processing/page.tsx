@@ -9,31 +9,15 @@ import { StatusPill } from "@/components/StatusPill";
 import { TopBar } from "@/components/TopBar";
 import { VideoPlayer } from "@/components/VideoPlayer";
 import { ViewSwitch } from "@/components/ViewSwitch";
-import type { JobProgress, JobStage } from "@/contracts/JobProgress";
+import type { JobProgress } from "@/contracts/JobProgress";
 import { api } from "@/lib/client";
 import { cx } from "@/lib/cx";
 import { useAsync } from "@/lib/hooks";
 import { useSession } from "@/lib/session";
+import { STEPS, stepState } from "@/lib/steps";
 
-/** The four steps shown to the lecturer, each covering one or more pipeline stages. */
-const STEPS: { title: string; stages: JobStage[] }[] = [
-  { title: "Checked the video", stages: ["check_video"] },
-  { title: "Listened to the lecture", stages: ["transcribe"] },
-  { title: "Reading the board", stages: ["select_frames", "read_board", "merge_blocks"] },
-  { title: "Writing notes and PDF", stages: ["section", "write_notes", "render_pdf"] },
-];
-const ORDER: JobStage[] = ["check_video", "transcribe", "select_frames", "read_board", "merge_blocks", "section", "write_notes", "render_pdf", "done"];
-
-type StepState = "done" | "active" | "waiting";
-
-function stepState(step: number, stage: JobStage): StepState {
-  const idx = ORDER.indexOf(stage);
-  if (stage === "done") return "done";
-  const first = ORDER.indexOf(STEPS[step]!.stages[0]!);
-  const last = ORDER.indexOf(STEPS[step]!.stages[STEPS[step]!.stages.length - 1]!);
-  if (idx > last) return "done";
-  return idx >= first ? "active" : "waiting";
-}
+/** Board text shown on the simulated player in mock mode (the mock processing lecture is L24). */
+const MOCK_BOARD = "f(x) = xᵀAx\nxᵀAx > 0 for all x ≠ 0\n⇒ A positive definite";
 
 export default function ProcessingPage() {
   const { id } = useParams<{ id: string }>();
@@ -47,17 +31,18 @@ export default function ProcessingPage() {
   }, [id]);
 
   // Section text arrives as the job writes it: reload the lecture whenever another section is ready.
+  // The progress stream closes itself once the job is done or failed; reload then too for the final title and PDF.
   const ready = job?.sections_ready ?? 0;
+  const stage = job?.stage ?? "check_video";
+  const done = stage === "done";
   const reload = lecture.reload;
   useEffect(() => {
-    if (ready > 0) reload();
-  }, [ready, reload]);
+    if (ready > 0 || done) reload();
+  }, [ready, done, reload]);
 
   if (me && me.role !== "lecturer") redirect("/lectures");
 
   const d = lecture.data;
-  const stage = job?.stage ?? "check_video";
-  const done = stage === "done";
   const pct = Math.round((job?.progress ?? 0) * 100);
   const sections = d?.sections ?? [];
   const shown = sections.slice(0, ready);
@@ -78,7 +63,7 @@ export default function ProcessingPage() {
       />
       <div className="grid gap-6 p-8 lg:grid-cols-2">
         <div className="flex flex-col gap-4">
-          <VideoPlayer src={d?.video_url || null} boardText={"f(x) = xᵀAx\nxᵀAx > 0 for all x ≠ 0\n⇒ A positive definite"} durationS={d?.summary.duration_s ?? 6900} />
+          <VideoPlayer src={d?.video_url || null} boardText={api.mode === "mock" ? MOCK_BOARD : (d?.board_blocks[0]?.text ?? "")} durationS={d?.summary.duration_s ?? 0} />
           <div className="flex flex-col gap-4 rounded-lg border border-default bg-surface p-4 shadow-card" data-testid="steps">
             {STEPS.map((s, i) => {
               const st = job ? stepState(i, stage) : "waiting";
@@ -109,7 +94,7 @@ export default function ProcessingPage() {
                 </div>
               );
             })}
-            {(job?.error || lost) && <p className="text-[13px] text-danger">{job?.error ?? "Lost connection to the progress feed. Reload to reconnect."}</p>}
+            {(job?.error || (lost && !done)) && <p className="text-[13px] text-danger">{job?.error ?? "Lost connection to the progress feed. Reload to reconnect."}</p>}
           </div>
         </div>
         <div className="flex flex-col gap-3">

@@ -44,7 +44,9 @@ export function SourcePanel({
   const block = blocks[0];
   const first = source.data?.transcript[0];
   const start = seek?.t ?? firstStart(bullet);
-  const item = review.data?.find((i) => i.bullet_id === bullet.id && i.suggestion);
+  // The open review item for this point: the top student fix if there is one, else the uncertain reading itself.
+  const forBullet = (review.data ?? []).filter((i) => i.bullet_id === bullet.id);
+  const item = forBullet.find((i) => i.suggestion) ?? forBullet[0];
   const top = item?.suggestion ?? null;
 
   async function decide(decision: "approve" | "edit") {
@@ -83,7 +85,7 @@ export function SourcePanel({
       {mode === "lecturer" && top && (
         <AiVerdict verdict={top.verdict ?? "unclear"} reason={`Top student fix: “${top.proposed_text}” · ${top.upvotes} upvotes. ${top.verdict_reason ?? ""}`} />
       )}
-      {mode === "lecturer" && editing && <TextField multiline label="Edited text" value={text} onChange={(e) => setText(e.target.value)} />}
+      {mode === "lecturer" && editing && <TextField multiline maxLength={1000} label="Edited text" value={text} onChange={(e) => setText(e.target.value)} />}
       {error && <p className="text-[13px] text-danger">{error}</p>}
 
       <div className="flex-1" />
@@ -111,8 +113,8 @@ export function SourcePanel({
             <Button variant="secondary" block disabled={!item} title={item ? undefined : "No open review item for this point"} onClick={() => setEditing(true)}>
               Edit text
             </Button>
-            <Button variant="success" block disabled={busy || !top} onClick={() => decide("approve")}>
-              Accept fix
+            <Button variant="success" block disabled={busy || !item} onClick={() => decide("approve")}>
+              {item && !top ? "Looks right" : "Accept fix"}
             </Button>
           </>
         )}

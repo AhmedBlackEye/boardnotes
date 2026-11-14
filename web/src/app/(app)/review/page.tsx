@@ -16,6 +16,7 @@ import { api } from "@/lib/client";
 import { cx } from "@/lib/cx";
 import { formatClock, plural } from "@/lib/format";
 import { useAsync } from "@/lib/hooks";
+import { approveEach } from "@/lib/batch";
 import { useSession } from "@/lib/session";
 
 type Sort = "urgent" | "upvoted" | "section";
@@ -100,7 +101,7 @@ function ReviewCard({ item, onDone }: { item: ReviewItem; onDone: () => void }) 
         )}
         {s?.verdict_reason && <AiVerdict verdict={s.verdict ?? "unclear"} reason={s.verdict_reason} />}
         {!s && <p className="text-[12px] text-secondary">Low-confidence reading from the AI. No student fixes yet.</p>}
-        {editing && <TextField multiline label="Edited text" value={text} onChange={(e) => setText(e.target.value)} />}
+        {editing && <TextField multiline maxLength={1000} label="Edited text" value={text} onChange={(e) => setText(e.target.value)} />}
         {error && <p className="text-[13px] text-danger">{error}</p>}
       </div>
       <div className="flex w-[140px] shrink-0 flex-col gap-2">
@@ -121,11 +122,9 @@ function ReviewCard({ item, onDone }: { item: ReviewItem; onDone: () => void }) 
             <Button variant="secondary" disabled={busy} onClick={() => setEditing(true)}>
               Edit
             </Button>
-            {s && (
-              <Button variant="ghost" disabled={busy} onClick={() => decide("reject")}>
-                Reject
-              </Button>
-            )}
+            <Button variant="ghost" disabled={busy} onClick={() => decide("reject")} title={s ? undefined : "The reading is wrong: remove this line from the notes"}>
+              {s ? "Reject" : "Remove line"}
+            </Button>
           </>
         )}
       </div>
@@ -145,6 +144,7 @@ export default function ReviewPage() {
   const lectures = useAsync(() => api.listLectures(), []);
   const [sort, setSort] = useState<Sort>("urgent");
   const [busy, setBusy] = useState(false);
+  const [bulk, setBulk] = useState<{ error: boolean; text: string } | null>(null);
   if (me && me.role !== "lecturer") redirect("/lectures");
 
   const list = sortItems(items.data ?? [], sort);
@@ -158,12 +158,12 @@ export default function ReviewPage() {
 
   async function approveAll() {
     setBusy(true);
-    try {
-      for (const i of agreed) await api.decide(i.id, { decision: "approve" });
-      items.reload();
-    } finally {
-      setBusy(false);
-    }
+    setBulk(null);
+    const r = await approveEach(agreed.map((i) => i.id), (id) => api.decide(id, { decision: "approve" }));
+    setBulk(r.failed ? { error: true, text: `Approved ${r.done} of ${agreed.length}. ${plural(r.failed, "fix", "fixes")} could not be approved (${r.firstError}).` } : { error: false, text: `Approved ${plural(r.done, "fix", "fixes")}.` });
+    items.reload();
+    lectures.reload();
+    setBusy(false);
   }
 
   return (
@@ -207,6 +207,11 @@ export default function ReviewPage() {
             </div>
             <p className="text-[12px] text-tertiary">Ranked by confidence, upvotes and AI check</p>
           </div>
+          {bulk && (
+            <p role="status" className={cx("text-[13px]", bulk.error ? "text-danger" : "text-secondary")}>
+              {bulk.text}
+            </p>
+          )}
           {items.error && <p className="text-[13px] text-danger">{items.error}</p>}
           {list.map((item) => (
             <ReviewCard key={item.id} item={item} onDone={items.reload} />

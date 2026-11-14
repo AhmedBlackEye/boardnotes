@@ -48,3 +48,30 @@ def test_compiles(tmp_path: Path) -> None:
     cmd = ["pdflatex", "-interaction=nonstopmode", "-halt-on-error", "-no-shell-escape", "n.tex"]
     r = subprocess.run(cmd, cwd=tmp_path, capture_output=True, timeout=120)  # noqa: S603
     assert r.returncode == 0, r.stdout.decode()[-800:]
+
+
+@pytest.mark.parametrize(
+    "evil",
+    [
+        r"\write18{id}",
+        r"\input1",
+        r"\InputIfFileExists{x}{}{}",
+        r"\scantokens{x}",
+        r"\newread\x",
+        r"x \] \input{/etc/passwd} \[",
+        r"\(x\)",
+        r"^^5cinput{/etc/passwd}",
+        r"\let\a\b",
+        r"\expandafter\x",
+        r"\begin{verbatim}x\end{verbatim}",
+        "é",
+        r"a_@",
+    ],
+)
+def test_safe_math_rejects(evil: str) -> None:
+    assert safe_math(evil) is None
+
+
+def test_safe_math_accepts_normal_formulas() -> None:
+    for f in [r"\det(A - \lambda I) = 0", r"\frac{a}{b} \, x^2", r"\begin{pmatrix} a & b \\ c & d \end{pmatrix}"]:
+        assert safe_math(f) == f

@@ -41,10 +41,40 @@ _UNICODE = {
     "·": r"$\cdot$",
 }
 
-_DANGEROUS = re.compile(
-    r"\\(input|include|write|read|openin|openout|immediate|catcode|def|edef|gdef|csname|usepackage|"
-    r"newcommand|renewcommand|special|href|url|verb)\b|%"
+_GREEK = {
+    "α": "alpha", "β": "beta", "γ": "gamma", "δ": "delta", "ε": "varepsilon", "ζ": "zeta", "η": "eta",
+    "θ": "theta", "ι": "iota", "κ": "kappa", "μ": "mu", "ν": "nu", "ξ": "xi", "π": "pi", "ρ": "rho",
+    "σ": "sigma", "τ": "tau", "υ": "upsilon", "φ": "varphi", "χ": "chi", "ψ": "psi", "ω": "omega",
+    "Γ": "Gamma", "Δ": "Delta", "Θ": "Theta", "Λ": "Lambda", "Ξ": "Xi", "Π": "Pi", "Σ": "Sigma",
+    "Φ": "Phi", "Ψ": "Psi", "Ω": "Omega",
+    "≈": "approx", "∞": "infty", "∂": "partial", "∇": "nabla", "∑": "sum", "∫": "int", "√": "surd",
+    "±": "pm", "∈": "in", "∀": "forall", "∃": "exists", "∝": "propto", "≡": "equiv", "←": "leftarrow",
+    "⇒": "Rightarrow", "⇔": "Leftrightarrow",
+}  # fmt: skip
+_UNICODE.update({ch: "$\\" + name + "$" for ch, name in _GREEK.items()})
+
+# Formulas are untrusted. Only these control words may appear in a formula; anything else (\input, \write18, ...)
+# makes the whole formula fall back to an escaped monospace line.
+_MATH_COMMANDS = frozenset(
+    """alpha beta gamma delta epsilon varepsilon zeta eta theta vartheta iota kappa lambda mu nu xi pi varpi rho
+    sigma varsigma tau upsilon phi varphi chi psi omega Gamma Delta Theta Lambda Xi Pi Sigma Upsilon Phi Psi Omega
+    frac dfrac tfrac sqrt sum prod int oint lim limsup liminf sup inf max min log ln exp sin cos tan cot sec csc
+    arcsin arccos arctan sinh cosh tanh det dim ker deg gcd arg mod bmod pmod Pr
+    cdot cdots ldots dots vdots ddots times div pm mp ast star circ bullet oplus otimes
+    leq geq neq approx sim simeq cong equiv propto ll gg le ge ne
+    in notin subset supset subseteq supseteq cup cap setminus emptyset varnothing forall exists nexists neg land lor
+    to rightarrow leftarrow leftrightarrow Rightarrow Leftarrow Leftrightarrow mapsto implies iff
+    infty partial nabla prime hbar ell angle perp parallel mid
+    left right big Big bigg Bigg langle rangle lceil rceil lfloor rfloor
+    hat bar vec tilde dot ddot overline underline widehat widetilde overbrace underbrace
+    mathbf mathrm mathcal mathbb mathit mathsf mathtt boldsymbol text textbf textit operatorname
+    binom choose quad qquad begin end""".split()
 )
+_MATH_ENVS = frozenset({"matrix", "pmatrix", "bmatrix", "vmatrix", "Vmatrix", "cases", "aligned", "array"})
+_CONTROL = re.compile(r"\\([A-Za-z]+|.)", re.DOTALL)
+_BEGIN_END = re.compile(r"\\(?:begin|end)(?![A-Za-z])")
+_BEGIN_END_ENV = re.compile(r"\\(?:begin|end)(?![A-Za-z])\s*\{([^{}]*)\}")
+_SAFE_SYMBOLS = frozenset(" ,;:!{}|\\")  # \, \; \: \! \{ \} \| \\ and "\ " (control space)
 
 
 def escape_tex(text: str) -> str:
@@ -57,19 +87,38 @@ def escape_tex(text: str) -> str:
             out.append(_UNICODE[ch])
         elif ord(ch) < 32:
             out.append(" ")
+        elif ord(ch) > 0x17F:
+            out.append("?")  # outside what pdflatex (T1 + utf8) can print without extra setup
         else:
             out.append(ch)
     return "".join(out)
 
 
 def safe_math(latex: str) -> str | None:
-    """Return the formula if it is safe to embed in display maths, else None."""
+    r"""Return the formula if it is safe to embed in display maths, else None.
+
+    Allowlist: printable ASCII only, no `$ % # @ ^^`, every control word in _MATH_COMMANDS, only maths
+    environments, and no \[ \] \( \) (which could close or open maths mode).
+    """
     latex = latex.strip()
-    if not latex or _DANGEROUS.search(latex) or "$" in latex:
+    if not latex or not all(" " <= ch < "\x7f" for ch in latex):
         return None
+    if any(bad in latex for bad in ("$", "%", "#", "@", "^^")):
+        return None
+    for m in _CONTROL.finditer(latex):
+        name = m.group(1)
+        if name.isalpha():
+            if name not in _MATH_COMMANDS:
+                return None
+        elif name not in _SAFE_SYMBOLS:
+            return None
+    envs = [m.group(1) for m in _BEGIN_END_ENV.finditer(latex)]
+    if any(e not in _MATH_ENVS for e in envs) or len(envs) != len(_BEGIN_END.findall(latex)):
+        return None  # unknown environment, or \begin / \end without a plain {env} argument
     depth = 0
-    for ch in latex:
-        depth += (ch == "{") - (ch == "}")
+    for m in re.finditer(r"\\.|[{}]", latex):
+        tok = m.group(0)
+        depth += (tok == "{") - (tok == "}")
         if depth < 0:
             return None
     return latex if depth == 0 else None
@@ -84,7 +133,7 @@ def _stamp(link: str | None, seconds: float) -> str:
     return f" \\href{{{_href(link)}}}{{[{format_time(seconds)}]}}" if link else ""
 
 
-def export_tex(lecture: LectureDetail) -> str:
+def export_tex(lecture: LectureDetail, include_drafts: bool = True) -> str:
     """Pipeline stage: one lecture's notes as a complete LaTeX document."""
     video_url = safe_video_url(lecture.video_url)
     first_seen = {b.id: b.first_seen_s for b in lecture.board_blocks}
@@ -106,6 +155,8 @@ def export_tex(lecture: LectureDetail) -> str:
     if status != LectureStatus.VERIFIED:
         lines.append(r"\noindent\draftmark" + "\n")
     for section in sorted(lecture.sections, key=lambda s: s.order):
+        if not include_drafts and section.status != SectionStatus.VERIFIED:
+            continue
         lines.append(f"\\section{{{escape_tex(section.heading)}}}")
         if section.status != SectionStatus.VERIFIED:
             lines.append(r"\noindent\draftmark")

@@ -135,7 +135,9 @@ async def request_scribe(audio: Path, api_key: str, client: httpx.AsyncClient | 
 
 async def transcribe(audio: Path, client: httpx.AsyncClient | None = None) -> list[TranscriptSegment]:
     """Pipeline stage (Transcriber): audio file -> transcript segments."""
-    if settings.llm_mode == "fake" or not settings.elevenlabs_api_key:
+    if settings.llm_mode == "fake":
         return load_fake_transcript()
+    if not settings.elevenlabs_api_key:
+        raise RuntimeError("ELEVENLABS_API_KEY is not set: cannot transcribe in live mode (refusing to use the fixture)")
     response = await request_scribe(audio, settings.elevenlabs_api_key, client)
     return segments_from_response(response)

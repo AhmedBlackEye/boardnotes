@@ -151,7 +151,15 @@ def test_tex_draft_marks():
 
 @pytest.mark.parametrize(
     "evil",
-    [r"\write18{rm -rf /}", r"\input{/etc/passwd}", r"\immediate\write18{id}", r"\openin1=/etc/passwd", r"\catcode`\%=12", r"\def\x{y}", r"\usepackage{shellesc}"],
+    [
+        r"\write18{rm -rf /}",
+        r"\input{/etc/passwd}",
+        r"\immediate\write18{id}",
+        r"\openin1=/etc/passwd",
+        r"\catcode`\%=12",
+        r"\def\x{y}",
+        r"\usepackage{shellesc}",
+    ],
 )
 def test_tex_dangerous_latex_neutralised(evil):
     l = lec()
@@ -165,7 +173,9 @@ def test_tex_dangerous_latex_neutralised(evil):
 
 def test_tex_evil_text_escaped():
     l = lec()
-    s = l.sections[0].model_copy(update={"heading": r"\input{/etc/passwd} $x$ ~ ^ _", "bullets": [bullet("e", 1, r"\write18{x} {}", ranges=[(1.0, 2.0)])]})
+    s = l.sections[0].model_copy(
+        update={"heading": r"\input{/etc/passwd} $x$ ~ ^ _", "bullets": [bullet("e", 1, r"\write18{x} {}", ranges=[(1.0, 2.0)])]}
+    )
     out = X.export_tex(l.model_copy(update={"sections": [s]}))
     body = out.split("\\begin{document}")[1]
     assert "\\input{/etc" not in body
@@ -191,7 +201,10 @@ def _compile(tmp_path, source: str):
     (tmp_path / "n.tex").write_text(source)
     return subprocess.run(
         ["pdflatex", "-interaction=nonstopmode", "-halt-on-error", "-no-shell-escape", "n.tex"],
-        cwd=tmp_path, capture_output=True, text=True, timeout=120,
+        cwd=tmp_path,
+        capture_output=True,
+        text=True,
+        timeout=120,
     )
 
 

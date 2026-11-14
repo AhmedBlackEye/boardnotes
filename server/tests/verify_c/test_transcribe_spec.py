@@ -120,10 +120,12 @@ def test_fake_mode_reads_fixture_offline(monkeypatch, tmp_path):
     assert "lecturer" in {s.speaker for s in out}
 
 
-def test_no_key_falls_back_to_fixture(monkeypatch, tmp_path):
+def test_live_no_key_raises_not_fixture(monkeypatch, tmp_path):
+    # Changed from "falls back to fixture": review (V1/V3) found fabricated transcripts in live mode break citations.
     monkeypatch.setattr(settings, "llm_mode", "live")
     monkeypatch.setattr(settings, "elevenlabs_api_key", None)
-    assert run(T.transcribe(tmp_path / "x.wav"))
+    with pytest.raises(RuntimeError):
+        run(T.transcribe(tmp_path / "x.wav"))
 
 
 def test_live_mode_uses_mock_transport_and_sends_key(monkeypatch, tmp_path):

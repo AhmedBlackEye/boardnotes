@@ -24,6 +24,8 @@ class Settings(BaseSettings):
 
     max_upload_bytes: int = 4 * 1024**3
     frame_interval_s: float = 3.0
+    max_duration_s: float = 4 * 3600  # longer recordings are rejected at upload
+    max_frames: int = 5000  # cap on frames sampled (and glanced at) per video
 
 
 settings = Settings()

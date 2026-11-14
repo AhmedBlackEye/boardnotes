@@ -20,6 +20,18 @@ NO_SOUND = "This video has no sound. BoardNotes needs the lecturer's voice, so p
 LOW_RES = "Resolution below 720p: board text may be hard to read"
 
 
+ALLOWED_FORMATS = frozenset({"mov", "mp4", "matroska", "webm", "avi"})  # demuxers we accept (format_name parts)
+
+
+def safe_input(video: Path) -> list[str]:
+    """Input options for untrusted files: local files only, and only ordinary video containers.
+
+    The `file:` prefix stops names like `http:...` or `concat:...` being read as URLs, `-protocol_whitelist file`
+    blocks network and nested protocols, and `-format_whitelist` refuses playlist/script formats (HLS, concat, ...).
+    """
+    return ["-protocol_whitelist", "file", "-format_whitelist", ",".join(sorted(ALLOWED_FORMATS)), "-i", f"file:{video.resolve()}"]
+
+
 def run_tool(args: list[str], timeout_s: float = FFMPEG_TIMEOUT_S) -> subprocess.CompletedProcess[str]:
     """Run ffmpeg/ffprobe with a fixed argument list. Raises CalledProcessError on a non-zero exit."""
     return subprocess.run(args, capture_output=True, text=True, check=True, timeout=timeout_s)  # noqa: S603
@@ -29,7 +41,7 @@ def _probe_json(video: Path) -> dict[str, Any]:
     if not video.is_file():
         raise VideoCheckError(UNREADABLE)
     try:
-        result = run_tool(["ffprobe", "-v", "error", "-print_format", "json", "-show_format", "-show_streams", str(video)], 120)
+        result = run_tool(["ffprobe", "-v", "error", "-print_format", "json", "-show_format", "-show_streams", *safe_input(video)], 120)
         data = json.loads(result.stdout)
     except (subprocess.CalledProcessError, subprocess.TimeoutExpired, json.JSONDecodeError) as e:
         raise VideoCheckError(UNREADABLE) from e
@@ -66,6 +78,9 @@ def probe_video(video: Path) -> VideoInfo:
         raise VideoCheckError(NO_PICTURE)
     if not sounds:
         raise VideoCheckError(NO_SOUND)
+    names = set(str(data["format"].get("format_name", "")).split(","))
+    if not names & ALLOWED_FORMATS:
+        raise VideoCheckError(UNREADABLE)
 
     picture = pictures[0]
     width, height = int(picture.get("width") or 0), int(picture.get("height") or 0)
@@ -86,7 +101,7 @@ def extract_audio(video: Path, out_dir: Path) -> Path:
     """Write the soundtrack as mono 16 kHz 16-bit WAV (what speech-to-text expects). Matches `AudioExtractor`."""
     out_dir.mkdir(parents=True, exist_ok=True)
     out = out_dir / "audio.wav"
-    args = ["ffmpeg", "-nostdin", "-v", "error", "-y", "-i", str(video), "-map", "0:a:0", "-vn"]
+    args = ["ffmpeg", "-nostdin", "-v", "error", "-y", *safe_input(video), "-map", "0:a:0", "-vn"]
     args += ["-ac", "1", "-ar", "16000", "-c:a", "pcm_s16le", str(out)]
     try:
         run_tool(args)

@@ -33,7 +33,7 @@ def test_probe_rejects_video_without_sound(tmp_path: Path) -> None:
 
 def test_probe_rejects_audio_only(tmp_path: Path) -> None:
     with pytest.raises(VideoCheckError, match="no picture"):
-        probe_video(make_audio_only(tmp_path / "a.wav"))
+        probe_video(make_audio_only(tmp_path / "a.m4a"))
 
 
 @pytest.mark.parametrize("content", [b"", b"this is not a video at all" * 100])
@@ -71,3 +71,31 @@ def test_extract_audio_without_sound_raises(tmp_path: Path) -> None:
     video = make_video(tmp_path / "v.mp4", duration_s=1, audio=False)
     with pytest.raises(VideoCheckError):
         extract_audio(video, tmp_path / "out")
+
+
+def test_probe_rejects_hls_playlist_renamed_to_mp4(tmp_path: Path) -> None:
+    (tmp_path / "seg.ts").write_bytes(b"x")
+    evil = tmp_path / "lecture.mp4"
+    evil.write_text("#EXTM3U\n#EXT-X-VERSION:3\n#EXTINF:1,\nseg.ts\n#EXT-X-ENDLIST\n")
+    with pytest.raises(VideoCheckError):
+        probe_video(evil)
+
+
+def test_probe_rejects_concat_file_renamed_to_mp4(tmp_path: Path) -> None:
+    real = make_video(tmp_path / "real.mp4", duration_s=1)
+    evil = tmp_path / "lecture.mp4"
+    evil.write_text(f"ffconcat version 1.0\nfile '{real}'\n")
+    with pytest.raises(VideoCheckError):
+        probe_video(evil)
+
+
+def test_extract_audio_rejects_concat_file(tmp_path: Path) -> None:
+    real = make_video(tmp_path / "real.mp4", duration_s=1)
+    evil = tmp_path / "lecture.mp4"
+    evil.write_text(f"ffconcat version 1.0\nfile '{real}'\n")
+    with pytest.raises(VideoCheckError):
+        extract_audio(evil, tmp_path / "out")
+
+
+def test_probe_accepts_dash_leading_filename(tmp_path: Path) -> None:
+    assert probe_video(make_video(tmp_path / "-v.mp4", duration_s=1)).has_video

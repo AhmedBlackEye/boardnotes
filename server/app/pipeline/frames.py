@@ -13,7 +13,7 @@ from pathlib import Path
 from PIL import Image
 
 from .interfaces import VideoCheckError
-from .video import run_tool
+from .video import run_tool, safe_input
 
 SMALL_EDGE = 768
 FULL_DIR = "frames"
@@ -58,7 +58,7 @@ def sample_frames(video: Path, out_dir: Path, interval_s: float, small_edge: int
     for old in [*full_dir.glob("frame_*.jpg"), *small_dir.glob("frame_*.jpg")]:
         old.unlink()  # a retried job must not mix in frames from an earlier run
 
-    args = ["ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "info", "-y", "-i", str(video), "-map", "0:v:0", "-an"]
+    args = ["ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "info", "-y", *safe_input(video), "-map", "0:v:0", "-an"]
     args += ["-vf", select_filter(interval_s), "-fps_mode", "vfr", "-q:v", "2", str(full_dir / "frame_%05d.jpg")]
     try:
         result = run_tool(args)

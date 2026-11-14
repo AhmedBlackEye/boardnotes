@@ -1,6 +1,6 @@
 {
  "project": "BoardNotes",
- "updated": "2026-11-14T21:40Z",
+ "updated": "2026-11-14T22:10Z",
  "status_flow": [
   "todo",
   "building",
@@ -455,103 +455,103 @@
    "title": "App shell: sidebar, top bar, view switch, roles, API client with mock mode",
    "phase": "P1",
    "owner": "agent-E",
-   "status": "building",
+   "status": "in_review",
    "depends_on": [],
    "acceptance": "Student/lecturer navigation as in Figma; works on mock data without the API",
    "checks": {
-    "make_check": "pending",
+    "make_check": "pass",
     "V1_review": "pending",
     "V2_tests": "pending",
     "V3_security": "pending"
    },
    "branch": "task/E-frontend",
-   "pr": null,
+   "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/5",
    "notes": "",
-   "updated": "2026-11-14T21:00Z"
+   "updated": "2026-11-14T22:10Z"
   },
   {
    "id": "E-2",
    "title": "UI components matching Figma",
    "phase": "P1",
    "owner": "agent-E",
-   "status": "building",
+   "status": "in_review",
    "depends_on": [
     "E-1"
    ],
    "acceptance": "Button, Status pill, Source chip, Note bullet, Board snapshot, Video player, Suggestion card, Chat message, etc.",
    "checks": {
-    "make_check": "pending",
+    "make_check": "pass",
     "V1_review": "pending",
     "V2_tests": "pending",
     "V3_security": "pending"
    },
    "branch": "task/E-frontend",
-   "pr": null,
+   "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/5",
    "notes": "",
-   "updated": "2026-11-14T21:00Z"
+   "updated": "2026-11-14T22:10Z"
   },
   {
    "id": "E-3",
    "title": "Student pages S1–S6",
    "phase": "P1",
    "owner": "agent-E",
-   "status": "building",
+   "status": "in_review",
    "depends_on": [
     "E-2"
    ],
    "acceptance": "Matches Figma frames; KaTeX formulas; source panel; suggest fix; ask; course notes; PDF preview",
    "checks": {
-    "make_check": "pending",
+    "make_check": "pass",
     "V1_review": "pending",
     "V2_tests": "pending",
     "V3_security": "pending"
    },
    "branch": "task/E-frontend",
-   "pr": null,
+   "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/5",
    "notes": "",
-   "updated": "2026-11-14T21:00Z"
+   "updated": "2026-11-14T22:10Z"
   },
   {
    "id": "E-4",
    "title": "Lecturer pages L1–L5",
    "phase": "P1",
    "owner": "agent-E",
-   "status": "building",
+   "status": "in_review",
    "depends_on": [
     "E-2"
    ],
    "acceptance": "Upload, processing, review queue, lecturer notes, view-as-student",
    "checks": {
-    "make_check": "pending",
+    "make_check": "pass",
     "V1_review": "pending",
     "V2_tests": "pending",
     "V3_security": "pending"
    },
    "branch": "task/E-frontend",
-   "pr": null,
+   "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/5",
    "notes": "",
-   "updated": "2026-11-14T21:00Z"
+   "updated": "2026-11-14T22:10Z"
   },
   {
    "id": "E-5",
    "title": "Figma Code Connect for the main components",
    "phase": "P1",
    "owner": "agent-E",
-   "status": "building",
+   "status": "in_review",
    "depends_on": [
     "E-2"
    ],
    "acceptance": "Main Figma components mapped to React components",
    "checks": {
-    "make_check": "pending",
+    "make_check": "pass",
     "V1_review": "pending",
     "V2_tests": "pending",
     "V3_security": "pending"
    },
    "branch": "task/E-frontend",
-   "pr": null,
-   "notes": "",
-   "updated": "2026-11-14T21:00Z"
+   "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/5",
+   "notes": "Code Connect files committed; publishing needs an Org/Enterprise Figma plan (npx figma connect publish).",
+   "updated": "2026-11-14T22:10Z"
   },
   {
    "id": "I-1",

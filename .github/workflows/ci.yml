@@ -36,3 +36,47 @@ jobs:
         run: cd server && uv run playwright install --with-deps chromium
       - run: make contracts
       - run: make check
+
+  # Browser tests on their own, so a failure here shows separately from "check". Offline: fake models, no keys.
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      db:
+        image: postgres:16
+        env:
+          POSTGRES_USER: boardnotes
+          POSTGRES_PASSWORD: boardnotes
+          POSTGRES_DB: boardnotes
+        ports: ["5433:5432"]
+        options: >-
+          --health-cmd "pg_isready -U boardnotes" --health-interval 2s --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: web/pnpm-lock.yaml
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - run: make setup
+      - name: Install Chromium (browser tests and server-side PDF rendering)
+        run: |
+          cd web && pnpm exec playwright install --with-deps chromium
+          cd ../server && uv run playwright install chromium
+      - name: Browser tests
+        run: cd web && pnpm test:e2e
+        env:
+          CI: "true"
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            web/playwright-report/
+            web/test-results/
+          retention-days: 7

@@ -1,4 +1,4 @@
-.PHONY: migrate setup db db-down contracts check check-server check-web test dev-server dev-web progress
+.PHONY: migrate setup db db-down contracts check check-server check-web test e2e dev-server dev-web progress
 
 setup:            ## install everything
 	cd server && uv sync
@@ -31,6 +31,9 @@ check-server:
 
 check-web:
 	cd web && pnpm -s typecheck && pnpm -s lint && pnpm -s test
+
+e2e:              ## browser tests: real API (fake models, throwaway db) on :8010 + web on :3010 (needs `make db`)
+	cd web && pnpm exec playwright install chromium && pnpm -s test:e2e
 
 dev-server:
 	cd server && uv run uvicorn app.main:app --reload --port 8000

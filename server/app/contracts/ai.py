@@ -116,12 +116,27 @@ class TimeRange(Strict):
     end_s: float = Field(ge=0)
 
 
+NoteKind = Literal["point", "definition", "example", "result", "remark"]
+
+
 class NoteBullet(Strict):
     text: str
     latex: str | None
     board_block_ids: list[str]
     transcript_ranges: list[TimeRange]
     confidence: float = Field(ge=0, le=1)
+    kind: NoteKind = Field(
+        default="point",
+        description="point: ordinary note; definition: defines a term; example: a worked example or exercise; "
+        "result: a key formula, rule or theorem; remark: an important intuition or warning",
+    )
+    title: str | None = Field(
+        default=None, description="Short box title for definition/example/result/remark (e.g. the term defined), else null"
+    )
+    figure_block_id: str | None = Field(
+        default=None,
+        description="Id of the one diagram block worth showing with this note, or null. Never a blank or repeated diagram",
+    )
 
 
 class SaidNotWritten(Strict):

@@ -31,8 +31,22 @@ Write concise study notes for one section of a lecture, from {start:.1f}s to {en
 The data below gives the section heading, the board writing for this section (one line per block: id, time it first
 appeared in seconds, type, confidence, content) and the transcript (one line per segment: [start-end seconds] speaker: words).
 
+Organise first, then write
+- Write the notes a strong student would keep, not a transcript of everything on the board. Merge points that repeat
+  the same idea, put them in a logical order (motivation, definitions, method, worked example, result), and leave out
+  housekeeping (e.g. "pause the video", "let's start", greetings) and anything a student would not revise from.
+- Aim for the fewest bullets that cover the section fully: usually 3-8.
+
 Bullets
 - Each bullet states one idea, definition, result or step a student needs. Keep bullets short; no filler.
+- kind: "definition" when the bullet defines a term; "example" for a worked example or exercise (put its steps in the
+  text and the key line in latex); "result" for a key formula, rule or conclusion worth boxing; "remark" for an
+  important intuition or warning; otherwise "point". Use boxes sparingly: most bullets are "point".
+- title: for definition/example/result/remark, a short box title (the term defined, or e.g. "Solving by substitution");
+  otherwise null.
+- figure_block_id: the id of a diagram block (type diagram, marked "figure:" below) that genuinely helps this bullet,
+  or null. Show each drawing at most once in the section, never pick one marked "(no figure)", and skip diagrams that
+  only show empty axes or repeat a drawing already chosen.
 - Every bullet MUST cite its sources: board_block_ids (ids exactly as given, e.g. "b_0003") and/or transcript_ranges
   (start_s/end_s copied from transcript segments in this section). Cite only what you used. A bullet you cannot cite
   must be left out.
@@ -46,7 +60,8 @@ Bullets
 
 said_not_written
 - List important things the lecturer said that are not on the board (an intuition, a warning, a reason), each with
-  at_s set to the start of the transcript segment where it was said. Leave the list empty if there are none.
+  at_s set to the start of the transcript segment where it was said. At most 3, only content a student would revise
+  from (no instructions about the video), and nothing already stated in a bullet. Leave the list empty if there are none.
 
 Set heading to the given section heading, start_s to {start:.1f} and end_s to {end:.1f}."""
 
@@ -56,11 +71,15 @@ def _one_line(text: str) -> str:
 
 
 def render_blocks(blocks: list[BoardBlock]) -> str:
-    """One compact line per block: `b_0001 @12.0s math conf=0.82: <latex or text>`."""
+    """One compact line per block: `b_0001 @12.0s math conf=0.82: <latex or text>`. Diagram blocks also say what
+    their figure shows, or "(no figure)" when curation hid it (blank or repeated)."""
     lines = []
     for b in blocks:
         content = b.latex if b.latex else b.text
-        lines.append(f"{b.id} @{b.first_seen_s:.1f}s {b.type} conf={b.confidence:.2f}: {_one_line(content)}")
+        line = f"{b.id} @{b.first_seen_s:.1f}s {b.type} conf={b.confidence:.2f}: {_one_line(content)}"
+        if b.type == "diagram":
+            line += f" | figure: {_one_line(b.figure.caption)}" if b.figure is not None else " | (no figure)"
+        lines.append(line)
     return "\n".join(lines) or "(no board writing)"
 
 

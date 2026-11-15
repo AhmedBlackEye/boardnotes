@@ -67,11 +67,14 @@ export type BoardBlocks = BoardBlock[];
 export type PdfUrl = string | null;
 export type BoardBlockIds = string[];
 export type Confidence1 = number;
+export type FigureBlockId = string | null;
 export type Id1 = string;
+export type Kind1 = "point" | "definition" | "example" | "result" | "remark";
 export type Latex1 = string | null;
 export type OpenSuggestions = number;
 export type Order = number;
 export type Text1 = string;
+export type Title1 = string | null;
 export type EndS = number;
 export type StartS = number;
 export type TranscriptRanges = TimeRange[];
@@ -110,7 +113,7 @@ export type SectionCount = number;
  * via the `definition` "LectureStatus".
  */
 export type LectureStatus = "uploading" | "processing" | "draft" | "in_review" | "verified" | "failed";
-export type Title1 = string;
+export type Title2 = string;
 export type UploadedAt = string;
 export type VideoUrl = string;
 
@@ -199,11 +202,14 @@ export interface Section {
 export interface Bullet {
   board_block_ids: BoardBlockIds;
   confidence: Confidence1;
+  figure_block_id?: FigureBlockId;
   id: Id1;
+  kind?: Kind1;
   latex: Latex1;
   open_suggestions: OpenSuggestions;
   order: Order;
   text: Text1;
+  title?: Title1;
   transcript_ranges: TranscriptRanges;
   uncertain: Uncertain;
 }
@@ -234,6 +240,6 @@ export interface LectureSummary {
   progress: Progress;
   section_count: SectionCount;
   status: LectureStatus;
-  title: Title1;
+  title: Title2;
   uploaded_at: UploadedAt;
 }

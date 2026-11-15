@@ -85,6 +85,9 @@ export function LectureNotes({ lecture, mode, preview, onChanged }: { lecture: L
   const uncertainTotal = lecture.sections.reduce((n, s) => n + uncertainCount(s), 0);
   const pdf = assetUrl(lecture.pdf_url);
   const figures = figuresByBullet(lecture);
+  const boxNumbers = new Map(
+    lecture.sections.flatMap((s) => s.bullets.filter((b) => (b.kind ?? "point") !== "point").map((b, i) => [b.id, `${s.order}.${i + 1}`] as const)),
+  );
 
   /** Approve a section (or "lecture") and say what happened next to the button. */
   async function verify(at: string, fn: () => Promise<VerifyResult>) {
@@ -202,6 +205,9 @@ export function LectureNotes({ lecture, mode, preview, onChanged }: { lecture: L
               {s.bullets.map((b) => (
                 <NoteBullet
                   key={b.id}
+                  kind={b.kind}
+                  title={b.title}
+                  number={boxNumbers.get(b.id)}
                   text={b.text}
                   latex={b.latex}
                   state={b.id === bulletId ? "selected" : b.uncertain ? "uncertain" : "default"}

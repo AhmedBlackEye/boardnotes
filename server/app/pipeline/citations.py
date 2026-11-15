@@ -72,6 +72,21 @@ def _check_bullet(
     return bullet.model_copy(update={"board_block_ids": ids, "transcript_ranges": ranges, "confidence": confidence}), problems
 
 
+def _check_figure(bullet: NoteBullet, blocks: dict[str, BoardBlock], shown: set[str], dropped: list[str], where: str) -> NoteBullet:
+    """Keep figure_block_id only when it names a diagram that still has a figure and was not already shown; the shown
+    diagram is also cited, so the bullet links to its source."""
+    fid = bullet.figure_block_id
+    if fid is None:
+        return bullet
+    block = blocks.get(fid)
+    if block is None or block.figure is None or fid in shown:
+        dropped.append(f"Removed figure {fid!r} from {where}: unknown, hidden or already shown")
+        return bullet.model_copy(update={"figure_block_id": None})
+    shown.add(fid)
+    ids = bullet.board_block_ids if fid in bullet.board_block_ids else [*bullet.board_block_ids, fid]
+    return bullet.model_copy(update={"board_block_ids": ids})
+
+
 def _said_ok(item: SaidNotWritten, section: SectionNotes, transcript: list[TranscriptSegment]) -> bool:
     in_section = _overlaps(item.at_s, item.at_s, section.start_s, section.end_s)
     return in_section and any(_overlaps(item.at_s, item.at_s, s.start_s, s.end_s) for s in transcript)
@@ -81,6 +96,7 @@ def validate_citations(notes: list[SectionNotes], blocks: list[BoardBlock], tran
     by_id = {b.id: b for b in blocks}
     valid: list[SectionNotes] = []
     dropped: list[str] = []
+    shown: set[str] = set()  # each figure appears once in the whole lecture
     for section in notes:
         kept: list[NoteBullet] = []
         for bullet in section.bullets:
@@ -91,6 +107,7 @@ def validate_citations(notes: list[SectionNotes], blocks: list[BoardBlock], tran
                 continue
             if problems:
                 dropped.append(f"Removed citations from {where}: {'; '.join(problems)}")
+            checked = _check_figure(checked, by_id, shown, dropped, where)
             kept.append(checked)
         said = []
         for item in section.said_not_written:

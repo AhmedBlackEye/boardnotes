@@ -4,7 +4,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from .ai import AnswerCitation, BoardBlock, SaidNotWritten, TimeRange
+from .ai import AnswerCitation, BoardBlock, NoteKind, SaidNotWritten, TimeRange
 from .enums import JobStage, LectureStatus, ReviewDecision, Role, SectionStatus, SuggestionStatus, Verdict
 
 
@@ -46,6 +46,9 @@ class Bullet(Api):
     board_block_ids: list[str]
     transcript_ranges: list[TimeRange]
     open_suggestions: int
+    kind: NoteKind = "point"
+    title: str | None = None
+    figure_block_id: str | None = None
 
 
 class Section(Api):

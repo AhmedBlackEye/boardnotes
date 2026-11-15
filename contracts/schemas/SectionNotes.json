@@ -16,6 +16,32 @@
           "title": "Confidence",
           "type": "number"
         },
+        "figure_block_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Id of the one diagram block worth showing with this note, or null. Never a blank or repeated diagram",
+          "title": "Figure Block Id"
+        },
+        "kind": {
+          "default": "point",
+          "description": "point: ordinary note; definition: defines a term; example: a worked example or exercise; result: a key formula, rule or theorem; remark: an important intuition or warning",
+          "enum": [
+            "point",
+            "definition",
+            "example",
+            "result",
+            "remark"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
         "latex": {
           "anyOf": [
             {
@@ -30,6 +56,19 @@
         "text": {
           "title": "Text",
           "type": "string"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Short box title for definition/example/result/remark (e.g. the term defined), else null",
+          "title": "Title"
         },
         "transcript_ranges": {
           "items": {

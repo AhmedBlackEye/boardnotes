@@ -68,9 +68,9 @@ def test_rate_limiter_drops_idle_keys() -> None:
 def test_weak_session_secret_is_refused_without_demo_login_and_replaced_when_empty() -> None:
     for secret in ("", DEFAULT_SESSION_SECRET):
         with pytest.raises(RuntimeError):
-            check_production_settings(Settings(demo_login=False, session_secret=secret))
-    check_production_settings(Settings(demo_login=False, session_secret="s3cret"))
-    local = Settings(session_secret="")
+            check_production_settings(Settings(_env_file=None, demo_login=False, session_secret=secret))  # type: ignore[call-arg]
+    check_production_settings(Settings(_env_file=None, demo_login=False, session_secret="s3cret"))  # type: ignore[call-arg]
+    local = Settings(_env_file=None, session_secret="")  # type: ignore[call-arg]
     check_production_settings(local)
     assert len(local.session_secret) >= 32
 

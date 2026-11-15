@@ -16,19 +16,19 @@ export function snapshotUrl(lectureId: string, blockId: string): string | null {
   return API_MODE === "mock" ? null : `/snapshots/${encodeURIComponent(lectureId)}/${encodeURIComponent(blockId)}.jpg`;
 }
 
-/** Diagram blocks to draw under each bullet: each figure appears once, under the first bullet that cites it. */
+/** Diagram blocks to draw under each bullet. When the AI chose figures (figure_block_id), only those are shown;
+ * for older notes, at most one per bullet (the first cited diagram). Each figure appears once per lecture. */
 export function figuresByBullet(lecture: LectureDetail): Map<string, BoardBlock[]> {
   const blocks = new Map(lecture.board_blocks.filter((b) => b.figure).map((b) => [b.id, b]));
+  const bullets = lecture.sections.flatMap((s) => s.bullets);
+  const chosen = bullets.some((b) => b.figure_block_id);
   const out = new Map<string, BoardBlock[]>();
-  for (const s of lecture.sections) {
-    for (const bullet of s.bullets) {
-      for (const id of bullet.board_block_ids) {
-        const block = blocks.get(id);
-        if (!block) continue;
-        blocks.delete(id);
-        out.set(bullet.id, [...(out.get(bullet.id) ?? []), block]);
-      }
-    }
+  for (const bullet of bullets) {
+    const ids = chosen ? (bullet.figure_block_id ? [bullet.figure_block_id] : []) : bullet.board_block_ids;
+    const id = ids.find((i) => blocks.has(i));
+    if (!id) continue;
+    out.set(bullet.id, [blocks.get(id)!]);
+    blocks.delete(id);
   }
   return out;
 }

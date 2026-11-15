@@ -119,6 +119,9 @@ def bullet_from_row(row: dict[str, Any]) -> Bullet:
         board_block_ids=list(row["board_block_ids"]),
         transcript_ranges=[TimeRange.model_validate(r) for r in row["transcript_ranges"]],
         open_suggestions=row.get("open_suggestions", 0),
+        kind=row.get("kind") or "point",
+        title=row.get("title"),
+        figure_block_id=row.get("figure_block_id"),
     )
 
 

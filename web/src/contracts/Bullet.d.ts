@@ -7,11 +7,14 @@
 
 export type BoardBlockIds = string[];
 export type Confidence = number;
+export type FigureBlockId = string | null;
 export type Id = string;
+export type Kind = "point" | "definition" | "example" | "result" | "remark";
 export type Latex = string | null;
 export type OpenSuggestions = number;
 export type Order = number;
 export type Text = string;
+export type Title = string | null;
 export type EndS = number;
 export type StartS = number;
 export type TranscriptRanges = TimeRange[];
@@ -20,11 +23,14 @@ export type Uncertain = boolean;
 export interface Bullet {
   board_block_ids: BoardBlockIds;
   confidence: Confidence;
+  figure_block_id?: FigureBlockId;
   id: Id;
+  kind?: Kind;
   latex: Latex;
   open_suggestions: OpenSuggestions;
   order: Order;
   text: Text;
+  title?: Title;
   transcript_ranges: TranscriptRanges;
   uncertain: Uncertain;
 }

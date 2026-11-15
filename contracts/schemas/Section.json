@@ -14,8 +14,32 @@
           "title": "Confidence",
           "type": "number"
         },
+        "figure_block_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Figure Block Id"
+        },
         "id": {
           "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "default": "point",
+          "enum": [
+            "point",
+            "definition",
+            "example",
+            "result",
+            "remark"
+          ],
+          "title": "Kind",
           "type": "string"
         },
         "latex": {
@@ -40,6 +64,18 @@
         "text": {
           "title": "Text",
           "type": "string"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Title"
         },
         "transcript_ranges": {
           "items": {

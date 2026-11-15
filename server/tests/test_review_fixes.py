@@ -264,11 +264,11 @@ async def test_cookie_secure_setting(app: FastAPI, anon: httpx.AsyncClient) -> N
 
 def test_live_mode_needs_a_real_session_secret() -> None:
     with pytest.raises(RuntimeError):
-        check_production_settings(Settings(llm_mode="live"))
+        check_production_settings(Settings(_env_file=None, llm_mode="live"))  # type: ignore[call-arg]
     with pytest.raises(RuntimeError):
-        check_production_settings(Settings(llm_mode="live", session_secret=""))
-    check_production_settings(Settings(llm_mode="live", session_secret="s3cret"))
-    check_production_settings(Settings())
+        check_production_settings(Settings(_env_file=None, llm_mode="live", session_secret=""))  # type: ignore[call-arg]
+    check_production_settings(Settings(_env_file=None, llm_mode="live", session_secret="s3cret"))  # type: ignore[call-arg]
+    check_production_settings(Settings(_env_file=None, ask_llm_mode=None))  # type: ignore[call-arg]
 
 
 def test_snapshot_leaves_no_temp_files(tmp_path: Path) -> None:

@@ -285,3 +285,53 @@ async def redraw_diagrams(blocks: list[BoardBlock], keyframes: list[Keyframe], l
         return await _redraw_one(block, keyframes, llm, sem)
 
     return list(await asyncio.gather(*(one(b) for b in blocks)))
+
+
+# ---------- Curation: show each diagram once, and only when it adds something ----------
+DUPLICATE_SIMILARITY = 0.5  # caption word overlap (Jaccard) above which two diagrams count as the same drawing
+_WORD = re.compile(r"[a-z0-9]+")
+_STOPWORDS = {"a", "an", "the", "of", "with", "and", "on", "in", "to", "is", "at", "for", "labeled", "labelled", "shows", "showing"}
+
+
+def _content_elements(fig: DiagramFigure) -> int:
+    """How much a figure draws: chart elements other than bare labels (a crop or Mermaid counts as content)."""
+    if fig.kind != "chart" or fig.chart is None:
+        return 1
+    return sum(1 for e in fig.chart.elements if e.type != "label")
+
+
+def _caption_words(fig: DiagramFigure) -> set[str]:
+    return {w for w in _WORD.findall(fig.caption.lower()) if w not in _STOPWORDS}
+
+
+def _similar(a: DiagramFigure, b: DiagramFigure) -> bool:
+    wa, wb = _caption_words(a), _caption_words(b)
+    if not wa or not wb:
+        return False
+    return len(wa & wb) / len(wa | wb) >= DUPLICATE_SIMILARITY
+
+
+def curate_figures(blocks: list[BoardBlock]) -> list[BoardBlock]:
+    """Drop figures that add nothing to the notes; the blocks themselves (and their board crops) stay citable.
+
+    - Blank charts: axes with nothing drawn on them (only labels such as the origin "O").
+    - Repeats: the same drawing read from several frames (similar captions). Of each group the most detailed one is
+      kept (most drawn elements; the latest frame on a tie, since a board sketch only gains detail over time)."""
+    figs = [b for b in blocks if b.figure is not None]
+    drop: set[str] = {b.id for b in figs if b.figure is not None and b.figure.kind == "chart" and _content_elements(b.figure) == 0}
+    kept: list[BoardBlock] = []
+    for b in sorted((b for b in figs if b.id not in drop), key=lambda b: b.best_frame_s):
+        assert b.figure is not None
+        twin = next((k for k in kept if k.figure is not None and _similar(k.figure, b.figure)), None)
+        if twin is None:
+            kept.append(b)
+            continue
+        assert twin.figure is not None
+        if _content_elements(b.figure) >= _content_elements(twin.figure):
+            drop.add(twin.id)
+            kept[kept.index(twin)] = b
+        else:
+            drop.add(b.id)
+    if drop:
+        log.info("curated diagrams: hid %d blank or repeated figure(s)", len(drop))
+    return [b.model_copy(update={"figure": None}) if b.id in drop else b for b in blocks]

@@ -7,8 +7,20 @@
 
 export type BoardBlockIds = string[];
 export type Confidence = number;
+/**
+ * Id of the one diagram block worth showing with this note, or null. Never a blank or repeated diagram
+ */
+export type FigureBlockId = string | null;
+/**
+ * point: ordinary note; definition: defines a term; example: a worked example or exercise; result: a key formula, rule or theorem; remark: an important intuition or warning
+ */
+export type Kind = "point" | "definition" | "example" | "result" | "remark";
 export type Latex = string | null;
 export type Text = string;
+/**
+ * Short box title for definition/example/result/remark (e.g. the term defined), else null
+ */
+export type Title = string | null;
 export type EndS = number;
 export type StartS = number;
 export type TranscriptRanges = TimeRange[];
@@ -37,8 +49,11 @@ export interface SectionNotes {
 export interface NoteBullet {
   board_block_ids: BoardBlockIds;
   confidence: Confidence;
+  figure_block_id?: FigureBlockId;
+  kind?: Kind;
   latex: Latex;
   text: Text;
+  title?: Title;
   transcript_ranges: TranscriptRanges;
 }
 /**

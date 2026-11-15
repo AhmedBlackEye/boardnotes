@@ -22,6 +22,7 @@ from app.contracts.enums import JobStage, LectureStatus, SectionStatus
 from app.db import Conn, Pool, execute, fetch_all, fetch_one
 from app.llm.client import LLM
 from app.media import lecture_dir, make_snapshot
+from app.pipeline.diagrams import curate_figures
 from app.pipeline.interfaces import (
     AudioExtractor,
     BlockMerger,
@@ -237,8 +238,9 @@ async def save_notes(pool: Pool, lecture_id: str, notes: list[SectionNotes]) -> 
             assert row is not None
             async with conn.cursor() as cur:
                 await cur.executemany(
-                    """insert into bullets (section_id, ord, text, latex, confidence, board_block_ids, transcript_ranges)
-                       values (%s, %s, %s, %s, %s, %s, %s)""",
+                    """insert into bullets (section_id, ord, text, latex, confidence, board_block_ids, transcript_ranges,
+                                            kind, title, figure_block_id)
+                       values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
                     [
                         (
                             row["id"],
@@ -248,6 +250,9 @@ async def save_notes(pool: Pool, lecture_id: str, notes: list[SectionNotes]) -> 
                             b.confidence,
                             b.board_block_ids,
                             Jsonb([r.model_dump() for r in b.transcript_ranges]),
+                            b.kind,
+                            b.title,
+                            b.figure_block_id,
                         )
                         for i, b in enumerate(section.bullets)
                     ],
@@ -325,6 +330,7 @@ async def run_job(
         # Q-4 diagrams: redraw or crop each diagram block (never fails the job), and keep its board crop on disk.
         await step(JobStage.MERGE_BLOCKS, 0.67, "Redrawing diagrams")
         blocks = await redraw_diagrams_safely(stages.redraw_diagrams, blocks, keyframes, llm, work / "snapshots")
+        blocks = curate_figures(blocks)
 
         await save_blocks(pool, lecture_id, blocks, keyframes)
 

@@ -1,16 +1,20 @@
 import io
 import re
+import unicodedata
 
 import pytest
 from pypdf import PdfReader
 
-from app.contracts.enums import LectureStatus
+from app.contracts.ai import BoardBlock, DiagramFigure
+from app.contracts.api import LectureDetail
+from app.contracts.enums import BlockType, LectureStatus
 from app.pipeline import pdf
-from tests.factories import sample_lecture
+from tests.factories import bullet, sample_lecture
 
 
 def pdf_text(data: bytes) -> str:
-    return "\n".join(page.extract_text() or "" for page in PdfReader(io.BytesIO(data)).pages)
+    # NFKC folds the serif font's ligatures ("ﬁ") back into plain letters.
+    return unicodedata.normalize("NFKC", "\n".join(page.extract_text() or "" for page in PdfReader(io.BytesIO(data)).pages))
 
 
 def pdf_links(data: bytes) -> list[str]:
@@ -91,14 +95,16 @@ def test_html_structure() -> None:
     assert re.search(r'<span class="num">1</span>The characteristic equation', html)
     assert re.search(r'<span class="num">2</span>Trace &amp; determinant', html)
     assert html.index("The characteristic equation") < html.index("Trace &amp; determinant")
-    assert html.count("Draft · not yet verified") >= 1
+    assert html.count('class="draft-mark"') == 1
     # One link to the lecture video at the top; no per-point timestamp links.
     assert html.count('href="http://localhost:3000/lectures/lec_21"') == 1
     assert "#t=" not in html
     assert "Watch the lecture video" in html
     assert 'data-latex="\\det(A - \\lambda I) = 0"' in html
-    assert "Said but not written" in html
-    assert "(uncertain)" in html
+    assert "Said in lecture, not on the board" in html
+    assert '<span class="uncertain">AI unsure</span>' in html
+    # Plain points are a bulleted list; no boxes without a kind.
+    assert '<ul class="bullets">' in html and 'class="box definition"' not in html
 
 
 def test_html_excludes_drafts_when_asked() -> None:
@@ -120,9 +126,80 @@ def test_module_html_has_cover_and_contents() -> None:
     lectures = [sample_lecture(LectureStatus.VERIFIED, "Lecture 1"), sample_lecture(title="Lecture 2")]
     html = pdf.build_module_html(lectures, "Linear <Algebra>")
     assert 'class="cover"' in html and 'class="contents"' in html
-    assert "Linear &lt;Algebra&gt; · complete notes" in html
+    assert "<h1>Linear &lt;Algebra&gt;</h1>" in html and "Complete lecture notes" in html
+    assert '<span class="num">2.1</span>' in html  # module sections are numbered lecture.section
     assert "1 of 2 verified by the lecturer" in html
     assert html.index("Contents") < html.index('<article class="lecture">')
+
+
+def _with_kinds(lec: LectureDetail) -> LectureDetail:
+    s3 = next(s for s in lec.sections if s.id == "s_3")
+    b1, b2 = s3.bullets
+    bullets = [
+        b1.model_copy(update={"kind": "definition", "title": "Eigenvalue <i>"}),
+        b2.model_copy(update={"kind": "example"}),
+        bullet("b_3_3", 3, "A plain point."),
+        bullet("b_3_4", 4, "Worth remembering.", None, [(2100.0, 2110.0)]).model_copy(update={"kind": "result"}),
+    ]
+    return lec.model_copy(update={"sections": [s.model_copy(update={"bullets": bullets}) if s.id == "s_3" else s for s in lec.sections]})
+
+
+def test_boxes_have_type_label_and_section_number() -> None:
+    html = pdf.build_lecture_html(_with_kinds(sample_lecture()))
+    assert 'class="box definition"' in html and 'class="box example"' in html and 'class="box result"' in html
+    assert '<span class="title">Eigenvalue &lt;i&gt;</span><span class="kind">Definition 1.1</span>' in html
+    # No title: the bar shows only the type label; numbering counts boxes within the section.
+    assert '<div class="box-bar"><span class="kind">Example 1.2</span></div>' in html
+    assert '<span class="kind">Key result 1.3</span>' in html
+    # Box text (and the formula) sit inside the box body; the plain point between boxes is a bulleted list.
+    example = html.split('class="box example"', 1)[1].split('class="box result"', 1)[0]
+    assert "Its roots are the eigenvalues." in example
+    assert '<ul class="bullets">' in example and "A plain point." in example
+    definition = html.split('class="box definition"', 1)[1].split('class="box example"', 1)[0]
+    assert 'data-latex="\\det(A - \\lambda I) = 0"' in definition
+
+
+def _figure(caption: str) -> DiagramFigure:
+    return DiagramFigure(kind="crop", chart=None, mermaid=None, caption=caption, redrawn_by_ai=False)
+
+
+def _lecture_with_diagrams(chosen: str | None) -> LectureDetail:
+    lec = sample_lecture()
+    blocks = [
+        BoardBlock(
+            id=i, type=BlockType.DIAGRAM, text="", latex=None, confidence=0.9, first_seen_s=2000.0, best_frame_s=2000.0,
+            bbox=[0, 0, 1, 1], figure=_figure(f"Caption {i}") if i != "blk_none" else None,
+        )
+        for i in ("blk_a", "blk_b", "blk_c", "blk_none")
+    ]  # fmt: skip
+    sections = []
+    for s in lec.sections:
+        bullets = [
+            b.model_copy(
+                update={
+                    "board_block_ids": ["blk_none", "blk_a", "blk_b"] if b.id == "b_3_1" else ["blk_a", "blk_c"],
+                    "figure_block_id": chosen if b.id == "b_4_1" else None,
+                }
+            )
+            for b in s.bullets
+        ]
+        sections.append(s.model_copy(update={"bullets": bullets}))
+    return lec.model_copy(update={"board_blocks": blocks, "sections": sections})
+
+
+def test_without_chosen_figures_each_bullet_shows_at_most_one() -> None:
+    view = pdf.lecture_view(_lecture_with_diagrams(chosen=None))
+    shown = [[f.caption for f in b.figures] for s in view.sections for b in s.bullets]
+    # s_3: b_3_1 -> blk_a (blk_none has no figure; only the first is shown), b_3_2 -> blk_c (blk_a already used)
+    assert shown == [["Caption blk_a"], ["Caption blk_c"], [], []]
+    assert view.sections[0].bullets[0].figures[0].label == "Figure 1.1"
+
+
+def test_chosen_figures_replace_cited_ones() -> None:
+    view = pdf.lecture_view(_lecture_with_diagrams(chosen="blk_b"))
+    shown = [[f.caption for f in b.figures] for s in view.sections for b in s.bullets]
+    assert shown == [[], [], ["Caption blk_b"], []]
+    assert view.sections[1].bullets[0].figures[0].label == "Figure 2.1"
 
 
 def test_header_escapes_title() -> None:
@@ -150,7 +227,7 @@ async def test_render_pdf(chromium_ok: None) -> None:
         "Linear Algebra · Lecture 21",
         "The characteristic equation",
         "Trace & determinant",
-        "DRAFT · NOT YET VERIFIED",
+        "draft, not yet verified",
         "<script>alert('x')</script>",
         "In review · not yet verified",
         "Page 1 of",
@@ -168,8 +245,8 @@ async def test_render_module_pdf(chromium_ok: None) -> None:
     data = await pdf.render_module_pdf(lectures, "Linear Algebra")
     reader = PdfReader(io.BytesIO(data))
     assert len(reader.pages) >= 4  # cover, contents, one page per lecture
-    first = reader.pages[0].extract_text()
-    assert "Linear Algebra · complete notes" in first
+    first = unicodedata.normalize("NFKC", reader.pages[0].extract_text())
+    assert "Linear Algebra" in first and "Complete lecture notes" in first
     assert "Contents" in reader.pages[1].extract_text()
     text = pdf_text(data)
     assert "Lecture 2 · Eigenvalues" in text and "1 of 2 lectures verified" in text

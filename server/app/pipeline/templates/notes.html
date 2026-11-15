@@ -1,6 +1,7 @@
 <!doctype html>
-{#- Printable notes, styled after Figma "S6 · PDF preview". All note text is autoescaped (it is untrusted).
-    Formulas are put in data-latex attributes and rendered by KaTeX (trust off) after load. -#}
+{#- Printable notes in the style of LaTeX course notes (serif type, numbered sections, tcolorbox-style boxes).
+    All note text is autoescaped (it is untrusted). Formulas are put in data-latex attributes and rendered by
+    KaTeX (trust off) after load. -#}
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -8,74 +9,118 @@
 {% if tokens_css %}<link rel="stylesheet" href="{{ tokens_css }}">{% endif %}
 {% if katex_css %}<link rel="stylesheet" href="{{ katex_css }}">{% endif %}
 <style>
+  /* Print palette. The web UI's design tokens (tokens.css) cover the chart colours and status hues; the PDF's
+     text and box colours below deliberately mirror a LaTeX/tcolorbox course-notes look instead. */
+  :root {
+    --pdf-ink: #111;
+    --pdf-muted: #555;
+    --pdf-rule: #999;
+    --pdf-link: #1a3a9c;
+    --pdf-unsure: #b7791f;
+    --box-definition: #1f2fb8;  --box-definition-tint: #eeeefc;
+    --box-example: #c0600a;     --box-example-tint: #fdf4e7;
+    --box-result: #1e7a3c;      --box-result-tint: #ebf6ee;
+    --box-remark: #222;         --box-remark-tint: #f1f1f1;
+    --box-said: #8a8a8a;        --box-said-tint: #f7f7f7;
+  }
   @page { size: A4; }
   * { box-sizing: border-box; }
   html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   body {
     margin: 0;
-    font-family: "Inter", "Helvetica Neue", Arial, system-ui, sans-serif;
-    font-size: 10.5pt;
-    line-height: 1.55;
-    color: var(--color-text-primary);
-    background: var(--color-bg-surface);
+    font-family: "Latin Modern Roman", "LM Roman 10", "CMU Serif", "Computer Modern", Georgia, "Times New Roman", serif;
+    font-size: 11pt;
+    line-height: 1.45;
+    color: var(--pdf-ink);
+    background: #fff;
+    text-rendering: optimizeLegibility;
+    font-kerning: normal;
   }
-  a { color: inherit; text-decoration: none; }
+  p { margin: 0; }
+  a { color: var(--pdf-link); text-decoration: none; }
+  .katex { font-size: 1.1em; }
 
-  /* Module cover + contents */
-  .cover { height: 240mm; display: flex; flex-direction: column; justify-content: center; break-after: page; }
-  .eyebrow { font-size: 9pt; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--color-text-tertiary); }
-  .cover h1 { font-size: 30pt; line-height: 1.15; margin: var(--spacing-sm) 0 var(--spacing-lg); }
-  .cover .meta { color: var(--color-text-secondary); font-size: 11pt; }
-  .track { margin-top: var(--spacing-md); width: 110mm; height: 6px; border-radius: var(--radius-full); background: var(--color-bg-muted); overflow: hidden; }
-  .track > div { height: 100%; background: var(--color-success-default); }
+  /* Module title page + contents */
+  .cover { height: 245mm; display: flex; flex-direction: column; align-items: center; text-align: center; break-after: page; }
+  .cover .top { margin-top: 55mm; width: 100%; }
+  .cover .rule { border: 0; border-top: 1.2pt solid var(--pdf-ink); margin: 0; }
+  .cover .rule.thin { border-top-width: 0.4pt; margin-top: 2pt; }
+  .cover h1 { font-size: 28pt; line-height: 1.2; font-weight: bold; margin: 14pt 0 6pt; }
+  .cover .subtitle { font-size: 14pt; font-style: italic; margin-bottom: 14pt; }
+  .cover .meta { margin-top: 22pt; font-size: 11pt; color: var(--pdf-muted); }
+  .cover .bottom { margin-top: auto; font-size: 10pt; color: var(--pdf-muted); font-style: italic; }
   .contents { break-after: page; }
-  .contents h2 { font-size: 16pt; margin: 0 0 var(--spacing-lg); }
+  .contents h2 { font-size: 20pt; font-weight: bold; margin: 0 0 18pt; }
   .contents ol { list-style: none; padding: 0; margin: 0; }
-  .contents > ol > li { padding: var(--spacing-sm) 0; border-bottom: 1px solid var(--color-border-default); }
-  .contents .row { display: flex; justify-content: space-between; gap: var(--spacing-lg); font-weight: 600; }
-  .contents .sections { color: var(--color-text-secondary); font-size: 9.5pt; margin-top: var(--spacing-2xs); }
+  .contents > ol > li { margin-bottom: 10pt; break-inside: avoid; }
+  .contents .row { display: flex; gap: 10pt; font-weight: bold; }
+  .contents .row .n { min-width: 1.6em; }
+  .contents .row .t { flex: 1; }
+  .contents .row .st { font-weight: normal; font-style: italic; font-size: 9.5pt; color: var(--pdf-muted); }
+  .contents .sections { list-style: none; padding: 0; margin: 2pt 0 0 calc(1.6em + 10pt); }
+  .contents .sections li { display: flex; gap: 8pt; }
+  .contents .sections .n { min-width: 2.2em; }
 
-  /* Lecture */
+  /* Lecture heading (chapter-like) */
   .lecture + .lecture { break-before: page; }
-  .lecture-head { margin-bottom: var(--spacing-lg); padding-bottom: var(--spacing-md); border-bottom: 1px solid var(--color-border-default); }
-  .lecture-head h1 { font-size: 18pt; line-height: 1.25; margin: 0 0 var(--spacing-2xs); }
-  .lecture-head .meta { color: var(--color-text-secondary); font-size: 9.5pt; }
-  .empty { color: var(--color-text-secondary); font-style: italic; }
+  .lecture-head { margin: 0 0 20pt; }
+  .lecture-head .chapter { font-size: 13pt; font-weight: bold; margin-bottom: 6pt; }
+  .lecture-head h1 { font-size: 22pt; line-height: 1.2; font-weight: bold; margin: 0; }
+  .lecture-head .rule { border: 0; border-top: 0.6pt solid var(--pdf-ink); margin: 8pt 0 5pt; }
+  .lecture-head .meta { display: flex; justify-content: space-between; gap: 12pt; font-size: 9.5pt; color: var(--pdf-muted); font-style: italic; }
+  .lecture-head .video-link { font-style: normal; }
+  .empty { color: var(--pdf-muted); font-style: italic; }
 
-  section.notes { margin: 0 0 var(--spacing-xl); }
-  .section-head { display: flex; align-items: center; justify-content: space-between; gap: var(--spacing-md); margin-bottom: var(--spacing-sm); break-after: avoid; }
-  .section-head h2 { font-size: 13pt; font-weight: 600; margin: 0; }
-  .section-head .num { margin-right: var(--spacing-sm); }
-  .draft-mark {
-    flex: none; font-size: 7.5pt; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
-    color: var(--color-warning-default); background: var(--color-bg-surface);
-    border: 1px solid var(--color-warning-default); border-radius: var(--radius-sm); padding: 2px var(--spacing-sm);
+  /* Sections */
+  section.notes { margin: 0 0 18pt; }
+  .section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12pt; margin: 0 0 7pt; break-after: avoid; }
+  .section-head h2 { font-size: 14pt; line-height: 1.25; font-weight: bold; margin: 0; }
+  .section-head .num { display: inline-block; min-width: 1.9em; margin-right: 0.35em; }
+  .draft-mark { flex: none; font-size: 8.5pt; font-style: italic; color: var(--pdf-unsure); }
+
+  /* Ordinary points */
+  ul.bullets { list-style: none; margin: 0 0 8pt; padding: 0 0 0 1.5em; }
+  ul.bullets > li { position: relative; margin: 0 0 4pt; text-align: justify; hyphens: auto; }
+  ul.bullets > li::before, .box.said li::before { content: "\2022"; position: absolute; left: -1.1em; top: -0.05em; font-size: 1.15em; }
+  ul.bullets > li:last-child { margin-bottom: 0; }
+  .math { margin: 5pt 0; text-align: center; break-inside: avoid; }
+  .math .katex-display { margin: 0; }
+  .math code { font-family: "Latin Modern Mono", "CMU Typewriter Text", Menlo, monospace; font-size: 9.5pt; }
+  .uncertain {
+    font-size: 6.5pt; vertical-align: super; line-height: 0; margin-left: 2pt; white-space: nowrap;
+    color: var(--pdf-unsure); font-style: italic; letter-spacing: .02em;
   }
 
-  ul.bullets { list-style: none; margin: 0; padding: 0; }
-  ul.bullets > li { display: flex; gap: var(--spacing-md); align-items: flex-start; margin-bottom: var(--spacing-sm); break-inside: avoid; }
-  .item { flex: 1; min-width: 0; }
-  .item p { margin: 0; }
-  .math { margin: var(--spacing-xs) 0 var(--spacing-2xs); text-align: center; font-size: 11.5pt; }
-  .math code { font-family: "JetBrains Mono", Menlo, monospace; font-size: 9.5pt; }
-  .uncertain { color: var(--color-warning-default); font-size: 8.5pt; font-weight: 600; margin-left: var(--spacing-2xs); }
-  .chip {
-    flex: none; display: inline-block; font-size: 8.5pt; font-weight: 600; white-space: nowrap;
-    color: var(--color-accent-default); background: var(--color-accent-subtle);
-    border-radius: var(--radius-sm); padding: 1px var(--spacing-sm);
+  /* tcolorbox-style boxes */
+  .box {
+    --c: var(--box-remark); --tint: var(--box-remark-tint);
+    margin: 10pt 0 12pt; border: 1.5px solid var(--c); border-radius: 3px; background: var(--tint);
+    break-inside: avoid; overflow: hidden;
   }
-  .said { margin-top: var(--spacing-sm); padding: var(--spacing-sm) var(--spacing-md); background: var(--color-bg-subtle); border-radius: var(--radius-md); break-inside: avoid; }
-  .said .eyebrow { font-size: 7.5pt; }
-  .said p { margin: var(--spacing-2xs) 0 0; color: var(--color-text-secondary); }
+  .box.definition { --c: var(--box-definition); --tint: var(--box-definition-tint); }
+  .box.example { --c: var(--box-example); --tint: var(--box-example-tint); }
+  .box.result { --c: var(--box-result); --tint: var(--box-result-tint); }
+  .box.remark { --c: var(--box-remark); --tint: var(--box-remark-tint); }
+  .box-bar { display: flex; justify-content: space-between; align-items: baseline; gap: 12pt; padding: 2.5pt 8pt 3pt; background: var(--c); color: #fff; font-weight: bold; line-height: 1.3; }
+  .box-bar .kind { flex: none; }
+  .box-body { padding: 6pt 9pt 7pt; text-align: justify; hyphens: auto; }
+  .box-body .math { margin: 6pt 0 2pt; }
+  .box.said { --c: var(--box-said); --tint: var(--box-said-tint); border-width: 0 0 0 2pt; border-radius: 0; margin-top: 8pt; }
+  .box.said .box-head { padding: 5pt 9pt 0; font-size: 9.5pt; font-weight: bold; font-variant: small-caps; letter-spacing: .03em; color: var(--pdf-muted); }
+  .box.said ul { list-style: none; margin: 2pt 0 0; padding: 0 9pt 6pt 2.1em; font-style: italic; font-size: 10pt; }
+  .box.said li { position: relative; margin-bottom: 2pt; text-align: justify; }
 
-  /* Diagrams: redrawn chart (inline SVG), Mermaid flowchart, or the board crop */
-  figure.diagram { margin: var(--spacing-sm) 0 var(--spacing-2xs); padding: var(--spacing-sm); border: 1px solid var(--color-border-default); border-radius: var(--radius-md); break-inside: avoid; }
-  figure.diagram svg.chart { display: block; width: 100%; max-width: 120mm; margin: 0 auto; font-family: inherit; }
+  /* Figures: redrawn chart (inline SVG), Mermaid flowchart, or the board crop */
+  figure.diagram { margin: 9pt auto 6pt; width: 62%; text-align: center; break-inside: avoid; }
+  .box figure.diagram { width: 55%; margin-bottom: 2pt; }
+  figure.diagram svg.chart { display: block; width: 100%; height: auto; max-height: 65mm; margin: 0 auto; font-family: inherit; }
   figure.diagram .mermaid-box { display: flex; justify-content: center; }
-  figure.diagram .mermaid-box svg { max-width: 120mm; height: auto; }
-  figure.diagram img.crop { display: block; max-width: 100%; max-height: 80mm; margin: 0 auto; border-radius: var(--radius-sm); background: var(--color-board-bg); }
-  figure.diagram figcaption { margin-top: var(--spacing-2xs); font-size: 8.5pt; color: var(--color-text-secondary); text-align: center; }
-  .ai-mark { font-size: 7.5pt; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--color-accent-default); margin-left: var(--spacing-2xs); }
+  figure.diagram .mermaid-box svg { max-width: 100%; height: auto; }
+  figure.diagram img.crop { display: block; max-width: 100%; max-height: 75mm; margin: 0 auto; background: var(--color-board-bg); }
+  figure.diagram figcaption { margin-top: 4pt; font-size: 9.5pt; line-height: 1.35; text-align: center; }
+  figure.diagram figcaption .fig-label { font-weight: bold; }
+  .ai-mark { font-style: italic; color: var(--pdf-muted); white-space: nowrap; }
+  figure.diagram figcaption { hyphens: manual; }
   .chart-grid { stroke: var(--color-border-default); stroke-width: 1; }
   .chart-axis { stroke: var(--color-text-secondary); stroke-width: 1.25; }
   .chart-tick { fill: var(--color-text-tertiary); font-size: 10px; }
@@ -95,20 +140,40 @@
 </style>
 </head>
 <body>
+{% macro figure(f) %}
+<figure class="diagram" data-kind="{{ f.kind }}">
+  {% if f.kind == "chart" %}{{ f.svg }}
+  {% elif f.kind == "mermaid" %}
+  <div class="mermaid-box" data-mermaid="{{ f.mermaid }}"></div>
+  {% if f.crop %}<img class="crop mermaid-fallback" src="{{ f.crop }}" alt="Board crop" hidden>{% endif %}
+  {% elif f.crop %}<img class="crop" src="{{ f.crop }}" alt="Board crop">
+  {% endif %}
+  <figcaption>{% if f.label %}<span class="fig-label">{{ f.label }}:</span> {% endif %}{{ f.caption }}{% if f.redrawn_by_ai %} <span class="ai-mark">(redrawn by AI)</span>{% endif %}</figcaption>
+</figure>
+{% endmacro %}
+{% macro body(b) %}
+<p>{{ b.text }}{% if b.uncertain %}<span class="uncertain">AI unsure</span>{% endif %}</p>
+{% if b.latex %}<div class="math" data-latex="{{ b.latex }}"><code>{{ b.latex }}</code></div>{% endif %}
+{% for f in b.figures %}{{ figure(f) }}{% endfor %}
+{% endmacro %}
 {% if cover %}
 <section class="cover">
-  <div class="eyebrow">{{ cover.title }}</div>
-  <h1>{{ cover.title }} · complete notes</h1>
-  <div class="meta">{{ cover.lecture_count }} lecture{{ "" if cover.lecture_count == 1 else "s" }} · {{ cover.verified_count }} of {{ cover.lecture_count }} verified by the lecturer</div>
-  <div class="track"><div style="width: {{ cover.verified_percent }}%"></div></div>
+  <div class="top">
+    <hr class="rule"><hr class="rule thin">
+    <h1>{{ cover.title }}</h1>
+    <div class="subtitle">Complete lecture notes</div>
+    <hr class="rule thin"><hr class="rule">
+    <div class="meta">{{ cover.lecture_count }} lecture{{ "" if cover.lecture_count == 1 else "s" }} · {{ cover.verified_count }} of {{ cover.lecture_count }} verified by the lecturer</div>
+  </div>
+  <div class="bottom">Generated by BoardNotes from the lecture recordings</div>
 </section>
 <nav class="contents">
   <h2>Contents</h2>
   <ol>
   {% for lec in lectures %}
     <li>
-      <div class="row"><span>{{ lec.title }}</span><span class="eyebrow">{{ lec.status_label }}</span></div>
-      {% if lec.sections %}<div class="sections">{% for s in lec.sections %}{{ s.number }} {{ s.heading }}{% if not loop.last %} · {% endif %}{% endfor %}</div>{% endif %}
+      <div class="row"><span class="n">{{ lec.number }}</span><span class="t">{{ lec.title }}</span><span class="st">{{ lec.status_label }}</span></div>
+      {% if lec.sections %}<ol class="sections">{% for s in lec.sections %}<li><span class="n">{{ s.label }}</span><span>{{ s.heading }}</span></li>{% endfor %}</ol>{% endif %}
     </li>
   {% endfor %}
   </ol>
@@ -118,43 +183,38 @@
 {% for lec in lectures %}
 <article class="lecture">
   <header class="lecture-head">
+    {% if lec.number %}<div class="chapter">Lecture {{ lec.number }}</div>{% endif %}
     <h1>{{ lec.title }}</h1>
-    <div class="meta">{{ lec.status_label }}{% if lec.duration %} · {{ lec.duration }}{% endif %} · {{ lec.verified_sections }} of {{ lec.total_sections }} sections verified</div>
-    {% if lec.video_link %}<div class="meta"><a class="video-link" href="{{ lec.video_link }}">Watch the lecture video</a></div>{% endif %}
+    <hr class="rule">
+    <div class="meta">
+      <span>{{ lec.status_label }}{% if lec.duration %} · {{ lec.duration }}{% endif %} · {{ lec.verified_sections }} of {{ lec.total_sections }} sections verified</span>
+      {% if lec.video_link %}<a class="video-link" href="{{ lec.video_link }}">Watch the lecture video</a>{% endif %}
+    </div>
   </header>
   {% for s in lec.sections %}
   <section class="notes">
     <div class="section-head">
-      <h2><span class="num">{{ s.number }}</span>{{ s.heading }}</h2>
-      {% if s.draft %}<span class="draft-mark">Draft · not yet verified</span>{% endif %}
+      <h2><span class="num">{{ s.label }}</span>{{ s.heading }}</h2>
+      {% if s.draft %}<span class="draft-mark">draft, not yet verified</span>{% endif %}
     </div>
-    <ul class="bullets">
     {% for b in s.bullets %}
-      <li>
-        <div class="item">
-          <p>{{ b.text }}{% if b.uncertain %}<span class="uncertain">(uncertain)</span>{% endif %}</p>
-          {% if b.latex %}<div class="math" data-latex="{{ b.latex }}"><code>{{ b.latex }}</code></div>{% endif %}
-          {% for f in b.figures %}
-          <figure class="diagram" data-kind="{{ f.kind }}">
-            {% if f.kind == "chart" %}{{ f.svg }}
-            {% elif f.kind == "mermaid" %}
-            <div class="mermaid-box" data-mermaid="{{ f.mermaid }}"></div>
-            {% if f.crop %}<img class="crop mermaid-fallback" src="{{ f.crop }}" alt="Board crop" hidden>{% endif %}
-            {% elif f.crop %}<img class="crop" src="{{ f.crop }}" alt="Board crop">
-            {% endif %}
-            <figcaption>{{ f.caption }}{% if f.redrawn_by_ai %}<span class="ai-mark">Redrawn by AI</span>{% endif %}</figcaption>
-          </figure>
-          {% endfor %}
-        </div>
-      </li>
-    {% endfor %}
-    </ul>
-    {% for n in s.said %}
-    <div class="said">
-      <div class="eyebrow">Said but not written</div>
-      <p>{{ n.text }}</p>
+    {% if b.kind == "point" %}
+    {% if loop.first or loop.previtem.kind != "point" %}<ul class="bullets">{% endif %}
+      <li>{{ body(b) }}</li>
+    {% if loop.last or loop.nextitem.kind != "point" %}</ul>{% endif %}
+    {% else %}
+    <div class="box {{ b.kind }}">
+      <div class="box-bar">{% if b.title %}<span class="title">{{ b.title }}</span>{% endif %}<span class="kind">{{ b.box_label }}</span></div>
+      <div class="box-body">{{ body(b) }}</div>
     </div>
+    {% endif %}
     {% endfor %}
+    {% if s.said %}
+    <div class="box said">
+      <div class="box-head">Said in lecture, not on the board</div>
+      <ul>{% for n in s.said %}<li>{{ n.text }}</li>{% endfor %}</ul>
+    </div>
+    {% endif %}
   </section>
   {% else %}
   <p class="empty">No sections to show yet.</p>

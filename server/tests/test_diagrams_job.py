@@ -111,5 +111,5 @@ async def test_pdf_renders_chart_and_mermaid(chromium_ok: None, monkeypatch: pyt
     text = pdf_text(data)
     assert "meet here" in text and "Row picture" in text
     assert "Elimination" in text and "Back substitution" in text  # Mermaid rendered the flowchart
-    assert text.count("REDRAWN BY AI") == 2 or text.count("Redrawn by AI") == 2
+    assert text.count("redrawn by AI") == 2
     assert len(PdfReader(io.BytesIO(data)).pages) >= 1

@@ -1,6 +1,7 @@
 """Stage: render lecture notes (and whole-module notes) to PDF.
 
-HTML is built from templates/notes.html (styled after Figma "S6 · PDF preview") and printed with headless Chromium
+HTML is built from templates/notes.html (styled like LaTeX course notes: serif type, numbered sections and
+tcolorbox-style definition / example / result / remark boxes) and printed with headless Chromium
 via Playwright. Note text is untrusted, so the template autoescapes everything; formulas go into data attributes and
 are rendered by KaTeX with `trust: false`. The browser may only load local files: every network request is blocked.
 
@@ -125,6 +126,10 @@ class FigureView:
     svg: Markup | None = None
     mermaid: str | None = None
     crop: str | None = None
+    label: str = ""  # "Figure 2.1", set when placed in a section
+
+
+KIND_LABELS = {"definition": "Definition", "example": "Example", "result": "Key result", "remark": "Remark"}
 
 
 @dataclass
@@ -135,6 +140,9 @@ class BulletView:
     time: str | None
     link: str | None
     figures: list[FigureView] = field(default_factory=list)
+    kind: str = "point"  # "point" | "definition" | "example" | "result" | "remark"
+    title: str | None = None
+    box_label: str | None = None  # "Definition 2.1" for boxed kinds, numbered per section
 
 
 @dataclass
@@ -147,6 +155,7 @@ class SaidView:
 @dataclass
 class SectionView:
     number: int
+    label: str  # "2", or "3.2" in a module PDF (lecture.section)
     heading: str
     draft: bool
     bullets: list[BulletView]
@@ -156,6 +165,7 @@ class SectionView:
 @dataclass
 class LectureView:
     title: str
+    number: int | None  # position in a module PDF; None for a single lecture
     status: LectureStatus
     status_label: str
     duration: str | None
@@ -208,12 +218,31 @@ def _section_view(
     video_url: str | None,
     first_seen: dict[str, float],
     figures: dict[str, FigureView] | None = None,
+    *,
+    chosen_only: bool = False,
+    label: str | None = None,
 ) -> SectionView:
-    """`figures` maps diagram block id -> figure; each is shown once, under the first bullet citing it (and removed)."""
+    """`figures` maps diagram block id -> figure; each is shown at most once per lecture (popped when placed).
+
+    With `chosen_only`, a bullet shows only the figure the notes stage chose for it (figure_block_id). Otherwise
+    (older notes) it shows at most one figure: the first cited diagram block not already shown.
+    """
     figures = figures if figures is not None else {}
+    label = label or str(number)
     bullets: list[BulletView] = []
+    box_count = 0
+    figure_count = 0
     for b in sorted(section.bullets, key=lambda b: b.order):
         t = bullet_time(b, first_seen)
+        candidates = ([b.figure_block_id] if b.figure_block_id else []) if chosen_only else b.board_block_ids
+        placed = next((figures.pop(i) for i in candidates if i in figures), None)
+        if placed is not None:
+            figure_count += 1
+            placed.label = f"Figure {label}.{figure_count}"
+        box_label = None
+        if b.kind in KIND_LABELS:
+            box_count += 1
+            box_label = f"{KIND_LABELS[b.kind]} {label}.{box_count}"
         bullets.append(
             BulletView(
                 text=b.text,
@@ -221,27 +250,35 @@ def _section_view(
                 uncertain=b.uncertain,
                 time=format_time(t) if t is not None else None,
                 link=timestamp_link(video_url, t) if t is not None else None,
-                figures=[figures.pop(i) for i in b.board_block_ids if i in figures],
+                figures=[placed] if placed is not None else [],
+                kind=b.kind,
+                title=b.title.strip() if b.title and b.title.strip() else None,
+                box_label=box_label,
             )
         )
     said = [SaidView(text=n.text, time=format_time(n.at_s), link=timestamp_link(video_url, n.at_s)) for n in section.said_not_written]
-    return SectionView(number=number, heading=section.heading, draft=section.status != SectionStatus.VERIFIED, bullets=bullets, said=said)
+    return SectionView(
+        number=number, label=label, heading=section.heading, draft=section.status != SectionStatus.VERIFIED, bullets=bullets, said=said
+    )
 
 
-def lecture_view(lecture: LectureDetail, include_drafts: bool = True) -> LectureView:
+def lecture_view(lecture: LectureDetail, include_drafts: bool = True, number: int | None = None) -> LectureView:
+    """`number` is the lecture's position in a module PDF; its sections are then labelled "number.section"."""
     video_url = safe_video_url(lecture.video_url)
     first_seen = {b.id: b.first_seen_s for b in lecture.board_blocks}
     figures = {b.id: f for b in lecture.board_blocks if (f := figure_view(lecture.summary.id, b)) is not None}
+    chosen_only = any(b.figure_block_id for s in lecture.sections for b in s.bullets)
     ordered = sorted(lecture.sections, key=lambda s: s.order)
     # Numbers follow the full lecture so they match the web app even when drafts are left out.
     sections = [
-        _section_view(i, s, None, first_seen, figures)  # no per-point links: one link at the top instead
-        for i, s in enumerate(ordered, start=1)
+        _section_view(i, s, None, first_seen, figures, chosen_only=chosen_only, label=f"{number}.{i}" if number else str(i))
+        for i, s in enumerate(ordered, start=1)  # no per-point links: one link at the top instead
         if include_drafts or s.status == SectionStatus.VERIFIED
     ]
     duration = lecture.summary.duration_s
     return LectureView(
         title=lecture.summary.title,
+        number=number,
         status=lecture.summary.status,
         status_label=status_label(lecture.summary.status),
         duration=format_time(duration) if duration else None,
@@ -282,7 +319,7 @@ def build_lecture_html(lecture: LectureDetail, include_drafts: bool = True) -> s
 
 
 def build_module_html(lectures: list[LectureDetail], module_title: str, include_drafts: bool = True) -> str:
-    views = [lecture_view(lec, include_drafts) for lec in lectures]
+    views = [lecture_view(lec, include_drafts, number=i) for i, lec in enumerate(lectures, start=1)]
     cover = CoverView(
         title=module_title,
         lecture_count=len(views),
@@ -292,23 +329,27 @@ def build_module_html(lectures: list[LectureDetail], module_title: str, include_
 
 
 # ---------- running header / footer (Chromium print templates; inline styles only) ----------
+PRINT_FONT = '"Latin Modern Roman","CMU Serif","Computer Modern",Georgia,"Times New Roman",serif'
+
+
 def header_html(title: str, label: str, verified: bool) -> str:
     color = _token("--color-success-default", "green") if verified else _token("--color-warning-default", "orange")
     muted = _token("--color-text-tertiary", "gray")
+    font = html.escape(PRINT_FONT)
     return (
-        f'<div style="box-sizing:border-box;width:100%;padding:0 20mm;font-family:Inter,Helvetica,Arial,sans-serif;font-size:8pt;'
-        f'display:flex;justify-content:space-between;color:{muted};">'
-        f"<span>{html.escape(title)}</span>"
-        f'<span style="color:{color};">{html.escape(label)}</span></div>'
+        f'<div style="box-sizing:border-box;width:100%;padding:0 20mm;font-family:{font};font-size:8.5pt;color:{muted};">'
+        f'<div style="display:flex;justify-content:space-between;padding-bottom:2px;border-bottom:0.5pt solid {muted};">'
+        f'<span style="font-style:italic;">{html.escape(title)}</span>'
+        f'<span style="color:{color};">{html.escape(label)}</span></div></div>'
     )
 
 
 def footer_html() -> str:
     muted = _token("--color-text-tertiary", "gray")
     return (
-        f'<div style="box-sizing:border-box;width:100%;padding:0 20mm;font-family:Inter,Helvetica,Arial,sans-serif;font-size:8pt;'
+        f'<div style="box-sizing:border-box;width:100%;padding:0 20mm;font-family:{html.escape(PRINT_FONT)};font-size:8.5pt;'
         f'display:flex;justify-content:space-between;color:{muted};">'
-        f"<span>{html.escape(FOOTER_TEXT)}</span>"
+        f'<span style="font-style:italic;">{html.escape(FOOTER_TEXT)}</span>'
         '<span>Page <span class="pageNumber"></span> of <span class="totalPages"></span></span></div>'
     )
 

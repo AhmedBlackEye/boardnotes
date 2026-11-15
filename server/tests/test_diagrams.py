@@ -282,7 +282,7 @@ def lecture_with_figure(fig: DiagramFigure) -> Any:
 def test_pdf_html_inlines_chart_svg_with_ai_label() -> None:
     fig = diagrams.figure_from_redraw(block(), fixture("default"))
     html = pdf.build_lecture_html(lecture_with_figure(fig))
-    assert html.count("<svg") == 1 and "Redrawn by AI" in html and "x - 2y = -1" in html
+    assert html.count("<svg") == 1 and "(redrawn by AI)" in html and "x - 2y = -1" in html
     assert "mermaid.min.js" not in html
 
 
@@ -302,7 +302,7 @@ def test_pdf_html_embeds_crop(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -
     fig = diagrams.crop_figure(block(), "The board sketch")
     html = pdf.build_lecture_html(lecture_with_figure(fig))
     assert 'src="data:image/jpeg;base64,' in html and "The board sketch" in html
-    assert "Redrawn by AI</span>" not in html
+    assert "redrawn by AI" not in html
 
 
 def test_figure_shown_once_even_if_cited_twice() -> None:

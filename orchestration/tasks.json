@@ -1,6 +1,6 @@
 {
  "project": "BoardNotes",
- "updated": "2026-11-15T01:30Z",
+ "updated": "2026-11-15T02:00Z",
  "status_flow": [
   "todo",
   "building",
@@ -18,6 +18,10 @@
   {
    "id": "P1",
    "name": "Phase 1 · Parallel build + verification"
+  },
+  {
+   "id": "P3",
+   "name": "Phase 3 · Accuracy (measured)"
   },
   {
    "id": "P2",
@@ -586,7 +590,7 @@
    "status": "todo",
    "depends_on": [
     "I-1",
-    "P0-4"
+    "Q-7"
    ],
    "acceptance": "Notes + PDF produced from fixtures/video/demo.mp4",
    "checks": {
@@ -628,6 +632,7 @@
    "owner": "lead",
    "status": "todo",
    "depends_on": [
+    "Q-7",
     "I-2"
    ],
    "acceptance": "Per-model accuracy on labelled frames; £/lecture; minutes/lecture",
@@ -662,6 +667,187 @@
    "pr": null,
    "notes": "Supabase project 'boardnotes' created (eu-west-2), schema + demo users loaded, RLS on; connection string in .env. Hosting still to choose.",
    "updated": "2026-11-15T01:30Z"
+  },
+  {
+   "id": "Q-1",
+   "title": "fal Whisper transcription option + board-vocabulary prompt",
+   "phase": "P3",
+   "owner": "agent-F",
+   "status": "todo",
+   "depends_on": [],
+   "acceptance": "TRANSCRIBER=fal|elevenlabs|fixture in .env; reads FAL_API_KEY; segments with timestamps; vocabulary from board text passed as prompt; offline tests",
+   "checks": {
+    "make_check": "pending",
+    "V1_review": "pending",
+    "V2_tests": "pending",
+    "V3_security": "pending"
+   },
+   "branch": null,
+   "pr": null,
+   "notes": "",
+   "updated": "2026-11-15T02:00Z"
+  },
+  {
+   "id": "Q-2",
+   "title": "Formula render check + targeted re-read",
+   "phase": "P3",
+   "owner": "agent-G",
+   "status": "todo",
+   "depends_on": [],
+   "acceptance": "Formulas that fail KaTeX are re-read once (Opus, only those blocks); still failing -> uncertain; no subject-specific assumptions",
+   "checks": {
+    "make_check": "pending",
+    "V1_review": "pending",
+    "V2_tests": "pending",
+    "V3_security": "pending"
+   },
+   "branch": null,
+   "pr": null,
+   "notes": "",
+   "updated": "2026-11-15T02:00Z"
+  },
+  {
+   "id": "Q-3",
+   "title": "Transcript context for board reading",
+   "phase": "P3",
+   "owner": "agent-G",
+   "status": "todo",
+   "depends_on": [],
+   "acceptance": "Each board read gets the ~30 s of transcript around its frame as untrusted data; tests check placement",
+   "checks": {
+    "make_check": "pending",
+    "V1_review": "pending",
+    "V2_tests": "pending",
+    "V3_security": "pending"
+   },
+   "branch": null,
+   "pr": null,
+   "notes": "",
+   "updated": "2026-11-15T02:00Z"
+  },
+  {
+   "id": "Q-4",
+   "title": "Diagrams: redraw as clean figure, else crop from the recording",
+   "phase": "P3",
+   "owner": "agent-H",
+   "status": "todo",
+   "depends_on": [],
+   "acceptance": "Diagram blocks become a validated chart spec (plots) or Mermaid (flow/structure) when confident; otherwise the board crop; both web and PDF; original crop always reachable; marked 'redrawn by AI'",
+   "checks": {
+    "make_check": "pending",
+    "V1_review": "pending",
+    "V2_tests": "pending",
+    "V3_security": "pending"
+   },
+   "branch": null,
+   "pr": null,
+   "notes": "",
+   "updated": "2026-11-15T02:00Z"
+  },
+  {
+   "id": "Q-5",
+   "title": "Consistent terms and symbols across a lecture",
+   "phase": "P3",
+   "owner": "agent-G",
+   "status": "todo",
+   "depends_on": [],
+   "acceptance": "One pass standardises how the same term/symbol is written across blocks; fewer duplicate blocks; generic across subjects",
+   "checks": {
+    "make_check": "pending",
+    "V1_review": "pending",
+    "V2_tests": "pending",
+    "V3_security": "pending"
+   },
+   "branch": null,
+   "pr": null,
+   "notes": "",
+   "updated": "2026-11-15T02:00Z"
+  },
+  {
+   "id": "Q-6",
+   "title": "Accuracy test set + scoring script",
+   "phase": "P3",
+   "owner": "lead + you",
+   "status": "todo",
+   "depends_on": [],
+   "acceptance": "15 labelled frames from the demo clip (lead drafts, user corrects); script scores text error rate, formula match, coverage, citation validity, confidence calibration; replays saved responses for free",
+   "checks": {
+    "make_check": "pending",
+    "V1_review": "pending",
+    "V2_tests": "pending",
+    "V3_security": "pending"
+   },
+   "branch": null,
+   "pr": null,
+   "notes": "",
+   "updated": "2026-11-15T02:00Z"
+  },
+  {
+   "id": "Q-7",
+   "title": "Baseline + per-change live accuracy runs",
+   "phase": "P3",
+   "owner": "lead",
+   "status": "todo",
+   "depends_on": [
+    "Q-6",
+    "Q-2",
+    "Q-3",
+    "Q-4",
+    "Q-5"
+   ],
+   "acceptance": "Needs user OK; < $1 total; results table for the pitch",
+   "checks": {
+    "make_check": "pending",
+    "V1_review": "pending",
+    "V2_tests": "pending",
+    "V3_security": "pending"
+   },
+   "branch": null,
+   "pr": null,
+   "notes": "",
+   "updated": "2026-11-15T02:00Z"
+  },
+  {
+   "id": "Q-8",
+   "title": "Calibrate the 'uncertain' threshold from measurements",
+   "phase": "P3",
+   "owner": "lead",
+   "status": "todo",
+   "depends_on": [
+    "Q-7"
+   ],
+   "acceptance": "Threshold set from Q-7 data; review queue flags real errors",
+   "checks": {
+    "make_check": "pending",
+    "V1_review": "pending",
+    "V2_tests": "pending",
+    "V3_security": "pending"
+   },
+   "branch": null,
+   "pr": null,
+   "notes": "",
+   "updated": "2026-11-15T02:00Z"
+  },
+  {
+   "id": "Q-9",
+   "title": "Learn from approved fixes (per-lecturer examples in prompts)",
+   "phase": "P3",
+   "owner": "agent-G",
+   "status": "todo",
+   "depends_on": [
+    "Q-7"
+   ],
+   "acceptance": "Last few approved corrections included as examples in board reads; measured with Q-6",
+   "checks": {
+    "make_check": "pending",
+    "V1_review": "pending",
+    "V2_tests": "pending",
+    "V3_security": "pending"
+   },
+   "branch": null,
+   "pr": null,
+   "notes": "",
+   "updated": "2026-11-15T02:00Z"
   }
  ]
 }

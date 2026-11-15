@@ -1,5 +1,9 @@
 [
  {
+  "at": "2026-11-15T02:00:00Z",
+  "text": "Plan updated: Phase 3 (measured accuracy) added: fal transcription, formula check, transcript-aware board reading, diagrams redrawn or cropped, consistent terms, test set + scoring. Kept generic across subjects."
+ },
+ {
   "at": "2026-11-15T01:30:00Z",
   "text": "Demo clip added (5 min, MIT OCW). Supabase project created in London with the schema and demo users. Anthropic and fal keys configured; app stays in offline mode until a live run is approved."
  },

@@ -28,7 +28,7 @@ Design source of truth: Figma file "BoardNotes Prototype" (pages Foundations, Co
    Choose via `tier=` in `LLMRequest`, never by model id in feature code.
 
 ## Commands
-- `make setup`, `make db` (local Postgres on :5433), `make check` (must pass before review), `make contracts`, `make progress`.
+- `make setup`, `make db` (local Postgres on :5433), `make migrate` (apply new migrations; `ENV=SUPABASE_DATABASE_URL` for the hosted db), `make check` (must pass before review), `make contracts`, `make progress`.
 - Server tests: `cd server && uv run pytest`. Web: `cd web && pnpm typecheck && pnpm lint`.
 
 ## Workflow

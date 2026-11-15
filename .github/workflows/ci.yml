@@ -30,7 +30,7 @@ jobs:
           cache-dependency-path: web/pnpm-lock.yaml
       - run: sudo apt-get update && sudo apt-get install -y ffmpeg postgresql-client
       - name: Load schema
-        run: psql postgresql://boardnotes:boardnotes@localhost:5433/boardnotes -f supabase/migrations/0001_init.sql
+        run: for f in supabase/migrations/*.sql; do psql -v ON_ERROR_STOP=1 postgresql://boardnotes:boardnotes@localhost:5433/boardnotes -f "$f"; done
       - run: make setup
       - name: Install Chromium for PDF rendering
         run: cd server && uv run playwright install --with-deps chromium

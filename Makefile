@@ -1,4 +1,4 @@
-.PHONY: setup db db-down contracts check check-server check-web test dev-server dev-web progress
+.PHONY: migrate setup db db-down contracts check check-server check-web test dev-server dev-web progress
 
 setup:            ## install everything
 	cd server && uv sync
@@ -15,6 +15,9 @@ db:               ## start local Postgres on :5433 (schema loads from supabase/m
 
 db-down:          ## stop and delete the local database
 	-$(CONTAINER) rm -f $(DB_NAME)
+
+migrate:          ## apply pending migrations to DATABASE_URL (add ENV=SUPABASE_DATABASE_URL for the hosted db)
+	uv run --project server python scripts/migrate.py --env $(or $(ENV),DATABASE_URL)
 
 contracts:        ## regenerate JSON schemas + web TypeScript types from server/app/contracts
 	cd server && uv run python ../scripts/export_contracts.py

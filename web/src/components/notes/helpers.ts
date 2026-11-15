@@ -1,13 +1,36 @@
 import type { Bullet } from "@/contracts/Bullet";
 import type { LectureDetail } from "@/contracts/LectureDetail";
 import type { Section } from "@/contracts/Section";
-import type { VerifyResult } from "@/lib/api";
+import type { BoardBlock } from "@/contracts/BoardBlock";
+import { API_MODE, type VerifyResult } from "@/lib/api";
 import { plural } from "@/lib/format";
 
 /** "Board 6": the 1-based position of a board block in the lecture. */
 export function boardLabel(lecture: LectureDetail, blockId: string): string {
   const i = lecture.board_blocks.findIndex((b) => b.id === blockId);
   return i >= 0 ? `Board ${i + 1}` : "Board";
+}
+
+/** Server URL of a block's board crop (the snapshots route); null in mock mode, where there are no images. */
+export function snapshotUrl(lectureId: string, blockId: string): string | null {
+  return API_MODE === "mock" ? null : `/snapshots/${encodeURIComponent(lectureId)}/${encodeURIComponent(blockId)}.jpg`;
+}
+
+/** Diagram blocks to draw under each bullet: each figure appears once, under the first bullet that cites it. */
+export function figuresByBullet(lecture: LectureDetail): Map<string, BoardBlock[]> {
+  const blocks = new Map(lecture.board_blocks.filter((b) => b.figure).map((b) => [b.id, b]));
+  const out = new Map<string, BoardBlock[]>();
+  for (const s of lecture.sections) {
+    for (const bullet of s.bullets) {
+      for (const id of bullet.board_block_ids) {
+        const block = blocks.get(id);
+        if (!block) continue;
+        blocks.delete(id);
+        out.set(bullet.id, [...(out.get(bullet.id) ?? []), block]);
+      }
+    }
+  }
+  return out;
 }
 
 export function findBullet(lecture: LectureDetail, bulletId: string | null): { section: Section; bullet: Bullet } | null {

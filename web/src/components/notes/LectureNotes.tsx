@@ -21,7 +21,8 @@ import { useSession } from "@/lib/session";
 import { AskPanel } from "@/components/notes/AskPanel";
 import { FixPanel } from "@/components/notes/FixPanel";
 import { SourcePanel } from "@/components/notes/SourcePanel";
-import { boardLabel, bulletAt, errorText, findBullet, firstStart, uncertainCount, verifyMessage } from "@/components/notes/helpers";
+import { DiagramFigure } from "@/components/diagrams/DiagramFigure";
+import { boardLabel, bulletAt, errorText, figuresByBullet, findBullet, firstStart, snapshotUrl, uncertainCount, verifyMessage } from "@/components/notes/helpers";
 
 type PanelName = "source" | "fix" | "ask";
 
@@ -83,6 +84,7 @@ export function LectureNotes({ lecture, mode, preview, onChanged }: { lecture: L
   const waiting = lecture.sections.reduce((n, s) => n + s.bullets.reduce((m, b) => m + b.open_suggestions, 0), 0);
   const uncertainTotal = lecture.sections.reduce((n, s) => n + uncertainCount(s), 0);
   const pdf = assetUrl(lecture.pdf_url);
+  const figures = figuresByBullet(lecture);
 
   /** Approve a section (or "lecture") and say what happened next to the button. */
   async function verify(at: string, fn: () => Promise<VerifyResult>) {
@@ -201,6 +203,9 @@ export function LectureNotes({ lecture, mode, preview, onChanged }: { lecture: L
                   latex={b.latex}
                   state={b.id === bulletId ? "selected" : b.uncertain ? "uncertain" : "default"}
                   onSelect={() => open(b.id, "source", firstStart(b))}
+                  figures={figures.get(b.id)?.map((block) =>
+                    block.figure ? <DiagramFigure key={block.id} figure={block.figure} boardText={block.text} snapshotUrl={snapshotUrl(lecture.summary.id, block.id)} /> : null,
+                  )}
                 >
                   {b.transcript_ranges.map((r, i) => (
                     <SourceChip key={i} seconds={r.start_s} onClick={() => open(b.id, "source", r.start_s)} />

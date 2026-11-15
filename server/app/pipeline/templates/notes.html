@@ -67,6 +67,31 @@
   .said { margin-top: var(--spacing-sm); padding: var(--spacing-sm) var(--spacing-md); background: var(--color-bg-subtle); border-radius: var(--radius-md); break-inside: avoid; }
   .said .eyebrow { font-size: 7.5pt; }
   .said p { margin: var(--spacing-2xs) 0 0; color: var(--color-text-secondary); }
+
+  /* Diagrams: redrawn chart (inline SVG), Mermaid flowchart, or the board crop */
+  figure.diagram { margin: var(--spacing-sm) 0 var(--spacing-2xs); padding: var(--spacing-sm); border: 1px solid var(--color-border-default); border-radius: var(--radius-md); break-inside: avoid; }
+  figure.diagram svg.chart { display: block; width: 100%; max-width: 120mm; margin: 0 auto; font-family: inherit; }
+  figure.diagram .mermaid-box { display: flex; justify-content: center; }
+  figure.diagram .mermaid-box svg { max-width: 120mm; height: auto; }
+  figure.diagram img.crop { display: block; max-width: 100%; max-height: 80mm; margin: 0 auto; border-radius: var(--radius-sm); background: var(--color-board-bg); }
+  figure.diagram figcaption { margin-top: var(--spacing-2xs); font-size: 8.5pt; color: var(--color-text-secondary); text-align: center; }
+  .ai-mark { font-size: 7.5pt; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--color-accent-default); margin-left: var(--spacing-2xs); }
+  .chart-grid { stroke: var(--color-border-default); stroke-width: 1; }
+  .chart-axis { stroke: var(--color-text-secondary); stroke-width: 1.25; }
+  .chart-tick { fill: var(--color-text-tertiary); font-size: 10px; }
+  .chart-axis-label, .chart-label { fill: var(--color-text-primary); font-size: 11px; }
+  .chart-title { fill: var(--color-text-primary); font-size: 12px; font-weight: 600; }
+  .chart-stroke { fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .chart-arrowhead { fill: var(--color-text-primary); }
+  .chart-stroke.series-0 { stroke: var(--color-accent-default); }
+  .chart-stroke.series-1 { stroke: var(--color-success-default); }
+  .chart-stroke.series-2 { stroke: var(--color-warning-default); }
+  .chart-stroke.series-3 { stroke: var(--color-danger-default); }
+  .chart-dot, .chart-bar { stroke: none; }
+  .chart-dot.series-0, .chart-bar.series-0, .chart-label.series-0 { fill: var(--color-accent-default); }
+  .chart-dot.series-1, .chart-bar.series-1, .chart-label.series-1 { fill: var(--color-success-default); }
+  .chart-dot.series-2, .chart-bar.series-2, .chart-label.series-2 { fill: var(--color-warning-default); }
+  .chart-dot.series-3, .chart-bar.series-3, .chart-label.series-3 { fill: var(--color-danger-default); }
 </style>
 </head>
 <body>
@@ -108,6 +133,17 @@
         <div class="item">
           <p>{{ b.text }}{% if b.uncertain %}<span class="uncertain">(uncertain)</span>{% endif %}</p>
           {% if b.latex %}<div class="math" data-latex="{{ b.latex }}"><code>{{ b.latex }}</code></div>{% endif %}
+          {% for f in b.figures %}
+          <figure class="diagram" data-kind="{{ f.kind }}">
+            {% if f.kind == "chart" %}{{ f.svg }}
+            {% elif f.kind == "mermaid" %}
+            <div class="mermaid-box" data-mermaid="{{ f.mermaid }}"></div>
+            {% if f.crop %}<img class="crop mermaid-fallback" src="{{ f.crop }}" alt="Board crop" hidden>{% endif %}
+            {% elif f.crop %}<img class="crop" src="{{ f.crop }}" alt="Board crop">
+            {% endif %}
+            <figcaption>{{ f.caption }}{% if f.redrawn_by_ai %}<span class="ai-mark">Redrawn by AI</span>{% endif %}</figcaption>
+          </figure>
+          {% endfor %}
         </div>
         {% if b.link %}<a class="chip" href="{{ b.link }}">&#9654; {{ b.time }}</a>{% endif %}
       </li>
@@ -126,6 +162,7 @@
 </article>
 {% endfor %}
 
+{% if mermaid_js %}<script src="{{ mermaid_js }}"></script>{% endif %}
 {% if katex_js %}
 <script src="{{ katex_js }}"></script>
 <script>
@@ -134,6 +171,32 @@
       katex.render(el.getAttribute("data-latex"), el, { displayMode: true, throwOnError: false, trust: false, strict: "ignore", maxExpand: 500 });
     } catch (e) { /* keep the plain LaTeX fallback */ }
   });
+</script>
+{% endif %}
+{#- Mermaid source is model output: rendered with securityLevel "strict" (labels sanitised, no click handlers or
+    links). If Mermaid is missing or fails, the board crop is shown instead and the "Redrawn by AI" mark removed. -#}
+{% if has_mermaid %}
+<script>
+  window.__diagramsReady = (async function () {
+    function fallback(box) {
+      var fig = box.closest("figure");
+      var img = fig.querySelector(".mermaid-fallback");
+      if (img) img.hidden = false;
+      var mark = fig.querySelector(".ai-mark");
+      if (mark) mark.remove();
+      box.remove();
+    }
+    var boxes = Array.prototype.slice.call(document.querySelectorAll("[data-mermaid]"));
+    if (!boxes.length) return;
+    if (!window.mermaid) { boxes.forEach(fallback); return; }
+    window.mermaid.initialize({ startOnLoad: false, securityLevel: "strict", theme: "neutral", flowchart: { htmlLabels: false } });
+    for (var i = 0; i < boxes.length; i++) {
+      try {
+        var out = await window.mermaid.render("pdf-mermaid-" + i, boxes[i].getAttribute("data-mermaid"));
+        boxes[i].innerHTML = out.svg;
+      } catch (e) { fallback(boxes[i]); }
+    }
+  })();
 </script>
 {% endif %}
 </body>

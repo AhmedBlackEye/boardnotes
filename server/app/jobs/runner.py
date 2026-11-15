@@ -9,7 +9,7 @@ import asyncio
 import importlib
 import logging
 from collections.abc import Awaitable, Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -21,12 +21,13 @@ from app.contracts.api import JobProgress
 from app.contracts.enums import JobStage, LectureStatus, SectionStatus
 from app.db import Conn, Pool, execute, fetch_all, fetch_one
 from app.llm.client import LLM
-from app.media import lecture_dir
+from app.media import lecture_dir, make_snapshot
 from app.pipeline.interfaces import (
     AudioExtractor,
     BlockMerger,
     BoardReader,
     CitationValidator,
+    DiagramRedrawer,
     Keyframe,
     KeyframeSelector,
     NoteWriter,
@@ -52,6 +53,7 @@ class Stages:
     plan_sections: SectionPlanner
     write_notes: NoteWriter
     validate_citations: CitationValidator
+    redraw_diagrams: DiagramRedrawer = field(default_factory=lambda: _lazy("diagrams", "redraw_diagrams"))
 
 
 def _lazy(module: str, name: str) -> Any:
@@ -74,6 +76,7 @@ def default_stages() -> Stages:
         plan_sections=_lazy("notes", "plan_sections"),
         write_notes=_lazy("notes", "write_notes"),
         validate_citations=_lazy("citations", "validate_citations"),
+        redraw_diagrams=_lazy("diagrams", "redraw_diagrams"),
     )
 
 
@@ -170,16 +173,37 @@ async def save_blocks(pool: Pool, lecture_id: str, blocks: list[BoardBlock], key
                 b.best_frame_s,
                 b.bbox,
                 str(frame.path) if frame else None,
+                Jsonb(b.figure.model_dump()) if b.figure else None,
             )
         )
     async with pool.connection() as conn:
         await execute(conn, "delete from board_blocks where lecture_id = %(lec)s", {"lec": lecture_id})
         async with conn.cursor() as cur:
             await cur.executemany(
-                """insert into board_blocks (id, lecture_id, type, text, latex, confidence, first_seen_s, best_frame_s, bbox, snapshot_path)
-                   values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                """insert into board_blocks
+                     (id, lecture_id, type, text, latex, confidence, first_seen_s, best_frame_s, bbox, snapshot_path, figure)
+                   values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
                 rows,
             )
+
+
+async def redraw_diagrams_safely(
+    redraw: DiagramRedrawer, blocks: list[BoardBlock], keyframes: list[Keyframe], llm: LLM, crops_dir: Path
+) -> list[BoardBlock]:
+    """Run the diagram stage; on any error keep the blocks as they were (the source panel still shows the crop)."""
+    try:
+        blocks = await redraw(blocks, keyframes, llm)
+    except Exception:
+        log.exception("diagram redraw failed; keeping board crops only")
+        return blocks
+    for b in blocks:
+        frame = nearest_keyframe(keyframes, b.best_frame_s)
+        if b.figure is not None and frame is not None:
+            try:
+                await asyncio.to_thread(make_snapshot, crops_dir / f"{b.id}.jpg", b.bbox, frame.path, None, b.best_frame_s)
+            except Exception:
+                log.exception("could not save the board crop of diagram %s", b.id)
+    return blocks
 
 
 def section_status(notes: SectionNotes) -> SectionStatus:
@@ -280,6 +304,11 @@ async def run_job(
 
         await step(JobStage.MERGE_BLOCKS, 0.65, "Combining board readings")
         blocks = await asyncio.to_thread(stages.merge_blocks, readings)
+
+        # Q-4 diagrams: redraw or crop each diagram block (never fails the job), and keep its board crop on disk.
+        await step(JobStage.MERGE_BLOCKS, 0.67, "Redrawing diagrams")
+        blocks = await redraw_diagrams_safely(stages.redraw_diagrams, blocks, keyframes, llm, work / "snapshots")
+
         await save_blocks(pool, lecture_id, blocks, keyframes)
 
         await step(JobStage.SECTION, 0.7, "Splitting the lecture into sections")

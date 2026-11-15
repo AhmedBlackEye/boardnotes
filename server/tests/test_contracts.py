@@ -16,6 +16,7 @@ SCHEMA_FOR_TASK = {
     "write_notes": ai.SectionNotes,
     "fix_check": ai.FixCheck,
     "ask": ai.LectureAnswer,
+    "diagram_redraw": ai.DiagramRedraw,
 }
 
 

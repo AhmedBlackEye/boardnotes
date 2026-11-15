@@ -10,7 +10,7 @@ The web app only talks to the API. The API enforces roles, so the database is ne
 
 ## Pipeline (offline, after upload)
 1. **Check video**: ffprobe: needs picture + sound; warn under 720p. Extract mono 16 kHz audio.
-2. **Transcribe**: ElevenLabs Scribe, word timestamps, speakers (main speaker = lecturer).
+2. **Transcribe**: `TRANSCRIBER` = fal Whisper (board vocabulary as prompt) or ElevenLabs Scribe, or the fixture offline; word timestamps, speakers (main speaker = lecturer).
 3. **Select keyframes**: one frame every 3 s. Haiku reads each small frame ("which lines of writing are visible?").
    Frames are compared **by the text read, not by pixels**, because the camera pans and the lecturer moves.
    For each piece of new writing, keep the clearest frame that shows it fully. Typically 80–200 frames per 2 h.

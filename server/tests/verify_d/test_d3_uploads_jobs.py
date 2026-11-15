@@ -187,7 +187,7 @@ class Recorder:
             self._hit("audio")
             return self.tmp / "a.wav"
 
-        async def transcribe(audio):
+        async def transcribe(audio, vocabulary=None):
             self._hit("transcribe")
             return [TranscriptSegment(start_s=0.0, end_s=5.0, speaker="lecturer", text="hello there")]
 
@@ -196,7 +196,7 @@ class Recorder:
             self.llms.append(llm)
             return [kf]
 
-        async def read(keyframes, llm):
+        async def read(keyframes, llm, transcript=None):
             self._hit("read")
             self.llms.append(llm)
             return [

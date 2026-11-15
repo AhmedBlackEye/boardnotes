@@ -1,6 +1,6 @@
 {
  "project": "BoardNotes",
- "updated": "2026-11-15T05:30Z",
+ "updated": "2026-11-15T06:30Z",
  "status_flow": [
   "todo",
   "building",
@@ -305,7 +305,7 @@
    },
    "branch": "task/C-audio-pdf",
    "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/2",
-   "notes": "Lead hardened PDF link checks before merge.",
+   "notes": "PDF now has one 'Watch the lecture video' link per lecture instead of per-point links (user request).",
    "updated": "2026-11-14T22:50Z"
   },
   {
@@ -533,7 +533,7 @@
    },
    "branch": "task/E-frontend",
    "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/5",
-   "notes": "Follow-ups (low): stop the upload loop if the server stops advancing; reject '/\\\\' paths in assetUrl (mock mode).",
+   "notes": "Low follow-ups fixed by lead: upload stall guard, backslash paths rejected in assetUrl.",
    "updated": "2026-11-14T23:05Z"
   },
   {
@@ -562,7 +562,7 @@
    "title": "Merge all branches, wire pipeline into job runner",
    "phase": "P2",
    "owner": "lead",
-   "status": "in_review",
+   "status": "merged",
    "depends_on": [
     "A-3",
     "B-4",
@@ -572,15 +572,15 @@
    ],
    "acceptance": "make check passes on main",
    "checks": {
-    "make_check": "pending",
-    "V1_review": "pending",
-    "V2_tests": "pending",
-    "V3_security": "pending"
+    "make_check": "pass",
+    "V1_review": "n/a (lead)",
+    "V2_tests": "smoke_e2e passes",
+    "V3_security": "n/a"
    },
    "branch": null,
    "pr": null,
-   "notes": "Offline end-to-end works: demo clip uploads, all stages run, notes + sources + PDF produced (scripts/smoke_e2e.py, ~3 s with recorded AI). Web connected to the real API. Small fixes queued until wave 1 merges (they touch the same files): section numbers start at 0; '0 student fixes and…' banner wording; lecture title in the list isn't a link; CORS origins should come from settings.",
-   "updated": "2026-11-15T02:50Z"
+   "notes": "Offline end-to-end works on main; integration fixes merged (section numbering, clickable titles, banner wording, WEB_ORIGINS setting).",
+   "updated": "2026-11-15T06:30Z"
   },
   {
    "id": "I-2",

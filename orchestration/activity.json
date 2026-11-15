@@ -1,5 +1,9 @@
 [
  {
+  "at": "2026-11-15T06:45:00Z",
+  "text": "Offline wave started: agent J (browser end-to-end tests of both flows), agent K (learn from approved fixes). No API credits used."
+ },
+ {
   "at": "2026-11-15T06:30:00Z",
   "text": "PDF/.tex: one video link per lecture instead of per point. Integration fixes merged (numbering, clickable titles, banner, configurable origins, upload stall guard). 684 server tests pass."
  },

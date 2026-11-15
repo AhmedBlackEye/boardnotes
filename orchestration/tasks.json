@@ -1,6 +1,6 @@
 {
  "project": "BoardNotes",
- "updated": "2026-11-15T06:30Z",
+ "updated": "2026-11-15T06:45Z",
  "status_flow": [
   "todo",
   "building",
@@ -608,8 +608,8 @@
    "id": "I-3",
    "title": "Browser tests of student and lecturer flows (Playwright)",
    "phase": "P2",
-   "owner": "lead",
-   "status": "todo",
+   "owner": "agent-J",
+   "status": "building",
    "depends_on": [
     "I-1"
    ],
@@ -620,10 +620,10 @@
     "V2_tests": "pending",
     "V3_security": "pending"
    },
-   "branch": null,
+   "branch": "task/I3-browser-e2e",
    "pr": null,
    "notes": "",
-   "updated": "2026-11-14T16:44Z"
+   "updated": "2026-11-15T06:45Z"
   },
   {
    "id": "I-4",
@@ -833,10 +833,8 @@
    "title": "Learn from approved fixes (per-lecturer examples in prompts)",
    "phase": "P3",
    "owner": "agent-G",
-   "status": "todo",
-   "depends_on": [
-    "Q-7"
-   ],
+   "status": "building",
+   "depends_on": [],
    "acceptance": "Last few approved corrections included as examples in board reads; measured with Q-6",
    "checks": {
     "make_check": "pending",
@@ -844,10 +842,10 @@
     "V2_tests": "pending",
     "V3_security": "pending"
    },
-   "branch": null,
+   "branch": "task/Q9-learn-from-fixes",
    "pr": null,
-   "notes": "",
-   "updated": "2026-11-15T02:00Z"
+   "notes": "Built offline now; measured later in Q-7.",
+   "updated": "2026-11-15T06:45Z"
   }
  ]
 }

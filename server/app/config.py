@@ -22,6 +22,10 @@ class Settings(BaseSettings):
 
     # "fake" replays recorded responses from fixtures/llm (no keys needed); "live" calls the real APIs.
     llm_mode: Literal["fake", "live"] = "fake"
+    # "Ask the lecture" can use real model calls while the processing pipeline stays offline (each question costs
+    # about 1-2 cents with Sonnet). Unset: follows LLM_MODE.
+    ask_llm_mode: Literal["fake", "live"] | None = None
+    ask_effort: Literal["low", "medium", "high"] = "medium"
     anthropic_api_key: str | None = None
     elevenlabs_api_key: str | None = None
     # Speech-to-text: "fixture" replays fixtures/transcript.json, "fal" uses fal's hosted Whisper, "elevenlabs" uses
@@ -64,8 +68,8 @@ def check_production_settings(s: Settings) -> None:
     random one (sessions then end when the API restarts).
     """
     weak = s.session_secret in ("", DEFAULT_SESSION_SECRET)
-    if weak and s.llm_mode == "live":
-        raise RuntimeError("Set SESSION_SECRET before running with LLM_MODE=live")
+    if weak and "live" in (s.llm_mode, s.ask_llm_mode):
+        raise RuntimeError("Set SESSION_SECRET before running with LLM_MODE=live or ASK_LLM_MODE=live")
     if weak and not s.demo_login:
         raise RuntimeError("Set SESSION_SECRET before running with DEMO_LOGIN=false")
     if not s.session_secret:

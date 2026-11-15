@@ -14,7 +14,7 @@ from sse_starlette.sse import EventSourceResponse
 from app import repo
 from app.auth import authenticate_stream
 from app.contracts.ai import AnswerCitation, BoardBlock, LectureAnswer
-from app.contracts.api import AskIn, AskOut, Section, TranscriptLine
+from app.contracts.api import AskIn, AskOut, AskTurn, Section, TranscriptLine
 from app.contracts.enums import CitationKind
 from app.llm.client import LLM, LLMRequest
 from app.state import AppState, StateDep
@@ -25,12 +25,21 @@ router = APIRouter(tags=["ask"])
 NOT_COVERED = "This lecture doesn't cover that, so I can't answer it from here."
 MAX_TRANSCRIPT_CHARS = 150_000
 
-ASK_INSTRUCTIONS = (
-    "Answer the student's question using only the lecture material provided (notes, board writing and transcript). "
-    "If the lecture does not contain the answer, set covered to false and say so; do not use outside knowledge. "
-    "Cite where the answer comes from: kind 'section' with the section id, kind 'board' with the board block id and the video time, "
-    "or kind 'transcript' with ref 'transcript' and the video time in seconds."
-)
+ASK_INSTRUCTIONS = """You are a patient tutor helping a student understand one specific lecture. The lecture material
+(notes, board writing with ids and times, and the transcript with times) is your main source. Earlier turns of this
+conversation, if any, are in "history": use them to understand follow-up questions.
+
+How to answer:
+- Start with a direct answer in one or two sentences, then explain the reasoning step by step, using the lecture's own
+  notation, terms and examples. Aim for under 200 words unless the student asks for more detail.
+- Explain so the student understands, rather than just restating the notes: say why each step follows.
+- You may add brief general background only when it helps explain something this lecture covers. Put it in a final
+  paragraph that starts with "Beyond this lecture:". Never present outside knowledge as something the lecture said.
+- If the lecture does not cover the topic at all, set covered to false and say so in one sentence, naming the closest
+  part of the lecture if there is one.
+- Write maths inline in LaTeX between single dollar signs, like $x = 2y - 1$. Use short plain paragraphs, no headings.
+- Cite where the answer comes from: kind "section" with the section id, kind "board" with the board block id and its
+  video time, or kind "transcript" with ref "transcript" and the video time in seconds. Cite at least one source."""
 
 
 def lecture_context(sections: list[Section], blocks: list[BoardBlock], lines: list[TranscriptLine]) -> dict[str, str]:
@@ -56,7 +65,11 @@ def check_answer(answer: LectureAnswer, section_ids: set[str], block_ids: set[st
     return AskOut(covered=answer.covered, answer=answer.answer, citations=citations if answer.covered else [])
 
 
-async def answer_question(state: AppState, llm: LLM, lecture_id: str, question: str) -> AskOut:
+def render_history(history: list[AskTurn]) -> str:
+    return "\n\n".join(f"Student: {t.question}\nTutor: {t.answer[:1500]}" for t in history[-6:])
+
+
+async def answer_question(state: AppState, llm: LLM, lecture_id: str, question: str, history: list[AskTurn] | None = None) -> AskOut:
     async with state.pool.connection() as conn:
         sections = await repo.sections(conn, lecture_id)
         blocks = await repo.board_blocks(conn, lecture_id)
@@ -64,24 +77,36 @@ async def answer_question(state: AppState, llm: LLM, lecture_id: str, question: 
     context = lecture_context(sections, blocks, lines)
     request = LLMRequest(
         task="ask",
-        tier="board",
+        tier="board",  # Sonnet: explains and reasons well at a fraction of Opus's price
         instructions=ASK_INSTRUCTIONS,
-        untrusted={**context, "question": question},
-        effort="low",
-        max_tokens=1500,
+        cached=context,  # the lecture is the same for every question: prompt-cached
+        untrusted={**({"history": render_history(history)} if history else {}), "question": question},
+        effort=state.settings.ask_effort,
+        max_tokens=4000,
     )
+    before = (llm.usage.input_tokens, llm.usage.output_tokens, llm.usage.cache_read_tokens)
     async with state.llm_slots:
         result = await llm.structured(request, LectureAnswer)
+    log.info(
+        "ask %s: input %d (cache read %d), output %d tokens",
+        lecture_id,
+        llm.usage.input_tokens - before[0],
+        llm.usage.cache_read_tokens - before[2],
+        llm.usage.output_tokens - before[1],
+    )
     duration = max([line.end_s for line in lines] + [s.end_s for s in sections] + [0.0])
     return check_answer(result, {s.id for s in sections}, {b.id for b in blocks}, duration)
 
 
-async def ask_events(state: AppState, lecture_id: str, question: str) -> AsyncIterator[ServerSentEvent]:
-    cached = state.ask_cache.get(lecture_id, question)
+async def ask_events(
+    state: AppState, lecture_id: str, question: str, history: list[AskTurn] | None = None
+) -> AsyncIterator[ServerSentEvent]:
+    # Follow-ups depend on the conversation, so only first questions are served from the answer cache.
+    cached = None if history else state.ask_cache.get(lecture_id, question)
     generation = state.ask_cache.generation(lecture_id)  # read before the notes are
     try:
-        out = cached or await answer_question(state, state.llm, lecture_id, question)
-        if cached is None:
+        out = cached or await answer_question(state, state.ask_llm or state.llm, lecture_id, question, history)
+        if cached is None and not history:
             state.ask_cache.put(lecture_id, question, out, generation)
     except Exception:
         log.exception("ask failed for lecture %s", lecture_id)
@@ -106,4 +131,4 @@ async def ask(lecture_id: str, body: AskIn, request: Request, state: StateDep) -
     async with state.pool.connection() as conn:
         await repo.visible_lecture(conn, lecture_id, user)
     check_ask_limits(state, user.id, lecture_id)
-    return EventSourceResponse(ask_events(state, lecture_id, body.question))
+    return EventSourceResponse(ask_events(state, lecture_id, body.question, body.history))

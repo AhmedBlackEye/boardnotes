@@ -52,9 +52,9 @@ async def test_ask_streams_a_covered_answer_with_valid_citations(sam: httpx.Asyn
     assert "done" in got
 
     request = fake_llm.requests[-1]
-    assert (request.task, request.tier, request.effort) == ("ask", "board", "low")
+    assert (request.task, request.tier, request.effort) == ("ask", "board", "medium")
     assert request.untrusted["question"] == "What is the row picture?"
-    assert "x equals two y minus one" in request.untrusted["transcript"] and "[sec_2] Elimination" in request.untrusted["notes"]
+    assert "x equals two y minus one" in request.cached["transcript"] and "[sec_2] Elimination" in request.cached["notes"]
     assert "row picture" not in request.instructions
 
 
@@ -149,3 +149,12 @@ async def test_missing_renderer_gives_a_clear_error(sam: httpx.AsyncClient, db: 
     state.pdfs.renderers = PdfRenderers(lecture=unavailable, module=unavailable)
     response = await sam.get("/lectures/lec_1/pdf")
     assert response.status_code == 503 and "not available" in response.json()["detail"]
+
+
+async def test_follow_up_sends_history_as_untrusted_and_skips_answer_cache(sam: httpx.AsyncClient, db: Db) -> None:
+    from app.api.ask import render_history
+    from app.contracts.api import AskTurn
+
+    turns = [AskTurn(question="What is the row picture?", answer="Each equation is a line.")]
+    text = render_history(turns)
+    assert "Student: What is the row picture?" in text and "Tutor: Each equation is a line." in text

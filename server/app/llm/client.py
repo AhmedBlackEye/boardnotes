@@ -29,6 +29,7 @@ class Usage:
     input_tokens: int = 0
     output_tokens: int = 0
     calls: int = 0
+    cache_read_tokens: int = 0
 
 
 @dataclass
@@ -40,6 +41,8 @@ class LLMRequest:
     images: list[Image] = field(default_factory=list)
     effort: Effort = "low"
     max_tokens: int = 8000
+    # Untrusted data that stays the same across calls (e.g. a whole lecture): sent first and prompt-cached.
+    cached: dict[str, str] = field(default_factory=dict)
 
 
 class LLM(Protocol):
@@ -62,10 +65,10 @@ def render_untrusted(untrusted: dict[str, str]) -> str:
     return "\n\n".join(parts)
 
 
-def get_llm() -> LLM:
+def get_llm(mode: str | None = None) -> LLM:
     from app.config import settings
 
-    if settings.llm_mode == "live":
+    if (mode or settings.llm_mode) == "live":
         from .anthropic_llm import AnthropicLLM
 
         return AnthropicLLM()

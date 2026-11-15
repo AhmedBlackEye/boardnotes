@@ -35,7 +35,8 @@ async def test_question_and_lecture_are_untrusted(sam, db, fake_llm):
     req = fake_llm.requests[-1]
     assert evil not in req.instructions
     assert evil in " ".join(req.untrusted.values())
-    blob = " ".join(req.untrusted.values())
+    # The lecture itself is sent as cached untrusted data (prompt caching); still never in the instructions.
+    blob = " ".join([*req.untrusted.values(), *req.cached.values()])
     assert "x + 2y = 3" in blob and "So x equals two y minus one" in blob
     assert "x + 2y = 3" not in req.instructions and "Welcome" not in req.instructions
 

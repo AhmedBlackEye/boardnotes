@@ -7,10 +7,27 @@ import type { AskOut } from "@/contracts/AskOut";
 import type { LectureDetail } from "@/contracts/LectureDetail";
 import { api } from "@/lib/client";
 import { boardLabel } from "@/components/notes/helpers";
+import { RichAnswer } from "@/components/RichAnswer";
+import type { AskTurn } from "@/contracts/AskTurn";
 
 type Msg = { role: "user"; text: string } | { role: "answer"; out: AskOut } | { role: "error"; text: string };
 
-const SUGGESTED = ["What is the trace?", "Explain the 2×2 example", "Summarise section 3"];
+/** Suggestions that work for any subject: a summary, plus an explanation of the first two section topics. */
+function suggestions(lecture: LectureDetail): string[] {
+  const topics = lecture.sections.slice(0, 2).map((s) => `Explain “${s.heading}”`);
+  return ["Summarise this lecture", ...topics, "What should I revise first?"].slice(0, 4);
+}
+
+/** Earlier question/answer pairs sent with a follow-up (last 6, answers trimmed). */
+function historyOf(msgs: Msg[]): AskTurn[] {
+  const turns: AskTurn[] = [];
+  for (let i = 0; i < msgs.length - 1; i++) {
+    const a = msgs[i];
+    const b = msgs[i + 1];
+    if (a.role === "user" && b.role === "answer") turns.push({ question: a.text, answer: b.out.answer.slice(0, 3000) });
+  }
+  return turns.slice(-6);
+}
 
 /** Ask the lecture: answers come only from this lecture and carry their sources. */
 export function AskPanel({ lecture, onSeek, initialQuestion }: { lecture: LectureDetail; onSeek: (t: number) => void; initialQuestion?: string }) {
@@ -31,7 +48,7 @@ export function AskPanel({ lecture, onSeek, initialQuestion }: { lecture: Lectur
     setQ("");
     setBusy(true);
     try {
-      const out = await api.ask(lecture.summary.id, text);
+      const out = await api.ask(lecture.summary.id, text, historyOf(msgs));
       setMsgs((m) => [...m, { role: "answer", out }]);
     } catch (e) {
       setMsgs((m) => [...m, { role: "error", text: e instanceof Error ? e.message : "Could not answer" }]);
@@ -60,7 +77,7 @@ export function AskPanel({ lecture, onSeek, initialQuestion }: { lecture: Lectur
             </ChatMessage>
           ) : m.role === "answer" ? (
             <ChatMessage key={i} kind={m.out.covered ? "answer" : "notice"} sources={m.out.covered ? chips(m.out) : undefined}>
-              {m.out.answer}
+              <RichAnswer text={m.out.answer} />
             </ChatMessage>
           ) : (
             <ChatMessage key={i} kind="notice">
@@ -75,7 +92,7 @@ export function AskPanel({ lecture, onSeek, initialQuestion }: { lecture: Lectur
       </div>
       <div className="flex flex-col gap-3 border-t border-default p-4">
         <div className="flex flex-wrap gap-2">
-          {SUGGESTED.map((s) => (
+          {suggestions(lecture).map((s) => (
             <button key={s} type="button" onClick={() => ask(s)} className="rounded-full border border-default px-3 py-1 text-[12px] text-secondary hover:bg-subtle">
               {s}
             </button>

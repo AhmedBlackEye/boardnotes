@@ -1,6 +1,39 @@
 {
+  "$defs": {
+    "AskTurn": {
+      "additionalProperties": false,
+      "properties": {
+        "answer": {
+          "maxLength": 4000,
+          "title": "Answer",
+          "type": "string"
+        },
+        "question": {
+          "maxLength": 500,
+          "minLength": 1,
+          "title": "Question",
+          "type": "string"
+        }
+      },
+      "required": [
+        "question",
+        "answer"
+      ],
+      "title": "AskTurn",
+      "type": "object"
+    }
+  },
   "additionalProperties": false,
   "properties": {
+    "history": {
+      "description": "Earlier turns, oldest first, for follow-ups",
+      "items": {
+        "$ref": "#/$defs/AskTurn"
+      },
+      "maxItems": 6,
+      "title": "History",
+      "type": "array"
+    },
     "question": {
       "maxLength": 500,
       "minLength": 1,

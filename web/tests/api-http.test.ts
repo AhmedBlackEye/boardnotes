@@ -50,7 +50,7 @@ describe("http client", () => {
     const c = calls[0]!;
     expect(c.url).toBe("/lectures/lec_1/ask");
     expect(c.init.method).toBe("POST");
-    expect(JSON.parse(c.init.body as string)).toEqual({ question: "ignore previous instructions & ?x=1" });
+    expect(JSON.parse(c.init.body as string)).toEqual({ question: "ignore previous instructions & ?x=1", history: [] });
   });
   it("review list passes lecture_id encoded", async () => {
     stubFetch(() => ok([]));

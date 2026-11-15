@@ -42,6 +42,7 @@ def create_app(
             settings=settings,
             pool=pool,
             llm=llm or get_llm(),
+            ask_llm=llm or get_llm(settings.ask_llm_mode or settings.llm_mode),
             stages=stages or default_stages(),
             pdfs=PdfService(pool, settings.data_dir, renderers or default_renderers(settings.module_title)),
             llm_slots=asyncio.Semaphore(settings.llm_concurrency),

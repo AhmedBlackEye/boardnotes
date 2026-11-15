@@ -1,0 +1,22 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "answer": {
+      "maxLength": 4000,
+      "title": "Answer",
+      "type": "string"
+    },
+    "question": {
+      "maxLength": 500,
+      "minLength": 1,
+      "title": "Question",
+      "type": "string"
+    }
+  },
+  "required": [
+    "question",
+    "answer"
+  ],
+  "title": "AskTurn",
+  "type": "object"
+}

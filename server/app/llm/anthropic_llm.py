@@ -31,6 +31,9 @@ class AnthropicLLM:
             }
             for img in req.images
         ]
+        if req.cached:
+            # Stable lecture context first, marked for prompt caching, so follow-up calls re-read it cheaply.
+            content.append({"type": "text", "text": render_untrusted(req.cached), "cache_control": {"type": "ephemeral"}})
         text = req.instructions
         if req.untrusted:
             text += "\n\n" + render_untrusted(req.untrusted)
@@ -48,6 +51,7 @@ class AnthropicLLM:
         self.usage.calls += 1
         self.usage.input_tokens += response.usage.input_tokens
         self.usage.output_tokens += response.usage.output_tokens
+        self.usage.cache_read_tokens += getattr(response.usage, "cache_read_input_tokens", 0) or 0
         if response.stop_reason == "refusal":
             raise RefusedError(f"{req.task}: model declined the request")
         if response.parsed_output is None:

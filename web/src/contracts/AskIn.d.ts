@@ -5,8 +5,32 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
+/**
+ * Earlier turns, oldest first, for follow-ups
+ *
+ * @maxItems 6
+ */
+export type History =
+  | []
+  | [AskTurn]
+  | [AskTurn, AskTurn]
+  | [AskTurn, AskTurn, AskTurn]
+  | [AskTurn, AskTurn, AskTurn, AskTurn]
+  | [AskTurn, AskTurn, AskTurn, AskTurn, AskTurn]
+  | [AskTurn, AskTurn, AskTurn, AskTurn, AskTurn, AskTurn];
+export type Answer = string;
 export type Question = string;
+export type Question1 = string;
 
 export interface AskIn {
+  history?: History;
+  question: Question1;
+}
+/**
+ * This interface was referenced by `AskIn`'s JSON-Schema
+ * via the `definition` "AskTurn".
+ */
+export interface AskTurn {
+  answer: Answer;
   question: Question;
 }

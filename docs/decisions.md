@@ -32,3 +32,12 @@ Newest first. Add an entry whenever you change a contract, a dependency, or how 
   New stages: `FormulaRechecker`, `TermNormaliser`, `DiagramRedrawer` (see pipeline/interfaces.py).
 - **Credits:** sponsor API credits are limited. Everything runs with `LLM_MODE=fake`; live runs need the user's OK.
   fal is used only for transcription.
+
+## 2026-11-15 · Ask the lecture (lead)
+- **Model:** Sonnet 5.5 (tier "board") at medium effort: explains and reasons well at about half Opus's price;
+  ~1-2 cents per question on a 5-min lecture. `ASK_LLM_MODE=live` lets Ask use real calls while the pipeline stays
+  offline; `ASK_EFFORT` tunes depth.
+- **Tutor-style answers:** direct answer, then step-by-step reasoning in the lecture's own notation; general background
+  allowed only as a labelled "Beyond this lecture:" paragraph; not-covered topics are refused; maths as `$...$`.
+- **Follow-ups:** `AskIn.history` (last 6 turns) is sent as untrusted data. The lecture context is sent as a prompt-cached
+  block (`LLMRequest.cached`), so follow-up questions re-read it cheaply.

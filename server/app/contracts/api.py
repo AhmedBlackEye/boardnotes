@@ -153,8 +153,14 @@ class ReviewDecisionIn(Api):
 
 
 # ---------- Ask the lecture ----------
+class AskTurn(Api):
+    question: str = Field(min_length=1, max_length=500)
+    answer: str = Field(max_length=4000)
+
+
 class AskIn(Api):
     question: str = Field(min_length=1, max_length=500)
+    history: list[AskTurn] = Field(default_factory=list, max_length=6, description="Earlier turns, oldest first, for follow-ups")
 
 
 class AskOut(Api):

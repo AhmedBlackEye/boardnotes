@@ -93,6 +93,7 @@ class AppState:
     llm: LLM
     stages: "Stages"
     pdfs: "PdfService"
+    ask_llm: LLM | None = None  # model for Ask the lecture; None = use llm
     ask_cache: AskCache = field(default_factory=AskCache)
     wake: asyncio.Event = field(default_factory=asyncio.Event)  # set when a job is queued
     limits: RateLimiter = field(default_factory=RateLimiter)

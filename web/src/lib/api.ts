@@ -7,6 +7,7 @@
  *   so every page works without the server.
  */
 import type { AskOut } from "@/contracts/AskOut";
+import type { AskTurn } from "@/contracts/AskTurn";
 import type { JobProgress } from "@/contracts/JobProgress";
 import type { LectureDetail } from "@/contracts/LectureDetail";
 import type { LectureSummary } from "@/contracts/LectureSummary";
@@ -131,7 +132,7 @@ export interface BoardNotesApi {
   verifySection(lectureId: string, sectionId: string): Promise<VerifyResult>;
   /** Confirm the uncertain readings of the whole lecture. */
   verifyLecture(lectureId: string): Promise<VerifyResult>;
-  ask(lectureId: string, question: string): Promise<AskOut>;
+  ask(lectureId: string, question: string, history?: AskTurn[]): Promise<AskOut>;
   listPdfs(): Promise<PdfInfo[]>;
   /** Link to the LaTeX source, or null when the server does not offer one. */
   texUrl(lectureId: string | null): string | null;
@@ -293,7 +294,7 @@ export const httpApi: BoardNotesApi = {
   decide: (itemId, body) => request<void>(paths.decision(itemId), json(body)),
   verifySection: (lectureId, sectionId) => verifyByReview(httpApi, lectureId, sectionId),
   verifyLecture: (lectureId) => verifyByReview(httpApi, lectureId, null),
-  ask: async (lectureId, question) => readAskResponse(await send(paths.ask(lectureId), json({ question }))),
+  ask: async (lectureId, question, history = []) => readAskResponse(await send(paths.ask(lectureId), json({ question, history }))),
   listPdfs: () => request<PdfInfo[]>(paths.pdfs),
   texUrl: () => null, // no .tex route on the server yet
   startUpload: (init) => request<UploadSession>(paths.uploads, json(init)),

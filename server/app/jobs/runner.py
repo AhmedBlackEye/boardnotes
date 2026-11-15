@@ -27,6 +27,7 @@ from app.pipeline.interfaces import (
     BlockMerger,
     BoardReader,
     CitationValidator,
+    FormulaRechecker,
     Keyframe,
     KeyframeSelector,
     NoteWriter,
@@ -52,6 +53,7 @@ class Stages:
     plan_sections: SectionPlanner
     write_notes: NoteWriter
     validate_citations: CitationValidator
+    recheck_formulas: FormulaRechecker
 
 
 def _lazy(module: str, name: str) -> Any:
@@ -74,6 +76,7 @@ def default_stages() -> Stages:
         plan_sections=_lazy("notes", "plan_sections"),
         write_notes=_lazy("notes", "write_notes"),
         validate_citations=_lazy("citations", "validate_citations"),
+        recheck_formulas=_lazy("formulas", "recheck_formulas"),
     )
 
 
@@ -287,6 +290,8 @@ async def run_job(
 
         await step(JobStage.MERGE_BLOCKS, 0.65, "Combining board readings")
         blocks = await asyncio.to_thread(stages.merge_blocks, readings)
+        await step(JobStage.MERGE_BLOCKS, 0.66, "Checking that formulas display correctly")
+        blocks = await stages.recheck_formulas(blocks, keyframes, llm)
         await save_blocks(pool, lecture_id, blocks, keyframes)
 
         await step(JobStage.SECTION, 0.7, "Splitting the lecture into sections")

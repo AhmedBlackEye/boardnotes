@@ -157,6 +157,10 @@ class Calls:
             self.hit("merge_blocks")
             return [block]
 
+        async def recheck_formulas(blocks: list[BoardBlock], keyframes: list[Keyframe], llm: Any) -> list[BoardBlock]:
+            self.hit("recheck_formulas")
+            return blocks
+
         async def plan_sections(blocks: list[BoardBlock], transcript: list[TranscriptSegment], llm: Any) -> SectionPlan:
             self.hit("plan_sections")
             return SectionPlan(sections=[SectionPlan.Span(heading="Intro", start_s=0, end_s=60)])
@@ -181,6 +185,7 @@ class Calls:
             plan_sections=plan_sections,
             write_notes=write_notes,
             validate_citations=validate_citations,
+            recheck_formulas=recheck_formulas,
         )
 
 
@@ -208,6 +213,7 @@ async def test_job_runs_stages_in_order_and_stores_results(pool: Pool, db: Db, s
         "transcribe",
         "read_board",
         "merge_blocks",
+        "recheck_formulas",
         "plan_sections",
         "write_notes",
         "validate_citations",

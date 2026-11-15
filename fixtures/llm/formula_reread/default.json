@@ -1,0 +1,1 @@
+{"type": "math", "text": "Solve 2x + y = 3, x - 2y = -1", "latex": "\\begin{cases} 2x + y = 3 \\\\ x - 2y = -1 \\end{cases}", "bbox": [0.1, 0.1, 0.9, 0.9], "confidence": 0.86}

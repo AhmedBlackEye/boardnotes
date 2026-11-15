@@ -1,6 +1,6 @@
 {
  "project": "BoardNotes",
- "updated": "2026-11-15T03:20Z",
+ "updated": "2026-11-15T04:00Z",
  "status_flow": [
   "todo",
   "building",
@@ -673,57 +673,57 @@
    "title": "fal Whisper transcription option + board-vocabulary prompt",
    "phase": "P3",
    "owner": "agent-F",
-   "status": "building",
+   "status": "merged",
    "depends_on": [],
    "acceptance": "TRANSCRIBER=fal|elevenlabs|fixture in .env; reads FAL_API_KEY; segments with timestamps; vocabulary from board text passed as prompt; offline tests",
    "checks": {
-    "make_check": "pending",
-    "V1_review": "pending",
-    "V2_tests": "pending",
-    "V3_security": "pending"
+    "make_check": "pass",
+    "V1_review": "pass",
+    "V2_tests": "pass",
+    "V3_security": "pass"
    },
    "branch": "task/Q1-fal-transcription",
-   "pr": null,
+   "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/6",
    "notes": "",
-   "updated": "2026-11-15T02:30Z"
+   "updated": "2026-11-15T04:00Z"
   },
   {
    "id": "Q-2",
    "title": "Formula render check + targeted re-read",
    "phase": "P3",
    "owner": "agent-G",
-   "status": "building",
+   "status": "in_review",
    "depends_on": [],
    "acceptance": "Formulas that fail KaTeX are re-read once (Opus, only those blocks); still failing -> uncertain; no subject-specific assumptions",
    "checks": {
-    "make_check": "pending",
+    "make_check": "pass",
     "V1_review": "pending",
     "V2_tests": "pending",
     "V3_security": "pending"
    },
    "branch": "task/Q-board-accuracy",
-   "pr": null,
+   "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/7",
    "notes": "",
-   "updated": "2026-11-15T02:30Z"
+   "updated": "2026-11-15T04:00Z"
   },
   {
    "id": "Q-3",
    "title": "Transcript context for board reading",
    "phase": "P3",
    "owner": "agent-G",
-   "status": "building",
+   "status": "in_review",
    "depends_on": [],
    "acceptance": "Each board read gets the ~30 s of transcript around its frame as untrusted data; tests check placement",
    "checks": {
-    "make_check": "pending",
+    "make_check": "pass",
     "V1_review": "pending",
     "V2_tests": "pending",
     "V3_security": "pending"
    },
    "branch": "task/Q-board-accuracy",
-   "pr": null,
+   "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/7",
    "notes": "",
-   "updated": "2026-11-15T02:30Z"
+   "updated": "2026-11-15T04:00Z"
   },
   {
    "id": "Q-4",
@@ -749,19 +749,19 @@
    "title": "Consistent terms and symbols across a lecture",
    "phase": "P3",
    "owner": "agent-G",
-   "status": "building",
+   "status": "in_review",
    "depends_on": [],
    "acceptance": "One pass standardises how the same term/symbol is written across blocks; fewer duplicate blocks; generic across subjects",
    "checks": {
-    "make_check": "pending",
+    "make_check": "pass",
     "V1_review": "pending",
     "V2_tests": "pending",
     "V3_security": "pending"
    },
    "branch": "task/Q-board-accuracy",
-   "pr": null,
+   "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/7",
    "notes": "",
-   "updated": "2026-11-15T02:30Z"
+   "updated": "2026-11-15T04:00Z"
   },
   {
    "id": "Q-6",

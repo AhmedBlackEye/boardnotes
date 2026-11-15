@@ -1,5 +1,9 @@
 [
  {
+  "at": "2026-11-15T04:00:00Z",
+  "text": "Q-1 fal transcription merged (all checks passed first time). G (board accuracy) built, PR #7, in review. H (diagrams) still building."
+ },
+ {
   "at": "2026-11-15T03:20:00Z",
   "text": "Accuracy test set drafted: 15 frames from the demo clip with draft labels, plus a scorer (coverage, text error rate, formula match, diagram recall, invented text, confidence calibration). Waiting for a human check of the labels."
  },

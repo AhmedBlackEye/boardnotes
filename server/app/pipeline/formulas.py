@@ -1,7 +1,8 @@
 """Formula render check (Q-2): board LaTeX that KaTeX can't render gets one closer look.
 
 1. Every block with LaTeX is checked with KaTeX (`check_latex`, the web renderer).
-2. Each failing block is re-read once at tier "notes", from a crop of its best keyframe around its bbox.
+2. Each failing block is re-read once at tier "notes", from a crop of its best keyframe around its bbox, at most
+   MAX_REREADS per lecture (lowest confidence first); the rest are marked uncertain without a re-read.
 3. If the new reading renders, it replaces the old one. Otherwise the text is kept, the LaTeX dropped and the
    confidence capped below LOW_CONFIDENCE so the block shows as uncertain.
 If KaTeX can't run ("unknown"), nothing is changed. Generic across subjects: only rendering is checked.
@@ -24,6 +25,7 @@ log = logging.getLogger(__name__)
 
 CROP_MARGIN = 0.05  # extra context around the block, as a share of the frame on each side
 REREAD_CONCURRENCY = 4
+MAX_REREADS = 20  # per lecture; beyond this, failing blocks (highest confidence first) are marked uncertain unread
 
 FORMULA_REREAD_INSTRUCTIONS = """\
 You are re-reading one piece of writing from a lecture blackboard or whiteboard. The image is a crop of a video frame
@@ -108,8 +110,9 @@ async def recheck_formulas(blocks: list[BoardBlock], keyframes: list[Keyframe], 
 
     sem = asyncio.Semaphore(REREAD_CONCURRENCY)
     order = list(failing)
-    rereads = await asyncio.gather(*(_reread(blocks[i], failing[i], keyframes, llm, sem) for i in order))
-    candidates = {i: r for i, r in zip(order, rereads, strict=True) if r is not None and r.latex}
+    to_reread = sorted(order, key=lambda i: blocks[i].confidence)[:MAX_REREADS]
+    rereads = await asyncio.gather(*(_reread(blocks[i], failing[i], keyframes, llm, sem) for i in to_reread))
+    candidates = {i: r for i, r in zip(to_reread, rereads, strict=True) if r is not None and r.latex}
     cand_order = list(candidates)
     checks = await asyncio.to_thread(check_latex, [candidates[i].latex or "" for i in cand_order])
 

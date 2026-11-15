@@ -104,6 +104,16 @@ async def test_reread_without_latex_or_without_a_frame_marks_uncertain(tmp_path:
     assert len(llm.requests) == 1
 
 
+async def test_rereads_are_capped_per_lecture_lowest_confidence_first(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(formulas, "MAX_REREADS", 2)
+    llm = OneAnswer(BoardReadBlock(type=BlockType.MATH, text="half", latex=r"\frac{1}{2}", bbox=[0, 0, 1, 1], confidence=0.9))
+    blocks = [block("b_1", BAD, confidence=0.9), block("b_2", BAD, confidence=0.5), block("b_3", BAD, confidence=0.6)]
+    out = await recheck_formulas(blocks, [keyframe(tmp_path)], llm)
+    assert len(llm.requests) == 2
+    assert [b.latex for b in out] == [None, r"\frac{1}{2}", r"\frac{1}{2}"]  # b_1 (most confident) was not re-read
+    assert out[0].confidence < LOW_CONFIDENCE
+
+
 async def test_katex_unavailable_changes_nothing(tmp_path: Path, fake_llm: FakeLLM, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(formulas, "check_latex", lambda xs: ["unknown"] * len(xs))
     blocks = [block("b_1", BAD), block("b_2", r"\frac{1}{2}")]

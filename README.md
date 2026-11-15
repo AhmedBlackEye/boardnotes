@@ -34,21 +34,37 @@ Built at Imperial AI Hack 2026 for Reply's **"AI on Campus"** challenge.
 Each model is matched to its job. The cheap model looks at every frame, the strong models only at what matters.
 
 ```mermaid
-flowchart LR
-    V[🎥 Lecture video] --> F[Sample frames<br/>every 3 s]
-    V --> A[Extract audio]
-    F --> G["Glance · Haiku<br/>is there new writing?"]
-    G -->|keyframes only| R["Read the board · Opus<br/>text, LaTeX, diagrams + confidence"]
-    G -->|board words as vocabulary| T["Transcribe · Whisper (fal)"]
-    A --> T
-    T -->|nearby speech settles unclear symbols| R
-    R --> M["Merge across frames<br/>drop fragments · agreement raises confidence"]
-    M --> D["Diagrams · Opus<br/>redraw as chart / flowchart, or crop;<br/>blank and repeated ones hidden"]
-    D --> P["Plan sections · Opus"]
+flowchart TB
+    V["🎥 Lecture video"]
+
+    subgraph S1 ["1 · See and hear"]
+        direction LR
+        G["<b>Glance</b> · Haiku<br/>every frame: new writing?"]
+        T["<b>Transcribe</b> · Whisper<br/>primed with board words"]
+    end
+
+    subgraph S2 ["2 · Read the board"]
+        direction LR
+        R["<b>Read keyframes</b> · Opus<br/>text, LaTeX, diagrams"]
+        M["<b>Merge frames</b><br/>drop fragments,<br/>agreement = confidence"]
+        D["<b>Diagrams</b> · Opus<br/>redraw or crop,<br/>hide blanks and repeats"]
+        R --> M --> D
+    end
+
+    subgraph S3 ["3 · Write the notes"]
+        direction LR
+        P["<b>Plan sections</b> · Opus"]
+        N["<b>Write notes</b> · Opus<br/>organise, classify,<br/>cite every point"]
+        C["<b>Citation check</b><br/>drop anything uncited"]
+        P --> N --> C
+    end
+
+    V --> G & T
+    G -- keyframes --> R
+    T -- speech settles unclear symbols --> R
+    D --> P
     T --> P
-    P --> N["Write notes · Opus<br/>organise, merge, classify,<br/>cite every point"]
-    N --> C["Citation check<br/>drop uncited points, check LaTeX"]
-    C --> O[📄 Notes + PDF]
+    C --> O["📄 Cited notes + PDF"]
 ```
 
 ```mermaid

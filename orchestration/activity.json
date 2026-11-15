@@ -1,5 +1,21 @@
 [
  {
+  "at": "2026-11-15T04:00:00Z",
+  "text": "Q-1 fal transcription merged (all checks passed first time). G (board accuracy) built, PR #7, in review. H (diagrams) still building."
+ },
+ {
+  "at": "2026-11-15T03:20:00Z",
+  "text": "Accuracy test set drafted: 15 frames from the demo clip with draft labels, plus a scorer (coverage, text error rate, formula match, diagram recall, invented text, confidence calibration). Waiting for a human check of the labels."
+ },
+ {
+  "at": "2026-11-15T02:50:00Z",
+  "text": "Integration: the demo clip ran end to end offline (upload → frames → board → notes → PDF); the web app now runs against the real backend. 4 small UI/config fixes queued."
+ },
+ {
+  "at": "2026-11-15T02:30:00Z",
+  "text": "Wave 1 started: agents F (fal transcription), G (formula check, transcript context, consistent terms), H (diagrams) on Opus; lead on integration and the accuracy test set. No API credits used."
+ },
+ {
   "at": "2026-11-15T02:00:00Z",
   "text": "Plan updated: Phase 3 (measured accuracy) added: fal transcription, formula check, transcript-aware board reading, diagrams redrawn or cropped, consistent terms, test set + scoring. Kept generic across subjects."
  },

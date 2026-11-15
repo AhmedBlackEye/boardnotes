@@ -2,6 +2,7 @@ import secrets
 from pathlib import Path
 from typing import Literal
 
+from pydantic import AliasChoices, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -21,6 +22,10 @@ class Settings(BaseSettings):
     llm_mode: Literal["fake", "live"] = "fake"
     anthropic_api_key: str | None = None
     elevenlabs_api_key: str | None = None
+    # Speech-to-text: "fixture" replays fixtures/transcript.json, "fal" uses fal's hosted Whisper, "elevenlabs" uses
+    # Scribe. Unset: "fixture" when LLM_MODE=fake, otherwise "elevenlabs".
+    transcriber: Literal["fixture", "fal", "elevenlabs"] | None = None
+    fal_api_key: str | None = Field(default=None, validation_alias=AliasChoices("fal_api_key", "fal_key"))
 
     model_glance: str = "claude-haiku-5-5"  # cheap per-frame read
     model_board: str = "claude-sonnet-5-5"  # accurate board read, fix check, Q&A
@@ -39,6 +44,11 @@ class Settings(BaseSettings):
     frame_interval_s: float = 3.0
     max_duration_s: float = 4 * 3600  # longer recordings are rejected at upload
     max_frames: int = 5000  # cap on frames sampled (and glanced at) per video
+
+    @field_validator("transcriber", mode="before")
+    @classmethod
+    def _blank_transcriber_is_unset(cls, v: object) -> object:
+        return None if isinstance(v, str) and not v.strip() else v
 
 
 DEFAULT_SESSION_SECRET = "dev-only-change-me"  # noqa: S105

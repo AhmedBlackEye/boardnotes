@@ -4,7 +4,7 @@
 
 Built at Imperial AI Hack 2026 for Reply's **"AI on Campus"** challenge.
 
-[**Figma design**](https://www.figma.com/design/I0dtgDaYeGWv360bEOOCK4/BoardNotes-Prototype) · [Product plan](https://claude.ai/artifact/Rk4H3m1UPom6Yt1FUAAazH) · [Tech plan](https://claude.ai/artifact/7k4MMapzieg7JkrVsw4qje)
+[**▶ Demo video (2 min)**](https://github.com/AhmedBlackEye/boardnotes/releases/download/demo/BoardNotes-demo.mp4) · [**Figma design**](https://www.figma.com/design/I0dtgDaYeGWv360bEOOCK4/BoardNotes-Prototype) · [Product plan](https://claude.ai/artifact/Rk4H3m1UPom6Yt1FUAAazH) · [Tech plan](https://claude.ai/artifact/7k4MMapzieg7JkrVsw4qje)
 
 ![Each point opens its source: the board crop, what the lecturer said, and an AI check of a student's fix](docs/images/source.png)
 <sub>The AI was unsure about this point because the lecturer's hand hides the second equation. A student suggested the fix, the AI found the equation clearly written in another frame and agrees, and the lecturer accepts it with one click.</sub>

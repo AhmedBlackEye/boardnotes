@@ -285,7 +285,7 @@ async def run_job(
         keyframes = await stages.select_keyframes(video, work / "frames", llm, settings.frame_interval_s)
 
         await step(JobStage.TRANSCRIBE, 0.25, "Transcribing the audio")
-        segments = await stages.transcribe(audio, glance_vocabulary(keyframes))
+        segments = await stages.transcribe(audio, vocabulary=glance_vocabulary(keyframes))
         await save_transcript(pool, lecture_id, segments)
 
         await step(JobStage.READ_BOARD, 0.45, f"Reading the board in {len(keyframes)} frames")

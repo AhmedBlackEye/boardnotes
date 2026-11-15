@@ -5,8 +5,9 @@ One model call per lecture lists variant spellings and their canonical form (e.g
 - exact replacement of whole tokens / LaTeX fragments only (never inside a longer word or command), in one pass so
   replacements never chain; blocks are never rewritten wholesale;
 - single-character variants are ignored (too easy to change meaning), as are LaTeX commands in plain text;
-- a LaTeX change that stops the formula rendering (KaTeX) is undone.
-Blocks that become identical are then merged. Generic across subjects.
+- a LaTeX change that stops the formula rendering (KaTeX) undoes that block's whole change (text and LaTeX).
+Blocks that become identical are then merged, but only when normalisation changed at least one of them: writing that
+was already identical (e.g. "x = 0" in two worked examples) stays separate. Generic across subjects.
 """
 
 import asyncio
@@ -25,6 +26,7 @@ log = logging.getLogger(__name__)
 MIN_VARIANT_CHARS = 2
 MAX_TERM_CHARS = 60
 MAX_BLOCK_CHARS = 400  # per block in the request; longer readings are cut
+MAX_REQUEST_CHARS = 40_000  # all blocks in the request; blocks beyond this are left out of the check
 
 
 class TermVariant(Strict):
@@ -51,7 +53,14 @@ fragment. If everything is already consistent, return an empty list."""
 
 
 def terms_request(blocks: list[BoardBlock]) -> LLMRequest:
-    lines = [f"{b.id} | {b.text[:MAX_BLOCK_CHARS]} | {(b.latex or '')[:MAX_BLOCK_CHARS]}".replace("\n", " ") for b in blocks]
+    lines: list[str] = []
+    total = 0
+    for b in blocks:
+        line = f"{b.id} | {b.text[:MAX_BLOCK_CHARS]} | {(b.latex or '')[:MAX_BLOCK_CHARS]}".replace("\n", " ")
+        total += len(line) + 1
+        if total > MAX_REQUEST_CHARS:
+            break
+        lines.append(line)
     return LLMRequest(
         task="normalise_terms",
         tier="board",
@@ -76,12 +85,21 @@ def usable_pairs(term_map: TermMap) -> dict[str, str]:
 
 
 def _pattern(variants: list[str]) -> re.Pattern[str] | None:
-    """Whole-token match for any variant: not preceded by a letter, digit, _ or \\, nor followed by a letter, digit or _.
-    Longest first so a longer variant wins over a shorter one it contains."""
+    """Whole-token match for any variant, longest first so a longer variant wins over a shorter one it contains.
+    - A plain variant must not be preceded by a letter, digit, _ or \\, nor followed by a letter, digit or _.
+    - A variant starting with a LaTeX command must not be preceded by \\ (an escaped backslash), and if it ends in a
+      letter it must not be followed by one (that would be a longer command). So `\\lamda_1` and `2\\lamda` match,
+      `\\lamdax` does not."""
     if not variants:
         return None
-    alts = "|".join(re.escape(v) for v in sorted(variants, key=len, reverse=True))
-    return re.compile(rf"(?<![A-Za-z0-9_\\])(?:{alts})(?![A-Za-z0-9_])")
+    alts: list[str] = []
+    for v in sorted(variants, key=len, reverse=True):
+        if v.startswith("\\"):
+            after = r"(?![A-Za-z])" if v[-1].isalpha() else ""
+            alts.append(rf"(?<!\\){re.escape(v)}{after}")
+        else:
+            alts.append(rf"(?<![A-Za-z0-9_\\]){re.escape(v)}(?![A-Za-z0-9_])")
+    return re.compile("|".join(alts))
 
 
 def replace_terms(value: str, pairs: dict[str, str], pattern: re.Pattern[str] | None) -> str:
@@ -91,7 +109,8 @@ def replace_terms(value: str, pairs: dict[str, str], pattern: re.Pattern[str] | 
 
 
 def apply_terms(blocks: list[BoardBlock], pairs: dict[str, str]) -> list[BoardBlock]:
-    """Apply the replacements to block text and LaTeX. LaTeX commands are never put into plain text."""
+    """Apply the replacements to block text and LaTeX. LaTeX commands are never put into plain text.
+    Unchanged blocks are returned as the same objects."""
     text_pairs = {v: c for v, c in pairs.items() if "\\" not in c}
     text_re, latex_re = _pattern(list(text_pairs)), _pattern(list(pairs))
     out: list[BoardBlock] = []
@@ -102,18 +121,36 @@ def apply_terms(blocks: list[BoardBlock], pairs: dict[str, str]) -> list[BoardBl
     return out
 
 
-def merge_identical(blocks: list[BoardBlock]) -> list[BoardBlock]:
-    """Merge blocks with the same type, text and LaTeX. The first keeps its id and earliest time; the most confident
-    reading's frame, position and confidence win."""
-    kept: dict[tuple[str, str, str | None], BoardBlock] = {}
+BlockKey = tuple[str, str, str | None]
+
+
+def _key(b: BoardBlock) -> BlockKey:
+    return (b.type.value, b.text, b.latex)
+
+
+def merge_identical(blocks: list[BoardBlock], changed: set[str]) -> list[BoardBlock]:
+    """Merge blocks with the same type, text and LaTeX, only in groups where at least one block's id is in `changed`
+    (normalisation made them identical). The first keeps its id, place and earliest time; the most confident
+    reading's frame, position and confidence win. Other blocks are kept as they are, in order."""
+    groups: dict[BlockKey, list[BoardBlock]] = {}
     for b in blocks:
-        key = (b.type.value, b.text, b.latex)
-        first = kept.get(key)
-        if first is None:
-            kept[key] = b
+        groups.setdefault(_key(b), []).append(b)
+    mergeable = {key for key, group in groups.items() if len(group) > 1 and any(b.id in changed for b in group)}
+
+    out: list[BoardBlock] = []
+    slot: dict[BlockKey, int] = {}  # mergeable key -> index of its first block in out
+    for b in blocks:
+        key = _key(b)
+        if key not in mergeable:
+            out.append(b)
             continue
+        if key not in slot:
+            slot[key] = len(out)
+            out.append(b)
+            continue
+        first = out[slot[key]]
         best = b if b.confidence > first.confidence else first
-        kept[key] = first.model_copy(
+        out[slot[key]] = first.model_copy(
             update={
                 "first_seen_s": min(first.first_seen_s, b.first_seen_s),
                 "best_frame_s": best.best_frame_s,
@@ -122,17 +159,17 @@ def merge_identical(blocks: list[BoardBlock]) -> list[BoardBlock]:
                 "figure": first.figure or b.figure,
             }
         )
-    return list(kept.values())
+    return out
 
 
 async def _keep_rendering(before: list[BoardBlock], after: list[BoardBlock]) -> list[BoardBlock]:
-    """Undo LaTeX changes that made a formula fail to render."""
+    """Undo the whole change (text and LaTeX) of any block whose new LaTeX fails to render, keeping them consistent."""
     changed = [i for i, (a, b) in enumerate(zip(before, after, strict=True)) if b.latex and a.latex != b.latex]
     results = await asyncio.to_thread(check_latex, [after[i].latex or "" for i in changed])
     out = list(after)
     for i, result in zip(changed, results, strict=True):
         if isinstance(result, LatexError):
-            out[i] = out[i].model_copy(update={"latex": before[i].latex})
+            out[i] = before[i]
     return out
 
 
@@ -149,6 +186,7 @@ async def normalise_terms(blocks: list[BoardBlock], llm: LLM) -> list[BoardBlock
     if not pairs:
         return blocks
     updated = await _keep_rendering(blocks, apply_terms(blocks, pairs))
-    merged = merge_identical(updated)
+    changed = {new.id for old, new in zip(blocks, updated, strict=True) if new is not old}
+    merged = merge_identical(updated, changed)
     log.info("normalise_terms: %d replacements, %d blocks merged", len(pairs), len(blocks) - len(merged))
     return merged

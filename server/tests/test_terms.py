@@ -83,9 +83,33 @@ def test_identical_blocks_merge_keeping_first_id_and_best_reading() -> None:
     a = block("b_1", "eigenvalue", t=5.0, confidence=0.8)
     other = block("b_2", "other", t=6.0)
     b = block("b_3", "eigenvalue", t=2.0, confidence=0.95)
-    out = merge_identical([a, other, b])
+    out = merge_identical([a, other, b], {"b_3"})
     assert [x.id for x in out] == ["b_1", "b_2"]
     assert (out[0].first_seen_s, out[0].best_frame_s, out[0].confidence) == (2.0, 3.0, 0.95)
+
+
+def test_identical_blocks_untouched_by_normalisation_stay_separate() -> None:
+    blocks = [block("b_1", "x = 0", t=5.0), block("b_2", "y", t=6.0), block("b_3", "x = 0", t=50.0)]
+    assert merge_identical(blocks, set()) == blocks
+    assert merge_identical(blocks, {"b_2"}) == blocks
+
+
+async def test_normalise_terms_does_not_merge_repeated_writing() -> None:
+    blocks = [block("b_1", "x = 0", t=5.0), block("b_2", "eigen value", t=6.0), block("b_3", "x = 0", t=50.0)]
+    out = await normalise_terms(blocks, MapLLM([("eigen value", "eigenvalue")]))
+    assert [(b.id, b.text) for b in out] == [("b_1", "x = 0"), ("b_2", "eigenvalue"), ("b_3", "x = 0")]
+
+
+def test_latex_command_variants_match_next_to_subscripts_and_digits() -> None:
+    blocks = [block("b_1", "l", r"\lamda_1 + 2\lamda + \lamdax + \\lamda + \lamda^2")]
+    out = apply_terms(blocks, {r"\lamda": r"\lambda"})
+    assert out[0].latex == r"\lambda_1 + 2\lambda + \lamdax + \\lamda + \lambda^2"
+
+
+def test_request_has_a_total_size_budget(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(terms, "MAX_REQUEST_CHARS", 30)
+    req = terms.terms_request([block("b_1", "a" * 10), block("b_2", "b" * 10), block("b_3", "c" * 10)])
+    assert "b_1" in req.untrusted["blocks"] and "b_3" not in req.untrusted["blocks"]
 
 
 async def test_normalise_terms_one_call_with_blocks_as_untrusted_data() -> None:
@@ -104,6 +128,10 @@ async def test_latex_change_that_breaks_rendering_is_undone() -> None:
     blocks = [block("b_1", "a", r"\alpha + 1"), block("b_2", "b", r"\beta")]
     out = await normalise_terms(blocks, MapLLM([(r"\alpha", r"\oops")]))
     assert out[0].latex == r"\alpha + 1"
+    # the text change in the same block is undone too, so text and LaTeX stay consistent
+    blocks = [block("b_1", "alfa", r"\alfa + 1"), block("b_2", "b", r"\beta")]
+    out = await normalise_terms(blocks, MapLLM([("alfa", "alpha"), (r"\alfa", r"\oops")]))
+    assert (out[0].text, out[0].latex) == ("alfa", r"\alfa + 1")
 
 
 async def test_model_failure_or_single_block_changes_nothing(fake_llm: FakeLLM) -> None:

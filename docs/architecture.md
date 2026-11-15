@@ -33,4 +33,6 @@ priority = 2 × (1 − confidence) + log2(1 + upvotes) + (1 if AI agrees) − (2
 - Models have no tools, so the worst a prompt injection can do is produce a wrong answer, which citations and lecturer review catch.
 - Structured outputs everywhere; responses are validated against `app/contracts`.
 - Upload limits: size (4 GB), container/codec checked with ffprobe before any processing.
-- Approved fixes are stored in `training_examples` for later fine-tuning (Adaption).
+- Approved fixes are stored in `training_examples` for later fine-tuning (Adaption). The most recent ones (the
+  uploader's first, then anyone's; `FIX_EXAMPLES`, default 5, text only) are given to the board reader as untrusted
+  "past corrections" data to help it read similar-looking writing (`app/pipeline/fix_examples.py`).

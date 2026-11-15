@@ -46,6 +46,7 @@ class Settings(BaseSettings):
     frame_interval_s: float = 3.0
     max_duration_s: float = 4 * 3600  # longer recordings are rejected at upload
     max_frames: int = 5000  # cap on frames sampled (and glanced at) per video
+    fix_examples: int = 5  # recent approved corrections shown to the board reader as examples (0 turns it off)
 
     @field_validator("transcriber", mode="before")
     @classmethod

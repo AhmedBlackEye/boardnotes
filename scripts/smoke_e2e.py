@@ -13,6 +13,7 @@ import httpx
 
 video = Path(sys.argv[1] if len(sys.argv) > 1 else "fixtures/video/demo.mp4")
 api = sys.argv[2] if len(sys.argv) > 2 else "http://localhost:8000"
+TITLE = sys.argv[3] if len(sys.argv) > 3 else "Smoke test · Geometry of Linear Algebra"
 c = httpx.Client(base_url=api, timeout=60)
 
 
@@ -25,7 +26,7 @@ def ok(r: httpx.Response) -> httpx.Response:
 t0 = time.time()
 ok(c.post("/auth/demo-login", json={"user_id": "u_lecturer"}))
 size = video.stat().st_size
-up = ok(c.post("/uploads", json={"filename": video.name, "size_bytes": size, "title": "Smoke test · Geometry of Linear Algebra"})).json()
+up = ok(c.post("/uploads", json={"filename": video.name, "size_bytes": size, "title": TITLE})).json()
 chunk = up["chunk_size"]
 with video.open("rb") as f:
     pos = 0

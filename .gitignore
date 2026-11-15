@@ -18,3 +18,4 @@ data/
 .claude/settings.local.json
 .playwright-mcp/
 eval/runs/
+supabase/.temp/

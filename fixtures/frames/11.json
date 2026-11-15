@@ -1,0 +1,17 @@
+{
+ "time_s": 195,
+ "lines": [
+  "Solve 2x + y = 3, x − 2y = −1, and find out",
+  "its \"row picture\" and \"column picture\"",
+  "x = 2y − 1 ⇒ 2(2y − 1) + y = 3",
+  "⇒ 5y − 2 = 3 ⇒ x = y = 1"
+ ],
+ "partial": [],
+ "latex": [
+  "\\begin{cases} 2x + y = 3 \\\\ x - 2y = -1 \\end{cases}",
+  "x = 2y - 1 \\Rightarrow 2(2y - 1) + y = 3",
+  "\\Rightarrow 5y - 2 = 3 \\Rightarrow x = y = 1"
+ ],
+ "diagrams": [],
+ "status": "draft: needs human check"
+}

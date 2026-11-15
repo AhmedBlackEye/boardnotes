@@ -1,6 +1,6 @@
 {
  "project": "BoardNotes",
- "updated": "2026-11-15T02:50Z",
+ "updated": "2026-11-15T03:20Z",
  "status_flow": [
   "todo",
   "building",
@@ -102,7 +102,7 @@
    "title": "Demo clip + 15 hand-labelled board frames",
    "phase": "P0",
    "owner": "you + lead",
-   "status": "building",
+   "status": "in_review",
    "depends_on": [],
    "acceptance": "fixtures/video/demo.mp4 present; fixtures/frames/NN.jpg + NN.json",
    "checks": {
@@ -110,8 +110,8 @@
    },
    "branch": null,
    "pr": null,
-   "notes": "Clip ready: fixtures/video/demo.mp4 = first 5 min of MIT 18.06SC 'Geometry of Linear Algebra' (360p, CC BY-NC-SA). Labelling 15 frames still to do.",
-   "updated": "2026-11-15T01:30Z"
+   "notes": "Clip ready; 15 frames labelled in draft, waiting for the user's check.",
+   "updated": "2026-11-15T03:20Z"
   },
   {
    "id": "P0-5",
@@ -768,7 +768,7 @@
    "title": "Accuracy test set + scoring script",
    "phase": "P3",
    "owner": "lead + you",
-   "status": "building",
+   "status": "in_review",
    "depends_on": [],
    "acceptance": "15 labelled frames from the demo clip (lead drafts, user corrects); script scores text error rate, formula match, coverage, citation validity, confidence calibration; replays saved responses for free",
    "checks": {
@@ -779,8 +779,8 @@
    },
    "branch": null,
    "pr": null,
-   "notes": "",
-   "updated": "2026-11-15T02:30Z"
+   "notes": "15 frames + draft labels in fixtures/frames (status 'draft: needs human check'); scorer eval/score_board.py with replay (free) and --live --yes; scorer unit-tested. Waiting for the user to check labels.",
+   "updated": "2026-11-15T03:20Z"
   },
   {
    "id": "Q-7",

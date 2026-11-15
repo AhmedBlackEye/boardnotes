@@ -1,5 +1,9 @@
 [
  {
+  "at": "2026-11-15T03:20:00Z",
+  "text": "Accuracy test set drafted: 15 frames from the demo clip with draft labels, plus a scorer (coverage, text error rate, formula match, diagram recall, invented text, confidence calibration). Waiting for a human check of the labels."
+ },
+ {
   "at": "2026-11-15T02:50:00Z",
   "text": "Integration: the demo clip ran end to end offline (upload → frames → board → notes → PDF); the web app now runs against the real backend. 4 small UI/config fixes queued."
  },

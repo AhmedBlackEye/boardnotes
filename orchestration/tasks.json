@@ -1,6 +1,6 @@
 {
  "project": "BoardNotes",
- "updated": "2026-11-15T04:00Z",
+ "updated": "2026-11-15T04:40Z",
  "status_flow": [
   "todo",
   "building",
@@ -692,76 +692,76 @@
    "title": "Formula render check + targeted re-read",
    "phase": "P3",
    "owner": "agent-G",
-   "status": "in_review",
+   "status": "changes_requested",
    "depends_on": [],
    "acceptance": "Formulas that fail KaTeX are re-read once (Opus, only those blocks); still failing -> uncertain; no subject-specific assumptions",
    "checks": {
     "make_check": "pass",
-    "V1_review": "pending",
-    "V2_tests": "pending",
-    "V3_security": "pending"
+    "V1_review": "changes requested",
+    "V2_tests": "31/32 (needs main merged: transcribe vocabulary)",
+    "V3_security": "pass"
    },
    "branch": "task/Q-board-accuracy",
    "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/7",
    "notes": "",
-   "updated": "2026-11-15T04:00Z"
+   "updated": "2026-11-15T04:40Z"
   },
   {
    "id": "Q-3",
    "title": "Transcript context for board reading",
    "phase": "P3",
    "owner": "agent-G",
-   "status": "in_review",
+   "status": "changes_requested",
    "depends_on": [],
    "acceptance": "Each board read gets the ~30 s of transcript around its frame as untrusted data; tests check placement",
    "checks": {
     "make_check": "pass",
-    "V1_review": "pending",
-    "V2_tests": "pending",
-    "V3_security": "pending"
+    "V1_review": "changes requested",
+    "V2_tests": "31/32 (needs main merged: transcribe vocabulary)",
+    "V3_security": "pass"
    },
    "branch": "task/Q-board-accuracy",
    "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/7",
    "notes": "",
-   "updated": "2026-11-15T04:00Z"
+   "updated": "2026-11-15T04:40Z"
   },
   {
    "id": "Q-4",
    "title": "Diagrams: redraw as clean figure, else crop from the recording",
    "phase": "P3",
    "owner": "agent-H",
-   "status": "building",
-   "depends_on": [],
-   "acceptance": "Diagram blocks become a validated chart spec (plots) or Mermaid (flow/structure) when confident; otherwise the board crop; both web and PDF; original crop always reachable; marked 'redrawn by AI'",
-   "checks": {
-    "make_check": "pending",
-    "V1_review": "pending",
-    "V2_tests": "pending",
-    "V3_security": "pending"
-   },
-   "branch": "task/Q4-diagrams",
-   "pr": null,
-   "notes": "",
-   "updated": "2026-11-15T02:30Z"
-  },
-  {
-   "id": "Q-5",
-   "title": "Consistent terms and symbols across a lecture",
-   "phase": "P3",
-   "owner": "agent-G",
    "status": "in_review",
    "depends_on": [],
-   "acceptance": "One pass standardises how the same term/symbol is written across blocks; fewer duplicate blocks; generic across subjects",
+   "acceptance": "Diagram blocks become a validated chart spec (plots) or Mermaid (flow/structure) when confident; otherwise the board crop; both web and PDF; original crop always reachable; marked 'redrawn by AI'",
    "checks": {
     "make_check": "pass",
     "V1_review": "pending",
     "V2_tests": "pending",
     "V3_security": "pending"
    },
+   "branch": "task/Q4-diagrams",
+   "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/8",
+   "notes": "",
+   "updated": "2026-11-15T04:40Z"
+  },
+  {
+   "id": "Q-5",
+   "title": "Consistent terms and symbols across a lecture",
+   "phase": "P3",
+   "owner": "agent-G",
+   "status": "changes_requested",
+   "depends_on": [],
+   "acceptance": "One pass standardises how the same term/symbol is written across blocks; fewer duplicate blocks; generic across subjects",
+   "checks": {
+    "make_check": "pass",
+    "V1_review": "changes requested",
+    "V2_tests": "31/32 (needs main merged: transcribe vocabulary)",
+    "V3_security": "pass"
+   },
    "branch": "task/Q-board-accuracy",
    "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/7",
    "notes": "",
-   "updated": "2026-11-15T04:00Z"
+   "updated": "2026-11-15T04:40Z"
   },
   {
    "id": "Q-6",

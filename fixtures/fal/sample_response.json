@@ -1,0 +1,820 @@
+{
+ "text": "Today we want to solve this system: two x plus y equals three, and x minus two y equals minus one. We'll look at it two ways, the row picture and the column picture, and they give the same answer. In the row picture each equation is a line in the plane and the solution is the point where those two lines cross each other. From the second equation, x equals two y minus one. Can we also eliminate x first? Yes, elimination works either way. Does the order matter? No, you get the same solution.",
+ "chunks": [
+  {
+   "timestamp": [
+    4.0,
+    4.35
+   ],
+   "text": " Today",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    4.45,
+    4.76
+   ],
+   "text": " we",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    4.83,
+    5.14
+   ],
+   "text": " want",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    5.18,
+    5.55
+   ],
+   "text": " to",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    5.6,
+    5.97
+   ],
+   "text": " solve",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    6.02,
+    6.36
+   ],
+   "text": " this",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    6.47,
+    6.87
+   ],
+   "text": " system:",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    6.99,
+    7.3
+   ],
+   "text": " two",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    7.36,
+    7.68
+   ],
+   "text": " x",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    7.75,
+    8.18
+   ],
+   "text": " plus",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    8.27,
+    8.67
+   ],
+   "text": " y",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    8.75,
+    9.06
+   ],
+   "text": " equals",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    9.12,
+    9.53
+   ],
+   "text": " three,",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    9.59,
+    9.98
+   ],
+   "text": " and",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    10.05,
+    10.47
+   ],
+   "text": " x",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    10.53,
+    10.93
+   ],
+   "text": " minus",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    11.04,
+    11.45
+   ],
+   "text": " two",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    11.57,
+    11.89
+   ],
+   "text": " y",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    11.99,
+    12.32
+   ],
+   "text": " equals",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    12.36,
+    12.77
+   ],
+   "text": " minus",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    12.85,
+    13.29
+   ],
+   "text": " one.",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    13.69,
+    14.1
+   ],
+   "text": " We'll",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    14.19,
+    14.56
+   ],
+   "text": " look",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    14.68,
+    15.05
+   ],
+   "text": " at",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    15.1,
+    15.51
+   ],
+   "text": " it",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    15.63,
+    16.05
+   ],
+   "text": " two",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    16.13,
+    16.53
+   ],
+   "text": " ways,",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    16.61,
+    16.94
+   ],
+   "text": " the",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    16.98,
+    17.41
+   ],
+   "text": " row",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    17.46,
+    17.83
+   ],
+   "text": " picture",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    17.87,
+    18.25
+   ],
+   "text": " and",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    18.36,
+    18.79
+   ],
+   "text": " the",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    18.85,
+    19.21
+   ],
+   "text": " column",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    19.33,
+    19.78
+   ],
+   "text": " picture,",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    19.83,
+    20.17
+   ],
+   "text": " and",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    20.25,
+    20.64
+   ],
+   "text": " they",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    20.68,
+    21.05
+   ],
+   "text": " give",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    21.14,
+    21.58
+   ],
+   "text": " the",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    21.66,
+    22.06
+   ],
+   "text": " same",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    22.11,
+    22.55
+   ],
+   "text": " answer.",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    22.85,
+    23.29
+   ],
+   "text": " In",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    23.36,
+    23.72
+   ],
+   "text": " the",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    23.81,
+    24.12
+   ],
+   "text": " row",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    24.18,
+    24.51
+   ],
+   "text": " picture",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    24.55,
+    24.86
+   ],
+   "text": " each",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    24.91,
+    25.27
+   ],
+   "text": " equation",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    25.38,
+    25.77
+   ],
+   "text": " is",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    25.83,
+    26.19
+   ],
+   "text": " a",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    26.24,
+    26.67
+   ],
+   "text": " line",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    26.75,
+    27.13
+   ],
+   "text": " in",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    27.18,
+    27.53
+   ],
+   "text": " the",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    27.64,
+    27.97
+   ],
+   "text": " plane",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    28.08,
+    28.47
+   ],
+   "text": " and",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    28.55,
+    28.86
+   ],
+   "text": " the",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    28.98,
+    29.41
+   ],
+   "text": " solution",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    29.47,
+    29.83
+   ],
+   "text": " is",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    29.93,
+    30.32
+   ],
+   "text": " the",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    30.39,
+    30.72
+   ],
+   "text": " point",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    30.84,
+    31.28
+   ],
+   "text": " where",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    31.38,
+    31.8
+   ],
+   "text": " those",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    31.88,
+    32.24
+   ],
+   "text": " two",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    32.28,
+    32.62
+   ],
+   "text": " lines",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    32.72,
+    33.17
+   ],
+   "text": " cross",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    33.28,
+    33.74
+   ],
+   "text": " each",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    33.81,
+    34.14
+   ],
+   "text": " other.",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    37.54,
+    37.88
+   ],
+   "text": " From",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    37.97,
+    38.41
+   ],
+   "text": " the",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    38.49,
+    38.89
+   ],
+   "text": " second",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    38.94,
+    39.34
+   ],
+   "text": " equation,",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    39.44,
+    39.86
+   ],
+   "text": " x",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    39.92,
+    40.34
+   ],
+   "text": " equals",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    40.44,
+    40.9
+   ],
+   "text": " two",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    40.97,
+    41.42
+   ],
+   "text": " y",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    41.47,
+    41.79
+   ],
+   "text": " minus",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    41.91,
+    42.33
+   ],
+   "text": " one.",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    42.93,
+    43.36
+   ],
+   "text": " Can",
+   "speaker": "SPEAKER_01"
+  },
+  {
+   "timestamp": [
+    43.45,
+    43.81
+   ],
+   "text": " we",
+   "speaker": "SPEAKER_01"
+  },
+  {
+   "timestamp": [
+    43.86,
+    44.17
+   ],
+   "text": " also",
+   "speaker": "SPEAKER_01"
+  },
+  {
+   "timestamp": [
+    44.26,
+    44.64
+   ],
+   "text": " eliminate",
+   "speaker": "SPEAKER_01"
+  },
+  {
+   "timestamp": [
+    44.72,
+    45.16
+   ],
+   "text": " x",
+   "speaker": "SPEAKER_01"
+  },
+  {
+   "timestamp": [
+    45.21,
+    45.55
+   ],
+   "text": " first?",
+   "speaker": "SPEAKER_01"
+  },
+  {
+   "timestamp": [
+    46.05,
+    46.4
+   ],
+   "text": " Yes,",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    46.46,
+    46.83
+   ],
+   "text": " elimination",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    46.94,
+    47.3
+   ],
+   "text": " works",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    47.38,
+    47.82
+   ],
+   "text": " either",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    47.94,
+    48.32
+   ],
+   "text": " way.",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    49.02,
+    49.4
+   ],
+   "text": " Does",
+   "speaker": "SPEAKER_02"
+  },
+  {
+   "timestamp": [
+    49.48,
+    49.81
+   ],
+   "text": " the",
+   "speaker": "SPEAKER_02"
+  },
+  {
+   "timestamp": [
+    49.91,
+    50.24
+   ],
+   "text": " order",
+   "speaker": "SPEAKER_02"
+  },
+  {
+   "timestamp": [
+    50.34,
+    50.73
+   ],
+   "text": " matter?",
+   "speaker": "SPEAKER_02"
+  },
+  {
+   "timestamp": [
+    51.13,
+    51.51
+   ],
+   "text": " No,",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    51.62,
+    51.94
+   ],
+   "text": " you",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    51.99,
+    52.34
+   ],
+   "text": " get",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    52.42,
+    52.81
+   ],
+   "text": " the",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    52.92,
+    53.3
+   ],
+   "text": " same",
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    53.38,
+    null
+   ],
+   "text": " solution.",
+   "speaker": "SPEAKER_00"
+  }
+ ],
+ "inferred_languages": [
+  "en"
+ ],
+ "diarization_segments": [
+  {
+   "timestamp": [
+    4.0,
+    34.14
+   ],
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    37.54,
+    42.33
+   ],
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    42.93,
+    45.55
+   ],
+   "speaker": "SPEAKER_01"
+  },
+  {
+   "timestamp": [
+    46.05,
+    48.32
+   ],
+   "speaker": "SPEAKER_00"
+  },
+  {
+   "timestamp": [
+    49.02,
+    50.73
+   ],
+   "speaker": "SPEAKER_02"
+  },
+  {
+   "timestamp": [
+    51.13,
+    53.38
+   ],
+   "speaker": "SPEAKER_00"
+  }
+ ]
+}

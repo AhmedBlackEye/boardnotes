@@ -137,7 +137,7 @@ class Calls:
             self.hit("extract_audio")
             return out_dir / "a.wav"
 
-        async def transcribe(audio: Path) -> list[TranscriptSegment]:
+        async def transcribe(audio: Path, vocabulary: list[str] | None = None) -> list[TranscriptSegment]:
             self.hit("transcribe")
             return [TranscriptSegment(start_s=0, end_s=5, speaker="lecturer", text="hello")]
 
@@ -145,7 +145,7 @@ class Calls:
             self.hit("select_keyframes")
             return [frame]
 
-        async def read_board(keyframes: list[Keyframe], llm: Any) -> list[FrameReading]:
+        async def read_board(keyframes: list[Keyframe], llm: Any, transcript: list[TranscriptSegment] | None = None) -> list[FrameReading]:
             self.hit("read_board")
             return [FrameReading(keyframe=frame, read=BoardRead(blocks=[], frame_quality="good"))]
 

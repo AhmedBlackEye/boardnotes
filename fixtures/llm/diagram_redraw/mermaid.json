@@ -1,0 +1,7 @@
+{
+  "kind": "mermaid",
+  "chart": null,
+  "mermaid": "flowchart LR\n  A[\"Ax = b\"] --> B[\"Elimination\"]\n  B --> C[\"Ux = c\"]\n  C --> D[\"Back substitution\"]",
+  "caption": "Solving Ax = b: elimination gives Ux = c, then back substitution.",
+  "confidence": 0.9
+}

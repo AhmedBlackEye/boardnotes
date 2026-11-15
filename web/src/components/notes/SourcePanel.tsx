@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { AiVerdict } from "@/components/AiVerdict";
 import { BoardSnapshot } from "@/components/BoardSnapshot";
+import { DiagramFigure } from "@/components/diagrams/DiagramFigure";
 import { Button } from "@/components/Button";
 import { TextField } from "@/components/TextField";
 import { VideoPlayer, type SeekRequest } from "@/components/VideoPlayer";
@@ -73,7 +74,15 @@ export function SourcePanel({
         seek={seek ?? { t: start, n: 0 }}
         compact
       />
-      {block && <BoardSnapshot caption={`On the board · ${formatTime(block.best_frame_s)}`} text={block.text} imageUrl={source.data?.snapshot_urls[0]} />}
+      {block && !block.figure && <BoardSnapshot caption={`On the board · ${formatTime(block.best_frame_s)}`} text={block.text} imageUrl={source.data?.snapshot_urls[0]} />}
+      {blocks.map((b, i) =>
+        b.figure ? (
+          <div key={b.id} className="flex flex-col gap-1.5">
+            <p className="text-[12px] font-semibold text-secondary">Diagram on the board · {formatTime(b.best_frame_s)}</p>
+            <DiagramFigure figure={b.figure} boardText={b.text} snapshotUrl={source.data?.snapshot_urls[i]} />
+          </div>
+        ) : null,
+      )}
       {first && (
         <div className="flex flex-col gap-1.5">
           <p className="text-[12px] font-semibold text-secondary">The lecturer said · {formatRange(first.start_s, first.end_s)}</p>

@@ -173,7 +173,10 @@ export function LectureNotes({ lecture, mode, preview, onChanged }: { lecture: L
           {lecturer && (waiting > 0 || uncertainTotal > 0) && (
             <div className="mb-4 flex items-center justify-between gap-3 rounded-lg bg-warning-subtle px-4 py-3 text-[13px] font-semibold text-warning">
               <span>
-                {plural(waiting, "student fix", "student fixes")} and {plural(uncertainTotal, "uncertain reading")} are waiting in this lecture.
+                {[waiting > 0 && plural(waiting, "student fix", "student fixes"), uncertainTotal > 0 && plural(uncertainTotal, "uncertain reading")]
+                  .filter(Boolean)
+                  .join(" and ")}{" "}
+                {waiting + uncertainTotal === 1 ? "is" : "are"} waiting in this lecture.
               </span>
               <Link href="/review">
                 <Button variant="secondary" className="px-3 py-1">Open review queue</Button>

@@ -135,7 +135,14 @@ export default function LecturesPage() {
           {lectures.error && <p className="p-4 text-[13px] text-danger">{lectures.error}</p>}
           {lectures.loading && !lectures.data && <p className="p-4 text-[13px] text-secondary">Loading lectures…</p>}
           {shown.map((l) => (
-            <LectureRow key={l.id} lecture={l} lecturer={lecturer} subtitle={subtitle(l, lecturer)} action={action(l)} />
+            <LectureRow
+              key={l.id}
+              lecture={l}
+              lecturer={lecturer}
+              subtitle={subtitle(l, lecturer)}
+              action={action(l)}
+              href={l.status === "processing" || l.status === "uploading" || l.status === "failed" ? undefined : `/lectures/${l.id}`}
+            />
           ))}
           {!lectures.loading && shown.length === 0 && <p className="p-4 text-[13px] text-secondary">No lectures match.</p>}
         </div>

@@ -19,7 +19,7 @@ from app.pdfs import PdfRenderers, PdfService, default_renderers
 from app.state import AppState
 
 log = logging.getLogger(__name__)
-WEB_ORIGINS = ["http://localhost:3000"]
+WEB_ORIGINS = [o.strip() for o in default_settings.web_origins.split(",") if o.strip()]
 
 
 def create_app(

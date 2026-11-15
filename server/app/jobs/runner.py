@@ -219,7 +219,7 @@ def section_status(notes: SectionNotes) -> SectionStatus:
 async def save_notes(pool: Pool, lecture_id: str, notes: list[SectionNotes]) -> None:
     async with pool.connection() as conn:
         await execute(conn, "delete from sections where lecture_id = %(lec)s", {"lec": lecture_id})
-        for order, section in enumerate(notes):
+        for order, section in enumerate(notes, start=1):  # sections are numbered from 1 in the UI and PDF
             row = await fetch_one(
                 conn,
                 """insert into sections (lecture_id, ord, heading, start_s, end_s, status, said_not_written)

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { ReactNode } from "react";
 import { BoardSnapshot } from "@/components/BoardSnapshot";
 import { StatusPill } from "@/components/StatusPill";
@@ -24,12 +25,30 @@ export function lecturePill(l: LectureSummary, lecturer: boolean): ReactNode {
 }
 
 /** One lecture in the list: board thumbnail, title, length, sections, status and an action button. */
-export function LectureRow({ lecture, subtitle, action, lecturer = false }: { lecture: LectureSummary; subtitle: string; action: ReactNode; lecturer?: boolean }) {
+export function LectureRow({
+  lecture,
+  subtitle,
+  action,
+  lecturer = false,
+  href,
+}: {
+  lecture: LectureSummary;
+  subtitle: string;
+  action: ReactNode;
+  lecturer?: boolean;
+  href?: string;
+}) {
   return (
     <div className={`${LECTURE_GRID} border-t border-default px-4 py-3`} data-testid="lecture-row">
       <BoardSnapshot size="small" text="Ax = b" className="h-10 justify-center" />
       <div className="min-w-0">
-        <p className="truncate text-[14px] font-semibold leading-[22px] text-primary">{lecture.title}</p>
+        {href ? (
+          <Link href={href} className="block truncate text-[14px] font-semibold leading-[22px] text-primary hover:text-accent hover:underline">
+            {lecture.title}
+          </Link>
+        ) : (
+          <p className="truncate text-[14px] font-semibold leading-[22px] text-primary">{lecture.title}</p>
+        )}
         <p className="text-[12px] text-tertiary">{subtitle}</p>
       </div>
       <p className="text-[13px] text-secondary">{formatDuration(lecture.duration_s)}</p>

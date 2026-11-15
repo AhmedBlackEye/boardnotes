@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     data_dir: Path = REPO_ROOT / "data"
     # Absolute origin of the web app; site-relative links (e.g. in PDFs) are resolved against it.
     public_base_url: str = "http://localhost:3000"
+    # Browser origins allowed to call the API with cookies (comma-separated in .env: WEB_ORIGINS=https://a,https://b).
+    web_origins: str = "http://localhost:3000"
     module_title: str = "Lecture notes"  # title on the cover of the all-lectures PDF
     session_secret: str = "dev-only-change-me"  # noqa: S105 - overridden by SESSION_SECRET outside local dev
 

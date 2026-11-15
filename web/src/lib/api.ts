@@ -335,7 +335,8 @@ export const httpApi: BoardNotesApi = {
 export function assetUrl(url: string | null | undefined): string | null {
   if (!url) return null;
   if (url.startsWith("#") || url.startsWith("blob:") || /^https?:\/\//i.test(url)) return url;
-  if (/^[a-z][a-z0-9+.-]*:/i.test(url) || url.startsWith("//") || url.startsWith("\\")) return null;
+  // Backslashes are never needed and browsers treat "/\\host" like "//host": reject them anywhere.
+  if (/^[a-z][a-z0-9+.-]*:/i.test(url) || url.startsWith("//") || url.includes("\\")) return null;
   return `${API_URL}${url.startsWith("/") ? "" : "/"}${url}`;
 }
 
@@ -405,10 +406,14 @@ async function sendFrom(
   let session = start;
   let offset = session.received_bytes;
   onProgress({ sentBytes: offset, totalBytes: file.size });
+  let stalled = 0;
   while (offset < file.size) {
     if (signal?.aborted) throw new DOMException("Upload paused", "AbortError");
     const chunk = file.slice(offset, Math.min(file.size, offset + session.chunk_size));
     session = await client.putChunk(session.upload_id, offset, chunk, file.size);
+    // Guard against a server that stops accepting data: give up instead of looping forever.
+    stalled = session.received_bytes > offset ? 0 : stalled + 1;
+    if (stalled >= 3) throw new Error("The upload stopped making progress. Check your connection and try again.");
     offset = session.received_bytes;
     onProgress({ sentBytes: offset, totalBytes: file.size });
   }

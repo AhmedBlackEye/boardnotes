@@ -28,11 +28,13 @@ from app.pipeline.interfaces import (
     BoardReader,
     CitationValidator,
     DiagramRedrawer,
+    FormulaRechecker,
     Keyframe,
     KeyframeSelector,
     NoteWriter,
     Probe,
     SectionPlanner,
+    TermNormaliser,
     Transcriber,
     VideoCheckError,
 )
@@ -53,6 +55,8 @@ class Stages:
     plan_sections: SectionPlanner
     write_notes: NoteWriter
     validate_citations: CitationValidator
+    recheck_formulas: FormulaRechecker
+    normalise_terms: TermNormaliser
     redraw_diagrams: DiagramRedrawer = field(default_factory=lambda: _lazy("diagrams", "redraw_diagrams"))
 
 
@@ -76,6 +80,8 @@ def default_stages() -> Stages:
         plan_sections=_lazy("notes", "plan_sections"),
         write_notes=_lazy("notes", "write_notes"),
         validate_citations=_lazy("citations", "validate_citations"),
+        recheck_formulas=_lazy("formulas", "recheck_formulas"),
+        normalise_terms=_lazy("terms", "normalise_terms"),
         redraw_diagrams=_lazy("diagrams", "redraw_diagrams"),
     )
 
@@ -257,6 +263,12 @@ async def set_lecture(pool: Pool, lecture_id: str, **fields: Any) -> None:
 
 
 # ---------- Running a job ----------
+def glance_vocabulary(keyframes: list[Keyframe]) -> list[str]:
+    """Distinct lines of board text from the keyframe glance, in order of first appearance."""
+    lines = (" ".join(line.split()) for kf in keyframes for line in kf.lines)
+    return list(dict.fromkeys(line for line in lines if line))
+
+
 AfterNotes = Callable[[str], Awaitable[None]]
 
 
@@ -292,18 +304,23 @@ async def run_job(
         await set_lecture(pool, lecture_id, duration_s=info.duration_s, width=info.width, height=info.height)
         audio = await asyncio.to_thread(stages.extract_audio, video, work / "audio")
 
-        await step(JobStage.TRANSCRIBE, 0.1, "Transcribing the audio")
-        segments = await stages.transcribe(audio)
-        await save_transcript(pool, lecture_id, segments)
-
-        await step(JobStage.SELECT_FRAMES, 0.25, "Finding frames with new board writing")
+        # Keyframes first, so the words seen on the board can prime speech recognition.
+        await step(JobStage.SELECT_FRAMES, 0.1, "Finding frames with new board writing")
         keyframes = await stages.select_keyframes(video, work / "frames", llm, settings.frame_interval_s)
 
+        await step(JobStage.TRANSCRIBE, 0.25, "Transcribing the audio")
+        segments = await stages.transcribe(audio, vocabulary=glance_vocabulary(keyframes))
+        await save_transcript(pool, lecture_id, segments)
+
         await step(JobStage.READ_BOARD, 0.45, f"Reading the board in {len(keyframes)} frames")
-        readings = await stages.read_board(keyframes, llm)
+        readings = await stages.read_board(keyframes, llm, segments)
 
         await step(JobStage.MERGE_BLOCKS, 0.65, "Combining board readings")
         blocks = await asyncio.to_thread(stages.merge_blocks, readings)
+        await step(JobStage.MERGE_BLOCKS, 0.66, "Checking that formulas display correctly")
+        blocks = await stages.recheck_formulas(blocks, keyframes, llm)
+        await step(JobStage.MERGE_BLOCKS, 0.68, "Making terms and symbols consistent")
+        blocks = await stages.normalise_terms(blocks, llm)
 
         # Q-4 diagrams: redraw or crop each diagram block (never fails the job), and keep its board crop on disk.
         await step(JobStage.MERGE_BLOCKS, 0.67, "Redrawing diagrams")

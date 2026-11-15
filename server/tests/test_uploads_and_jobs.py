@@ -102,6 +102,8 @@ class Calls:
         self.order: list[str] = []
         self.frame = tmp_path / "frame.jpg"
         self.fail_at: str | None = None
+        self.vocabulary: list[str] | None = None
+        self.transcript: list[TranscriptSegment] | None = None
         self.probe = VideoInfo(duration_s=120.0, width=1280, height=720, has_video=True, has_audio=True, warnings=[])
 
     def hit(self, name: str) -> None:
@@ -127,7 +129,7 @@ class Calls:
                 said_not_written=[],
             )
         ]
-        frame = Keyframe(time_s=6.0, path=self.frame, lines=["x=1"], readable=0.9)
+        frame = Keyframe(time_s=6.0, path=self.frame, lines=["x=1", " x=1 ", "eigen  value", ""], readable=0.9)
 
         def probe(video: Path) -> VideoInfo:
             self.hit("probe_video")
@@ -139,6 +141,7 @@ class Calls:
 
         async def transcribe(audio: Path, vocabulary: list[str] | None = None) -> list[TranscriptSegment]:
             self.hit("transcribe")
+            self.vocabulary = vocabulary
             return [TranscriptSegment(start_s=0, end_s=5, speaker="lecturer", text="hello")]
 
         async def select_keyframes(video: Path, out_dir: Path, llm: Any, interval_s: float) -> list[Keyframe]:
@@ -147,11 +150,20 @@ class Calls:
 
         async def read_board(keyframes: list[Keyframe], llm: Any, transcript: list[TranscriptSegment] | None = None) -> list[FrameReading]:
             self.hit("read_board")
+            self.transcript = transcript
             return [FrameReading(keyframe=frame, read=BoardRead(blocks=[], frame_quality="good"))]
 
         def merge_blocks(readings: list[FrameReading]) -> list[BoardBlock]:
             self.hit("merge_blocks")
             return [block]
+
+        async def recheck_formulas(blocks: list[BoardBlock], keyframes: list[Keyframe], llm: Any) -> list[BoardBlock]:
+            self.hit("recheck_formulas")
+            return blocks
+
+        async def normalise_terms(blocks: list[BoardBlock], llm: Any) -> list[BoardBlock]:
+            self.hit("normalise_terms")
+            return [b.model_copy(update={"text": "x = 1"}) for b in blocks]
 
         async def plan_sections(blocks: list[BoardBlock], transcript: list[TranscriptSegment], llm: Any) -> SectionPlan:
             self.hit("plan_sections")
@@ -177,6 +189,8 @@ class Calls:
             plan_sections=plan_sections,
             write_notes=write_notes,
             validate_citations=validate_citations,
+            recheck_formulas=recheck_formulas,
+            normalise_terms=normalise_terms,
         )
 
 
@@ -200,10 +214,12 @@ async def test_job_runs_stages_in_order_and_stores_results(pool: Pool, db: Db, s
     assert calls.order == [
         "probe_video",
         "extract_audio",
-        "transcribe",
         "select_keyframes",
+        "transcribe",
         "read_board",
         "merge_blocks",
+        "recheck_formulas",
+        "normalise_terms",
         "plan_sections",
         "write_notes",
         "validate_citations",
@@ -215,13 +231,16 @@ async def test_job_runs_stages_in_order_and_stores_results(pool: Pool, db: Db, s
     assert job is not None
     assert (job["stage"], job["progress"], job["sections_ready"], job["error"]) == ("done", 1.0, 1, None)
     assert (await (await db.execute("select count(*) as n from transcript_segments")).fetchone()) == {"n": 1}
-    block = await (await db.execute("select snapshot_path from board_blocks where id = 'b_1'")).fetchone()
+    block = await (await db.execute("select snapshot_path, text from board_blocks where id = 'b_1'")).fetchone()
     assert block is not None and block["snapshot_path"] == str(calls.frame)
+    assert block["text"] == "x = 1"  # blocks are stored after recheck and normalisation
     section = await (await db.execute("select * from sections")).fetchone()
     assert section is not None and section["status"] == "uncertain"
     bullets = await (await db.execute("select text, confidence from bullets order by ord")).fetchall()
     assert [b["text"] for b in bullets] == ["sure", "unsure"]
     assert pdf_for == ["lec_j"]
+    assert calls.vocabulary == ["x=1", "eigen value"]  # distinct glance lines prime transcription
+    assert calls.transcript is not None and [s.text for s in calls.transcript] == ["hello"]  # speech goes to board reading
 
 
 @pytest.mark.parametrize("fail_at", ["probe_video", "transcribe", "write_notes"])

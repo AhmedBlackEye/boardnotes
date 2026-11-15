@@ -7,6 +7,7 @@ import pytest
 
 from app.contracts import ai
 from app.llm.client import LLMRequest, render_untrusted
+from app.pipeline.terms import TermMap
 
 FIXTURES = Path(__file__).resolve().parents[2] / "fixtures" / "llm"
 SCHEMA_FOR_TASK = {
@@ -16,6 +17,8 @@ SCHEMA_FOR_TASK = {
     "write_notes": ai.SectionNotes,
     "fix_check": ai.FixCheck,
     "ask": ai.LectureAnswer,
+    "formula_reread": ai.BoardReadBlock,
+    "normalise_terms": TermMap,
 }
 
 

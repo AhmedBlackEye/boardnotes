@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from PIL import Image as PILImage
 from rapidfuzz import fuzz
 
-from app.contracts.ai import BoardBlock, BoardRead, BoardReadBlock
+from app.contracts.ai import BoardBlock, BoardRead, BoardReadBlock, TranscriptSegment
 from app.contracts.enums import BlockType
 from app.llm.anthropic_llm import RefusedError
 from app.llm.client import LLM, Image, LLMRequest
@@ -23,6 +23,8 @@ READ_CONCURRENCY = 6
 READ_ATTEMPTS = 2  # first try + one retry
 RETRY_BACKOFF_S = 2.0  # wait before a retry, times the attempt number
 MAX_IMAGE_PIXELS = 40_000_000  # refuse to decode anything bigger (ffmpeg frames are far smaller)
+SPEECH_BEFORE_S = 20.0  # speech from this long before a frame can explain what is on the board ...
+SPEECH_AFTER_S = 10.0  # ... and from shortly after it (lecturers often read out what they have just written)
 
 
 class BoardReadError(RuntimeError):
@@ -68,6 +70,20 @@ If the frame shows no board writing, return no blocks and frame_quality "poor".
 A cheaper first pass listed lines it thought were visible; they are given as data below and may be wrong or incomplete.
 Use them only as a hint, and read the image yourself."""
 
+SPEECH_HINT = """
+
+What the lecturer said around the time of this frame is also given as data below (an automatic transcript, which may
+contain mistakes). Use it only to decide between readings of writing that is unclear on the board (for example a
+symbol or word that is hard to make out). Never add content that is not written on the board, and never change
+clearly legible writing to match the speech."""
+
+
+def nearby_speech(transcript: list[TranscriptSegment], time_s: float) -> str:
+    """Transcript text spoken from SPEECH_BEFORE_S before to SPEECH_AFTER_S after `time_s`, one segment per line."""
+    start, end = time_s - SPEECH_BEFORE_S, time_s + SPEECH_AFTER_S
+    lines = [s.text.strip() for s in sorted(transcript, key=lambda s: s.start_s) if s.end_s >= start and s.start_s <= end]
+    return "\n".join(line for line in lines if line)
+
 
 def load_image(data: bytes) -> Image:
     """Return the image for the model, downscaled so the long edge is at most MAX_EDGE_PX."""
@@ -84,18 +100,22 @@ def load_image(data: bytes) -> Image:
         return Image(data=out.getvalue(), media_type="image/jpeg")
 
 
-def board_read_request(keyframe: Keyframe, image: Image) -> LLMRequest:
+def board_read_request(keyframe: Keyframe, image: Image, speech: str = "") -> LLMRequest:
+    """Request for one frame. Speech near the frame, if any, goes in untrusted data like the first-pass lines."""
+    untrusted = {"first_pass_lines": "\n".join(keyframe.lines)}
+    if speech:
+        untrusted["nearby_speech"] = speech
     return LLMRequest(
         task="board_read",
         tier="board",
-        instructions=BOARD_READ_INSTRUCTIONS,
-        untrusted={"first_pass_lines": "\n".join(keyframe.lines)},
+        instructions=BOARD_READ_INSTRUCTIONS + (SPEECH_HINT if speech else ""),
+        untrusted=untrusted,
         images=[image],
         effort="low",
     )
 
 
-async def _read_one(keyframe: Keyframe, llm: LLM, sem: asyncio.Semaphore) -> FrameReading | None:
+async def _read_one(keyframe: Keyframe, llm: LLM, sem: asyncio.Semaphore, speech: str) -> FrameReading | None:
     async with sem:
         try:
             data = await asyncio.to_thread(keyframe.path.read_bytes)
@@ -103,7 +123,7 @@ async def _read_one(keyframe: Keyframe, llm: LLM, sem: asyncio.Semaphore) -> Fra
         except Exception:
             log.exception("board_read: cannot load frame at %.1fs (%s); skipping", keyframe.time_s, keyframe.path)
             return None
-        req = board_read_request(keyframe, image)
+        req = board_read_request(keyframe, image, speech)
         for attempt in range(1, READ_ATTEMPTS + 1):
             try:
                 read = await llm.structured(req, BoardRead)
@@ -119,12 +139,14 @@ async def _read_one(keyframe: Keyframe, llm: LLM, sem: asyncio.Semaphore) -> Fra
         return None
 
 
-async def read_board(keyframes: list[Keyframe], llm: LLM) -> list[FrameReading]:
+async def read_board(keyframes: list[Keyframe], llm: LLM, transcript: list[TranscriptSegment] | None = None) -> list[FrameReading]:
     """Read every keyframe at full resolution. Frames that fail twice are skipped. Output is in time order.
 
+    If a transcript is given, the speech around each frame is passed as untrusted data to help resolve unclear writing.
     Raises BoardReadError if there were keyframes but none could be read."""
     sem = asyncio.Semaphore(READ_CONCURRENCY)
-    results = await asyncio.gather(*(_read_one(kf, llm, sem) for kf in keyframes))
+    segments = transcript or []
+    results = await asyncio.gather(*(_read_one(kf, llm, sem, nearby_speech(segments, kf.time_s)) for kf in keyframes))
     readings = sorted((r for r in results if r is not None), key=lambda r: r.keyframe.time_s)
     if keyframes and not readings:
         raise BoardReadError(f"none of the {len(keyframes)} keyframes could be read")

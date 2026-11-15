@@ -187,7 +187,7 @@ class Recorder:
             self._hit("audio")
             return self.tmp / "a.wav"
 
-        async def transcribe(audio):
+        async def transcribe(audio, vocabulary=None):
             self._hit("transcribe")
             return [TranscriptSegment(start_s=0.0, end_s=5.0, speaker="lecturer", text="hello there")]
 
@@ -196,7 +196,7 @@ class Recorder:
             self.llms.append(llm)
             return [kf]
 
-        async def read(keyframes, llm):
+        async def read(keyframes, llm, transcript=None):
             self._hit("read")
             self.llms.append(llm)
             return [
@@ -287,7 +287,7 @@ async def test_job_runs_stages_in_order_and_stores_results(settings, db, fake_ll
             result = await _wait_job(c, lec_id)
             app_client = c
             assert result["error"] is None and result["stage"] == "done" and result["progress"] == 1.0
-            assert rec.calls == ["probe", "audio", "transcribe", "select", "read", "merge", "plan", "write", "validate"]
+            assert rec.calls == ["probe", "audio", "select", "transcribe", "read", "merge", "plan", "write", "validate"]
             assert all(x is fake_llm for x in rec.llms)
             d = (await c.get(f"/lectures/{lec_id}")).json()
             assert d["summary"]["status"] == "draft"

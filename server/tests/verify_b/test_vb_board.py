@@ -64,7 +64,7 @@ async def test_read_board_uses_board_tier_and_image(tmp_path):
     out = await read_board([kf(jpeg(tmp_path / "a.jpg"), 1.0)], llm)
     assert len(out) == 1
     r = llm.requests[0]
-    assert r.tier == "board" and r.task == "board_read"
+    assert r.tier == "read" and r.task == "board_read"
     assert len(r.images) == 1 and r.images[0].media_type in ("image/jpeg", "image/png")
 
 
@@ -167,7 +167,7 @@ def test_merge_higher_confidence_equal_text_wins():
     rs = [reading(5.0, blk("Integration by parts", conf=0.6)), reading(9.0, blk("Integration by parts", conf=0.95))]
     out = merge_blocks(rs)
     assert len(out) == 1
-    assert out[0].best_frame_s == 9.0 and out[0].confidence == 0.95 and out[0].first_seen_s == 5.0
+    assert out[0].best_frame_s == 9.0 and out[0].confidence == 0.97 and out[0].first_seen_s == 5.0
 
 
 def test_merge_unsorted_input_first_seen_is_min():

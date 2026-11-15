@@ -34,7 +34,8 @@ class Settings(BaseSettings):
     fal_api_key: str | None = Field(default=None, validation_alias=AliasChoices("fal_api_key", "fal_key"))
 
     model_glance: str = "claude-haiku-5-5"  # cheap per-frame read
-    model_board: str = "claude-sonnet-5-5"  # accurate board read, fix check, Q&A
+    model_board: str = "claude-sonnet-5-5"  # fix checks, Q&A, term normalising
+    model_read: str = "claude-opus-5-5"  # board reading and diagram redraws: accuracy here sets the quality of everything after
     model_notes: str = "claude-opus-5-5"  # sections and notes
 
     # Demo login lets anyone pick a seeded user (lecturer included); turn it off for anything public.

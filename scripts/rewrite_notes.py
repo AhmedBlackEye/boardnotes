@@ -19,6 +19,7 @@ from app.contracts.enums import LectureStatus
 from app.db import create_pool, execute
 from app.jobs.runner import save_notes, set_lecture
 from app.llm.client import get_llm
+from app.pipeline.board import drop_fragments
 from app.pipeline.citations import validate_citations
 from app.pipeline.diagrams import curate_figures
 from app.pipeline.notes import plan_sections, write_notes
@@ -36,6 +37,7 @@ async def main(lecture_id: str) -> None:
         if not blocks and not segments:
             sys.exit(f"{lecture_id}: no board blocks or transcript stored")
 
+        blocks = drop_fragments(blocks)  # unsure pieces of other blocks stay in the database but are not given to the notes
         curated = curate_figures(blocks)
         async with pool.connection() as conn:
             for before, after in zip(blocks, curated, strict=True):

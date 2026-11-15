@@ -90,8 +90,13 @@ def test_partly_invalid_citations_are_removed_and_bullet_flagged() -> None:
     assert report.dropped[0].startswith("Removed citations")
 
 
-def test_confidence_capped_by_cited_block() -> None:
+def test_confidence_capped_by_best_cited_block() -> None:
+    # One clear board source is enough: a blurry second reading doesn't drag the bullet down.
     report = run(bullet(["b_0001", "b_0002"], conf=0.9))
+    (kept,) = report.valid[0].bullets
+    assert kept.confidence == 0.9
+    # Only unsure sources: the bullet is capped at the best of them.
+    report = run(bullet(["b_0002"], conf=0.9))
     (kept,) = report.valid[0].bullets
     assert kept.confidence == 0.6
     assert report.flagged_bullets == 1

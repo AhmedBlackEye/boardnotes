@@ -65,7 +65,9 @@ def _check_bullet(
 
     confidence = bullet.confidence
     if ids:
-        confidence = min(confidence, *(blocks[i].confidence for i in ids))
+        # A point is as reliable as its best board source: a blurry second sighting of the same writing does not make a
+        # clear reading less trustworthy.
+        confidence = min(confidence, max(blocks[i].confidence for i in ids))
     weak = bool(problems) or (bullet.latex is not None and not ids)  # some citations were bad, or maths only heard
     if weak:
         confidence = min(confidence, UNCERTAIN_CAP)

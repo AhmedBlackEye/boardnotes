@@ -63,7 +63,7 @@ async def test_read_board_sends_image_and_puts_first_pass_lines_in_untrusted(tmp
     assert len(fake_llm.requests) == 2
     for req in fake_llm.requests:
         assert req.task == "board_read"
-        assert req.tier == "board"
+        assert req.tier == "read"
         assert len(req.images) == 1
         assert injected not in req.instructions
         assert "2x + y = 3" not in req.instructions

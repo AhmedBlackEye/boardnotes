@@ -28,7 +28,7 @@ def test_camera_move_duplicates_become_one_block() -> None:
     assert len(out) == 1
     assert out[0].first_seen_s == 3
     assert out[0].best_frame_s == 6
-    assert out[0].confidence == 0.95
+    assert out[0].confidence == 0.97  # best reading 0.95, plus agreement across frames
     assert out[0].bbox == [0.5, 0.4, 0.7, 0.5]
 
 
@@ -111,3 +111,29 @@ def test_math_fragment_must_be_an_exact_piece() -> None:
     full = blk("2x + y = 3, x - 2y = -1", r"\begin{cases} 2x + y = 3 \\ x - 2y = -1 \end{cases}")
     out = merge_blocks([frame(3, full), frame(6, blk("2x + y = 4", "2x + y = 4"))])
     assert len(out) == 2
+
+
+def test_unsure_fragments_of_other_blocks_are_dropped() -> None:
+    from app.contracts.ai import BoardBlock
+    from app.pipeline.board import drop_fragments
+
+    def b(bid: str, text: str, conf: float, latex: str | None = None) -> BoardBlock:
+        return BoardBlock(
+            id=bid,
+            type="math" if latex else "text",
+            text=text,
+            latex=latex,
+            confidence=conf,
+            first_seen_s=0,
+            best_frame_s=0,
+            bbox=[0, 0, 1, 1],
+        )
+
+    blocks = [
+        b("b_1", "Row picture:", 0.95),
+        b("b_2", "Row", 0.6),  # cut off by the frame edge
+        b("b_3", "2x+y=3", 0.9, "2x+y=3"),
+        b("b_4", "=3", 0.5, "=3"),
+        b("b_5", "Column", 0.9),  # confident: kept even though it is short
+    ]
+    assert [x.id for x in drop_fragments(blocks)] == ["b_1", "b_3", "b_5"]

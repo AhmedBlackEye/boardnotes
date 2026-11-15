@@ -54,8 +54,13 @@ Bullets
   and how. Ignore student questions unless the lecturer's answer adds content.
 - latex: the bullet's key formula in KaTeX-compatible LaTeX (no $ signs), copied from the cited board block where there is
   one; otherwise null.
-- confidence (0-1): how sure you are the bullet is faithful to the lecture. Lower it when the cited board block has low
-  confidence, when the board and the transcript disagree, or when the audio is unclear.
+- confidence (0-1, calibrated; be decisive): how sure you are the bullet is faithful to the lecture.
+  0.9+: the board and the lecturer's speech agree, or one of them states it clearly. This is the normal case.
+  0.75-0.9: supported clearly by one source, with minor uncertainty in wording or a symbol.
+  below 0.75: only when you genuinely doubt the content itself: the sources disagree, the key writing is illegible and
+  the speech doesn't settle it, or you are inferring something not clearly stated.
+  A clear reading of a formula plus a blurry duplicate of it is still clear: judge by the best evidence, and when the
+  speech confirms writing that is partly cut off, trust it. Prefer citing the clearest board block for each fact.
 - Do not add facts, examples or steps that are not in the lecture.
 
 said_not_written

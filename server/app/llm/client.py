@@ -14,7 +14,7 @@ from pydantic import BaseModel
 
 T = TypeVar("T", bound=BaseModel)
 
-Tier = Literal["glance", "board", "notes"]
+Tier = Literal["glance", "board", "read", "notes"]  # read: accuracy-critical vision (board reading, diagrams)
 Effort = Literal["low", "medium", "high"]
 
 

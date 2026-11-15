@@ -75,7 +75,8 @@ SPEECH_HINT = """
 What the lecturer said around the time of this frame is also given as data below (an automatic transcript, which may
 contain mistakes). Use it only to decide between readings of writing that is unclear on the board (for example a
 symbol or word that is hard to make out). Never add content that is not written on the board, and never change
-clearly legible writing to match the speech."""
+clearly legible writing to match the speech. When the speech confirms your reading of writing that is slightly unclear,
+that is good evidence: rate it 0.85 or higher."""
 
 
 def nearby_speech(transcript: list[TranscriptSegment], time_s: float) -> str:
@@ -107,11 +108,11 @@ def board_read_request(keyframe: Keyframe, image: Image, speech: str = "") -> LL
         untrusted["nearby_speech"] = speech
     return LLMRequest(
         task="board_read",
-        tier="board",
+        tier="read",
         instructions=BOARD_READ_INSTRUCTIONS + (SPEECH_HINT if speech else ""),
         untrusted=untrusted,
         images=[image],
-        effort="low",
+        effort="medium",
     )
 
 
@@ -162,6 +163,9 @@ PARTIAL_RATIO = 92.0  # similarity of the shorter reading to the best-matching p
 PARTIAL_MIN_CHARS = 6  # shorter readings can't be matched as fragments (too many false hits)
 PARTIAL_MIN_SHARE = 0.4  # ... nor can fragments shorter than this share of the longer reading
 FULLER_SHARE = 0.9  # a reading under this share of a matching reading's length is treated as partial
+AGREEMENT_BONUS = 0.05  # confidence added for each extra frame where the same writing was read the same way
+MAX_AGREED_CONFIDENCE = 0.97
+FRAGMENT_MAX_CONFIDENCE = 0.8  # a reading this unsure that is only a piece of another block is dropped as a fragment
 
 _LATEX_NOISE = re.compile(r"\\(left|right|big|Big|bigg|Bigg|displaystyle|,|;|:|!|quad|qquad)(?![a-zA-Z])")
 _NON_KEY = re.compile(r"[^\w\\{}^_=+\-*/<>()\[\]|]")
@@ -290,16 +294,52 @@ def merge_blocks(readings: list[FrameReading]) -> list[BoardBlock]:
                 clusters.append(_Cluster(best=sighting, first_seen_s=t, frames={t}))
 
     clusters.sort(key=lambda c: (c.first_seen_s, c.best.block.bbox[1], c.best.block.bbox[0]))
-    return [
+    blocks = [
         BoardBlock(
             id=f"b_{n:04d}",
             type=c.best.block.type,
             text=c.best.block.text,
             latex=c.best.block.latex,
-            confidence=c.best.block.confidence,
+            confidence=agreed_confidence(c.best.block.confidence, len(c.frames)),
             first_seen_s=c.first_seen_s,
             best_frame_s=c.best.time_s,
             bbox=_clamp_bbox(c.best.block.bbox),
         )
         for n, c in enumerate(clusters, start=1)
     ]
+    return drop_fragments(blocks)
+
+
+def agreed_confidence(best: float, frames: int) -> float:
+    """Writing read the same way in several frames is more trustworthy than one reading alone."""
+    if frames <= 1:
+        return best
+    return round(max(best, min(MAX_AGREED_CONFIDENCE, best + AGREEMENT_BONUS * (frames - 1))), 2)
+
+
+def _block_keys(b: BoardBlock) -> list[str]:
+    keys = [normalise(b.text)] + ([normalise(b.latex)] if b.latex else [])
+    return [k for k in keys if k]
+
+
+def drop_fragments(blocks: list[BoardBlock]) -> list[BoardBlock]:
+    """Drop unsure readings that are only a piece of another block (e.g. "=3" or "Row" read from a frame where the
+    camera cut the writing off), so they don't add noise to the notes. Diagrams are kept (curated separately), and
+    nothing is dropped in favour of a block that is itself less confident."""
+    keep: list[BoardBlock] = []
+    for b in blocks:
+        mine = _block_keys(b)
+        fragment = (
+            b.type != BlockType.DIAGRAM
+            and b.confidence < FRAGMENT_MAX_CONFIDENCE
+            and any(
+                o is not b
+                and o.type != BlockType.DIAGRAM
+                and o.confidence >= b.confidence
+                and any(k != ok and k in ok for k in mine for ok in _block_keys(o))
+                for o in blocks
+            )
+        )
+        if not fragment:
+            keep.append(b)
+    return keep

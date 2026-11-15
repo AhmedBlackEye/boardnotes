@@ -184,7 +184,7 @@ async def test_redraw_sets_figures_on_diagram_blocks_only(tmp_path: Path) -> Non
     assert out[0] == text
     assert out[1].figure is not None and out[1].figure.kind == "chart"
     [req] = llm.requests
-    assert (req.task, req.tier) == ("diagram_redraw", "board")
+    assert (req.task, req.tier) == ("diagram_redraw", "read")
     assert req.untrusted == {"board_reading": diagram.text}
     assert diagram.text not in req.instructions
     with PILImage.open(io.BytesIO(req.images[0].data)) as crop:  # cropped to the bbox (+ margin), not the whole frame

@@ -9,7 +9,12 @@ from app.config import settings
 
 from .client import DATA_RULE, LLMRequest, T, Usage, render_untrusted
 
-MODELS = {"glance": settings.model_glance, "board": settings.model_board, "notes": settings.model_notes}
+MODELS = {
+    "glance": settings.model_glance,
+    "board": settings.model_board,
+    "read": settings.model_read,
+    "notes": settings.model_notes,
+}
 
 
 class RefusedError(RuntimeError):

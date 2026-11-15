@@ -248,7 +248,7 @@ def best_keyframe(keyframes: list[Keyframe], time_s: float) -> Keyframe | None:
 def diagram_request(block: BoardBlock, image: Image) -> LLMRequest:
     return LLMRequest(
         task="diagram_redraw",
-        tier="board",
+        tier="read",
         instructions=DIAGRAM_INSTRUCTIONS,
         untrusted={"board_reading": block.text},
         images=[image],

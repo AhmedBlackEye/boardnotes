@@ -21,3 +21,14 @@ Newest first. Add an entry whenever you change a contract, a dependency, or how 
   (transcribe), `pipeline/pdf.py` (render_pdf, render_module_pdf), `pipeline/tex.py` (export_tex).
 - **One branch + PR per agent workstream** during the parallel build (one commit per task), instead of one PR per task,
   to keep five agents from colliding on shared files. Only the lead edits `orchestration/tasks.json`.
+
+## 2026-11-15 · Phase 3 contracts (lead)
+- **Generic across subjects.** No subject-specific checks (e.g. SymPy). Formulas are only checked for rendering.
+- **Diagrams:** `DiagramRedraw` (LLM output) -> `DiagramFigure` on `BoardBlock.figure`. Redraw as a `ChartSpec`
+  (rendered by our own code, never executed) or Mermaid (boxes and arrows) only when confident and it renders;
+  otherwise `kind="crop"` from the best frame. The original crop is always reachable; redraws are labelled.
+- **Stage order:** select_keyframes runs before transcribe so glance text can prime speech recognition
+  (`Transcriber(audio, vocabulary)`); `BoardReader(keyframes, llm, transcript)` gets nearby speech as untrusted data.
+  New stages: `FormulaRechecker`, `TermNormaliser`, `DiagramRedrawer` (see pipeline/interfaces.py).
+- **Credits:** sponsor API credits are limited. Everything runs with `LLM_MODE=fake`; live runs need the user's OK.
+  fal is used only for transcription.

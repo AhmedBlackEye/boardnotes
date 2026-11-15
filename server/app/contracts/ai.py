@@ -6,6 +6,8 @@ Rules every module relies on:
 - Every NoteBullet must cite at least one board block id or one transcript range.
 """
 
+from typing import Literal
+
 from pydantic import BaseModel, ConfigDict, Field
 
 from .enums import BlockType, CitationKind, Verdict
@@ -48,6 +50,53 @@ class BoardRead(Strict):
     frame_quality: str = Field(description="'good', 'partly_hidden' or 'poor'")
 
 
+# ---------- Diagrams (redrawn by the model, or cropped from the recording) ----------
+class ChartElement(Strict):
+    """One drawable thing in a chart. Generic: works for plots, vectors, geometry, bar charts, timelines."""
+
+    type: Literal["line", "segment", "polyline", "point", "vector", "bar", "label"]
+    points: list[list[float]] = Field(
+        description="[[x, y], ...] in data coordinates. line: 2 points it passes through; segment/vector: start and end; "
+        "polyline: samples along a curve; point/label: 1 point; bar: [[x, height]]"
+    )
+    label: str | None = Field(description="Text shown next to the element, or null")
+
+
+class ChartSpec(Strict):
+    """A small, safe chart description our own code renders (never executed as code)."""
+
+    title: str | None
+    x_label: str | None
+    y_label: str | None
+    x_range: list[float] = Field(min_length=2, max_length=2)
+    y_range: list[float] = Field(min_length=2, max_length=2)
+    show_axes: bool
+    elements: list[ChartElement] = Field(max_length=50)
+
+
+class DiagramRedraw(Strict):
+    """LLM output for a diagram block: a redraw we can render, or 'none' to fall back to the board crop."""
+
+    kind: Literal["chart", "mermaid", "none"] = Field(
+        description="chart for plots/axes/geometry; mermaid for boxes-and-arrows "
+        "(flowcharts, cycles, trees); none if neither can faithfully represent it"
+    )
+    chart: ChartSpec | None
+    mermaid: str | None = Field(description="Mermaid source (flowchart/graph only), or null")
+    caption: str = Field(description="One sentence describing what the diagram shows")
+    confidence: float = Field(ge=0, le=1, description="How faithful the redraw is to the original")
+
+
+class DiagramFigure(Strict):
+    """What the notes and PDF show for a diagram block. The board crop is always available as the original."""
+
+    kind: Literal["chart", "mermaid", "crop"]
+    chart: ChartSpec | None
+    mermaid: str | None
+    caption: str
+    redrawn_by_ai: bool
+
+
 # ---------- Merged board content (after de-duplication across frames) ----------
 class BoardBlock(Strict):
     id: str = Field(description="Stable id, e.g. 'b_0412'")
@@ -58,6 +107,7 @@ class BoardBlock(Strict):
     first_seen_s: float = Field(ge=0, description="When this writing first appeared")
     best_frame_s: float = Field(ge=0, description="Time of the clearest frame showing it; used for the snapshot crop")
     bbox: list[float] = Field(min_length=4, max_length=4, description="Position within the best frame, normalised 0-1")
+    figure: DiagramFigure | None = Field(default=None, description="Set for diagram blocks: redrawn chart/Mermaid, or crop")
 
 
 # ---------- Notes ----------

@@ -34,6 +34,18 @@
           "title": "Confidence",
           "type": "number"
         },
+        "figure": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DiagramFigure"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Set for diagram blocks: redrawn chart/Mermaid, or crop"
+        },
         "first_seen_s": {
           "description": "When this writing first appeared",
           "minimum": 0,
@@ -142,6 +154,188 @@
         "open_suggestions"
       ],
       "title": "Bullet",
+      "type": "object"
+    },
+    "ChartElement": {
+      "additionalProperties": false,
+      "description": "One drawable thing in a chart. Generic: works for plots, vectors, geometry, bar charts, timelines.",
+      "properties": {
+        "label": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Text shown next to the element, or null",
+          "title": "Label"
+        },
+        "points": {
+          "description": "[[x, y], ...] in data coordinates. line: 2 points it passes through; segment/vector: start and end; polyline: samples along a curve; point/label: 1 point; bar: [[x, height]]",
+          "items": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array"
+          },
+          "title": "Points",
+          "type": "array"
+        },
+        "type": {
+          "enum": [
+            "line",
+            "segment",
+            "polyline",
+            "point",
+            "vector",
+            "bar",
+            "label"
+          ],
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "points",
+        "label"
+      ],
+      "title": "ChartElement",
+      "type": "object"
+    },
+    "ChartSpec": {
+      "additionalProperties": false,
+      "description": "A small, safe chart description our own code renders (never executed as code).",
+      "properties": {
+        "elements": {
+          "items": {
+            "$ref": "#/$defs/ChartElement"
+          },
+          "maxItems": 50,
+          "title": "Elements",
+          "type": "array"
+        },
+        "show_axes": {
+          "title": "Show Axes",
+          "type": "boolean"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Title"
+        },
+        "x_label": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "X Label"
+        },
+        "x_range": {
+          "items": {
+            "type": "number"
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "title": "X Range",
+          "type": "array"
+        },
+        "y_label": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Y Label"
+        },
+        "y_range": {
+          "items": {
+            "type": "number"
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "title": "Y Range",
+          "type": "array"
+        }
+      },
+      "required": [
+        "title",
+        "x_label",
+        "y_label",
+        "x_range",
+        "y_range",
+        "show_axes",
+        "elements"
+      ],
+      "title": "ChartSpec",
+      "type": "object"
+    },
+    "DiagramFigure": {
+      "additionalProperties": false,
+      "description": "What the notes and PDF show for a diagram block. The board crop is always available as the original.",
+      "properties": {
+        "caption": {
+          "title": "Caption",
+          "type": "string"
+        },
+        "chart": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ChartSpec"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "kind": {
+          "enum": [
+            "chart",
+            "mermaid",
+            "crop"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "mermaid": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Mermaid"
+        },
+        "redrawn_by_ai": {
+          "title": "Redrawn By Ai",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "kind",
+        "chart",
+        "mermaid",
+        "caption",
+        "redrawn_by_ai"
+      ],
+      "title": "DiagramFigure",
       "type": "object"
     },
     "LectureStatus": {

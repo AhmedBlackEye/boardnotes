@@ -1,0 +1,190 @@
+{
+  "$defs": {
+    "ChartElement": {
+      "additionalProperties": false,
+      "description": "One drawable thing in a chart. Generic: works for plots, vectors, geometry, bar charts, timelines.",
+      "properties": {
+        "label": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Text shown next to the element, or null",
+          "title": "Label"
+        },
+        "points": {
+          "description": "[[x, y], ...] in data coordinates. line: 2 points it passes through; segment/vector: start and end; polyline: samples along a curve; point/label: 1 point; bar: [[x, height]]",
+          "items": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array"
+          },
+          "title": "Points",
+          "type": "array"
+        },
+        "type": {
+          "enum": [
+            "line",
+            "segment",
+            "polyline",
+            "point",
+            "vector",
+            "bar",
+            "label"
+          ],
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "points",
+        "label"
+      ],
+      "title": "ChartElement",
+      "type": "object"
+    },
+    "ChartSpec": {
+      "additionalProperties": false,
+      "description": "A small, safe chart description our own code renders (never executed as code).",
+      "properties": {
+        "elements": {
+          "items": {
+            "$ref": "#/$defs/ChartElement"
+          },
+          "maxItems": 50,
+          "title": "Elements",
+          "type": "array"
+        },
+        "show_axes": {
+          "title": "Show Axes",
+          "type": "boolean"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Title"
+        },
+        "x_label": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "X Label"
+        },
+        "x_range": {
+          "items": {
+            "type": "number"
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "title": "X Range",
+          "type": "array"
+        },
+        "y_label": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Y Label"
+        },
+        "y_range": {
+          "items": {
+            "type": "number"
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "title": "Y Range",
+          "type": "array"
+        }
+      },
+      "required": [
+        "title",
+        "x_label",
+        "y_label",
+        "x_range",
+        "y_range",
+        "show_axes",
+        "elements"
+      ],
+      "title": "ChartSpec",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "LLM output for a diagram block: a redraw we can render, or 'none' to fall back to the board crop.",
+  "properties": {
+    "caption": {
+      "description": "One sentence describing what the diagram shows",
+      "title": "Caption",
+      "type": "string"
+    },
+    "chart": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ChartSpec"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "confidence": {
+      "description": "How faithful the redraw is to the original",
+      "maximum": 1,
+      "minimum": 0,
+      "title": "Confidence",
+      "type": "number"
+    },
+    "kind": {
+      "description": "chart for plots/axes/geometry; mermaid for boxes-and-arrows (flowcharts, cycles, trees); none if neither can faithfully represent it",
+      "enum": [
+        "chart",
+        "mermaid",
+        "none"
+      ],
+      "title": "Kind",
+      "type": "string"
+    },
+    "mermaid": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Mermaid source (flowchart/graph only), or null",
+      "title": "Mermaid"
+    }
+  },
+  "required": [
+    "kind",
+    "chart",
+    "mermaid",
+    "caption",
+    "confidence"
+  ],
+  "title": "DiagramRedraw",
+  "type": "object"
+}

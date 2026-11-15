@@ -17,6 +17,37 @@ export type Bbox = [number, number, number, number];
  */
 export type BestFrameS = number;
 export type Confidence = number;
+export type Caption = string;
+/**
+ * Text shown next to the element, or null
+ */
+export type Label = string | null;
+/**
+ * [[x, y], ...] in data coordinates. line: 2 points it passes through; segment/vector: start and end; polyline: samples along a curve; point/label: 1 point; bar: [[x, height]]
+ */
+export type Points = number[][];
+export type Type = "line" | "segment" | "polyline" | "point" | "vector" | "bar" | "label";
+/**
+ * @maxItems 50
+ */
+export type Elements = ChartElement[];
+export type ShowAxes = boolean;
+export type Title = string | null;
+export type XLabel = string | null;
+/**
+ * @minItems 2
+ * @maxItems 2
+ */
+export type XRange = [number, number];
+export type YLabel = string | null;
+/**
+ * @minItems 2
+ * @maxItems 2
+ */
+export type YRange = [number, number];
+export type Kind = "chart" | "mermaid" | "crop";
+export type Mermaid = string | null;
+export type RedrawnByAi = boolean;
 /**
  * When this writing first appeared
  */
@@ -79,7 +110,7 @@ export type SectionCount = number;
  * via the `definition` "LectureStatus".
  */
 export type LectureStatus = "uploading" | "processing" | "draft" | "in_review" | "verified" | "failed";
-export type Title = string;
+export type Title1 = string;
 export type UploadedAt = string;
 export type VideoUrl = string;
 
@@ -98,11 +129,54 @@ export interface BoardBlock {
   bbox: Bbox;
   best_frame_s: BestFrameS;
   confidence: Confidence;
+  /**
+   * Set for diagram blocks: redrawn chart/Mermaid, or crop
+   */
+  figure?: DiagramFigure | null;
   first_seen_s: FirstSeenS;
   id: Id;
   latex: Latex;
   text: Text;
   type: BlockType;
+}
+/**
+ * What the notes and PDF show for a diagram block. The board crop is always available as the original.
+ *
+ * This interface was referenced by `LectureDetail`'s JSON-Schema
+ * via the `definition` "DiagramFigure".
+ */
+export interface DiagramFigure {
+  caption: Caption;
+  chart: ChartSpec | null;
+  kind: Kind;
+  mermaid: Mermaid;
+  redrawn_by_ai: RedrawnByAi;
+}
+/**
+ * A small, safe chart description our own code renders (never executed as code).
+ *
+ * This interface was referenced by `LectureDetail`'s JSON-Schema
+ * via the `definition` "ChartSpec".
+ */
+export interface ChartSpec {
+  elements: Elements;
+  show_axes: ShowAxes;
+  title: Title;
+  x_label: XLabel;
+  x_range: XRange;
+  y_label: YLabel;
+  y_range: YRange;
+}
+/**
+ * One drawable thing in a chart. Generic: works for plots, vectors, geometry, bar charts, timelines.
+ *
+ * This interface was referenced by `LectureDetail`'s JSON-Schema
+ * via the `definition` "ChartElement".
+ */
+export interface ChartElement {
+  label: Label;
+  points: Points;
+  type: Type;
 }
 /**
  * This interface was referenced by `LectureDetail`'s JSON-Schema
@@ -160,6 +234,6 @@ export interface LectureSummary {
   progress: Progress;
   section_count: SectionCount;
   status: LectureStatus;
-  title: Title;
+  title: Title1;
   uploaded_at: UploadedAt;
 }

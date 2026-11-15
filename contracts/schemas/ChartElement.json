@@ -1,0 +1,49 @@
+{
+  "additionalProperties": false,
+  "description": "One drawable thing in a chart. Generic: works for plots, vectors, geometry, bar charts, timelines.",
+  "properties": {
+    "label": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Text shown next to the element, or null",
+      "title": "Label"
+    },
+    "points": {
+      "description": "[[x, y], ...] in data coordinates. line: 2 points it passes through; segment/vector: start and end; polyline: samples along a curve; point/label: 1 point; bar: [[x, height]]",
+      "items": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "title": "Points",
+      "type": "array"
+    },
+    "type": {
+      "enum": [
+        "line",
+        "segment",
+        "polyline",
+        "point",
+        "vector",
+        "bar",
+        "label"
+      ],
+      "title": "Type",
+      "type": "string"
+    }
+  },
+  "required": [
+    "type",
+    "points",
+    "label"
+  ],
+  "title": "ChartElement",
+  "type": "object"
+}

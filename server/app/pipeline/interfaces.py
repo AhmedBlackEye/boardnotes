@@ -11,6 +11,10 @@ Stage order and owners:
   plan_sections      (B)  -> SectionPlan               uses LLM tier "notes"
   write_notes        (B)  -> list[SectionNotes]        uses LLM tier "notes"
   validate_citations (B)  -> CitationReport            pure code, no LLM
+
+Phase 3 order (job runner): probe -> extract_audio -> select_keyframes -> transcribe(vocabulary from glance lines)
+  -> read_board(transcript) -> merge_blocks -> recheck_formulas -> normalise_terms -> redraw_diagrams
+  -> plan_sections -> write_notes -> validate_citations
   render_pdf         (C)  -> bytes                      from LectureDetail
 """
 
@@ -67,7 +71,9 @@ class AudioExtractor(Protocol):
 
 
 class Transcriber(Protocol):
-    async def __call__(self, audio: Path) -> list[TranscriptSegment]: ...
+    async def __call__(self, audio: Path, vocabulary: list[str] | None = None) -> list[TranscriptSegment]: ...
+
+    # vocabulary: terms seen on the board (from the keyframe glance), used to prime speech recognition
 
 
 class KeyframeSelector(Protocol):
@@ -75,7 +81,11 @@ class KeyframeSelector(Protocol):
 
 
 class BoardReader(Protocol):
-    async def __call__(self, keyframes: list[Keyframe], llm: LLM) -> list[FrameReading]: ...
+    async def __call__(
+        self, keyframes: list[Keyframe], llm: LLM, transcript: list[TranscriptSegment] | None = None
+    ) -> list[FrameReading]: ...
+
+    # transcript: speech near each frame is given to the model as untrusted context to resolve unclear writing
 
 
 class BlockMerger(Protocol):
@@ -98,3 +108,21 @@ class CitationValidator(Protocol):
 
 class PdfRenderer(Protocol):
     async def __call__(self, lecture: LectureDetail, include_drafts: bool = True) -> bytes: ...
+
+
+class FormulaRechecker(Protocol):
+    """Re-reads blocks whose formula fails to render (KaTeX), once, at a higher tier. Returns updated blocks."""
+
+    async def __call__(self, blocks: list[BoardBlock], keyframes: list[Keyframe], llm: LLM) -> list[BoardBlock]: ...
+
+
+class TermNormaliser(Protocol):
+    """Makes the same term or symbol read consistently across a lecture's blocks. Generic across subjects."""
+
+    async def __call__(self, blocks: list[BoardBlock], llm: LLM) -> list[BoardBlock]: ...
+
+
+class DiagramRedrawer(Protocol):
+    """Sets BoardBlock.figure for diagram blocks: a validated chart/Mermaid redraw, or a crop of the original."""
+
+    async def __call__(self, blocks: list[BoardBlock], keyframes: list[Keyframe], llm: LLM) -> list[BoardBlock]: ...

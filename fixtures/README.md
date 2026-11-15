@@ -4,6 +4,7 @@
 - `frames/` — hand-labelled board frames for accuracy tests: `NN.jpg` plus `NN.json` with the correct reading (`{"lines": [...], "latex": [...]}`).
 - `llm/<task>/*.json` — recorded model responses used by `FakeLLM` (no API key needed). Each must validate against its contract (`tests/test_contracts.py` checks this).
 - `transcript.json` — a small fake transcript matching the demo clip's opening.
+- `elevenlabs/sample_response.json`, `fal/sample_response.json` — recorded-style speech-to-text responses for the same opening (mapping tests).
 
 ## Demo video source
 `fixtures/video/full.mp4` (16.5 min) and `demo.mp4` (first 5 min) come from "Geometry of Linear Algebra", MIT 18.06SC

@@ -1,6 +1,6 @@
 {
  "project": "BoardNotes",
- "updated": "2026-11-15T02:00Z",
+ "updated": "2026-11-15T04:40Z",
  "status_flow": [
   "todo",
   "building",
@@ -102,7 +102,7 @@
    "title": "Demo clip + 15 hand-labelled board frames",
    "phase": "P0",
    "owner": "you + lead",
-   "status": "building",
+   "status": "in_review",
    "depends_on": [],
    "acceptance": "fixtures/video/demo.mp4 present; fixtures/frames/NN.jpg + NN.json",
    "checks": {
@@ -110,8 +110,8 @@
    },
    "branch": null,
    "pr": null,
-   "notes": "Clip ready: fixtures/video/demo.mp4 = first 5 min of MIT 18.06SC 'Geometry of Linear Algebra' (360p, CC BY-NC-SA). Labelling 15 frames still to do.",
-   "updated": "2026-11-15T01:30Z"
+   "notes": "Clip ready; 15 frames labelled in draft, waiting for the user's check.",
+   "updated": "2026-11-15T03:20Z"
   },
   {
    "id": "P0-5",
@@ -562,7 +562,7 @@
    "title": "Merge all branches, wire pipeline into job runner",
    "phase": "P2",
    "owner": "lead",
-   "status": "building",
+   "status": "in_review",
    "depends_on": [
     "A-3",
     "B-4",
@@ -579,8 +579,8 @@
    },
    "branch": null,
    "pr": null,
-   "notes": "",
-   "updated": "2026-11-14T23:40Z"
+   "notes": "Offline end-to-end works: demo clip uploads, all stages run, notes + sources + PDF produced (scripts/smoke_e2e.py, ~3 s with recorded AI). Web connected to the real API. Small fixes queued until wave 1 merges (they touch the same files): section numbers start at 0; '0 student fixes and…' banner wording; lecture title in the list isn't a link; CORS origins should come from settings.",
+   "updated": "2026-11-15T02:50Z"
   },
   {
    "id": "I-2",
@@ -673,102 +673,102 @@
    "title": "fal Whisper transcription option + board-vocabulary prompt",
    "phase": "P3",
    "owner": "agent-F",
-   "status": "todo",
+   "status": "merged",
    "depends_on": [],
    "acceptance": "TRANSCRIBER=fal|elevenlabs|fixture in .env; reads FAL_API_KEY; segments with timestamps; vocabulary from board text passed as prompt; offline tests",
    "checks": {
-    "make_check": "pending",
-    "V1_review": "pending",
-    "V2_tests": "pending",
-    "V3_security": "pending"
+    "make_check": "pass",
+    "V1_review": "pass",
+    "V2_tests": "pass",
+    "V3_security": "pass"
    },
-   "branch": null,
-   "pr": null,
+   "branch": "task/Q1-fal-transcription",
+   "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/6",
    "notes": "",
-   "updated": "2026-11-15T02:00Z"
+   "updated": "2026-11-15T04:00Z"
   },
   {
    "id": "Q-2",
    "title": "Formula render check + targeted re-read",
    "phase": "P3",
    "owner": "agent-G",
-   "status": "todo",
+   "status": "changes_requested",
    "depends_on": [],
    "acceptance": "Formulas that fail KaTeX are re-read once (Opus, only those blocks); still failing -> uncertain; no subject-specific assumptions",
    "checks": {
-    "make_check": "pending",
-    "V1_review": "pending",
-    "V2_tests": "pending",
-    "V3_security": "pending"
+    "make_check": "pass",
+    "V1_review": "changes requested",
+    "V2_tests": "31/32 (needs main merged: transcribe vocabulary)",
+    "V3_security": "pass"
    },
-   "branch": null,
-   "pr": null,
+   "branch": "task/Q-board-accuracy",
+   "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/7",
    "notes": "",
-   "updated": "2026-11-15T02:00Z"
+   "updated": "2026-11-15T04:40Z"
   },
   {
    "id": "Q-3",
    "title": "Transcript context for board reading",
    "phase": "P3",
    "owner": "agent-G",
-   "status": "todo",
+   "status": "changes_requested",
    "depends_on": [],
    "acceptance": "Each board read gets the ~30 s of transcript around its frame as untrusted data; tests check placement",
    "checks": {
-    "make_check": "pending",
-    "V1_review": "pending",
-    "V2_tests": "pending",
-    "V3_security": "pending"
+    "make_check": "pass",
+    "V1_review": "changes requested",
+    "V2_tests": "31/32 (needs main merged: transcribe vocabulary)",
+    "V3_security": "pass"
    },
-   "branch": null,
-   "pr": null,
+   "branch": "task/Q-board-accuracy",
+   "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/7",
    "notes": "",
-   "updated": "2026-11-15T02:00Z"
+   "updated": "2026-11-15T04:40Z"
   },
   {
    "id": "Q-4",
    "title": "Diagrams: redraw as clean figure, else crop from the recording",
    "phase": "P3",
    "owner": "agent-H",
-   "status": "todo",
+   "status": "in_review",
    "depends_on": [],
    "acceptance": "Diagram blocks become a validated chart spec (plots) or Mermaid (flow/structure) when confident; otherwise the board crop; both web and PDF; original crop always reachable; marked 'redrawn by AI'",
    "checks": {
-    "make_check": "pending",
+    "make_check": "pass",
     "V1_review": "pending",
     "V2_tests": "pending",
     "V3_security": "pending"
    },
-   "branch": null,
-   "pr": null,
+   "branch": "task/Q4-diagrams",
+   "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/8",
    "notes": "",
-   "updated": "2026-11-15T02:00Z"
+   "updated": "2026-11-15T04:40Z"
   },
   {
    "id": "Q-5",
    "title": "Consistent terms and symbols across a lecture",
    "phase": "P3",
    "owner": "agent-G",
-   "status": "todo",
+   "status": "changes_requested",
    "depends_on": [],
    "acceptance": "One pass standardises how the same term/symbol is written across blocks; fewer duplicate blocks; generic across subjects",
    "checks": {
-    "make_check": "pending",
-    "V1_review": "pending",
-    "V2_tests": "pending",
-    "V3_security": "pending"
+    "make_check": "pass",
+    "V1_review": "changes requested",
+    "V2_tests": "31/32 (needs main merged: transcribe vocabulary)",
+    "V3_security": "pass"
    },
-   "branch": null,
-   "pr": null,
+   "branch": "task/Q-board-accuracy",
+   "pr": "https://github.com/AhmedBlackEye/boardnotes/pull/7",
    "notes": "",
-   "updated": "2026-11-15T02:00Z"
+   "updated": "2026-11-15T04:40Z"
   },
   {
    "id": "Q-6",
    "title": "Accuracy test set + scoring script",
    "phase": "P3",
    "owner": "lead + you",
-   "status": "todo",
+   "status": "in_review",
    "depends_on": [],
    "acceptance": "15 labelled frames from the demo clip (lead drafts, user corrects); script scores text error rate, formula match, coverage, citation validity, confidence calibration; replays saved responses for free",
    "checks": {
@@ -779,8 +779,8 @@
    },
    "branch": null,
    "pr": null,
-   "notes": "",
-   "updated": "2026-11-15T02:00Z"
+   "notes": "15 frames + draft labels in fixtures/frames (status 'draft: needs human check'); scorer eval/score_board.py with replay (free) and --live --yes; scorer unit-tested. Waiting for the user to check labels.",
+   "updated": "2026-11-15T03:20Z"
   },
   {
    "id": "Q-7",

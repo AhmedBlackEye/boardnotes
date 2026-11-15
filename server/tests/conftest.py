@@ -28,6 +28,12 @@ def _no_retry_backoff(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(board, "RETRY_BACKOFF_S", 0.0)
 
 
+@pytest.fixture(autouse=True)
+def _no_real_transcriber(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Ignore TRANSCRIBER from a developer's .env so tests never reach a real speech-to-text API."""
+    monkeypatch.setattr(default_settings, "transcriber", None)
+
+
 @pytest.fixture
 def fake_llm() -> FakeLLM:
     return FakeLLM()

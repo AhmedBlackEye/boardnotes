@@ -1,0 +1,13 @@
+{
+ "time_s": 115,
+ "lines": [
+  "Solve 2x + y = 3, x − 2y = −1, and find out",
+  "its \"row picture\" and \"column picture\""
+ ],
+ "partial": [],
+ "latex": [
+  "\\begin{cases} 2x + y = 3 \\\\ x - 2y = -1 \\end{cases}"
+ ],
+ "diagrams": [],
+ "status": "draft: needs human check"
+}

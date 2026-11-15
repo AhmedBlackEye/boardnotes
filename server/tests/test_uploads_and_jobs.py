@@ -145,7 +145,7 @@ class Calls:
             self.hit("select_keyframes")
             return [frame]
 
-        async def read_board(keyframes: list[Keyframe], llm: Any, transcript: Any = None) -> list[FrameReading]:
+        async def read_board(keyframes: list[Keyframe], llm: Any, transcript: list[TranscriptSegment] | None = None) -> list[FrameReading]:
             self.hit("read_board")
             return [FrameReading(keyframe=frame, read=BoardRead(blocks=[], frame_quality="good"))]
 

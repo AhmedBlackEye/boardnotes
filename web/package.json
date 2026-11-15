@@ -9,6 +9,7 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:e2e": "playwright test",
     "types": "json2ts -i '../contracts/schemas/*.json' -o src/contracts --unreachableDefinitions --no-additionalProperties"
   },
   "dependencies": {
@@ -20,6 +21,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@playwright/test": "1.65.1",
     "@tailwindcss/postcss": "^4",
     "@testing-library/dom": "^10.4.2",
     "@testing-library/react": "^16.3.3",

@@ -6,18 +6,18 @@
  },
  {
   "label": "Demo clip in fixtures/video",
-  "state": "pending",
-  "value": "Waiting for clip"
+  "state": "pass",
+  "value": "5 min MIT OCW clip"
  },
  {
   "label": "API keys (Anthropic, ElevenLabs)",
-  "state": "pending",
-  "value": "Not needed until integration"
+  "state": "pass",
+  "value": "Anthropic + fal set (ElevenLabs later)"
  },
  {
   "label": "Supabase cloud project",
-  "state": "pending",
-  "value": "Not needed until integration"
+  "state": "pass",
+  "value": "Project created, schema loaded"
  },
  {
   "label": "End-to-end run on demo clip",

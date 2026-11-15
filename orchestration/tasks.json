@@ -1,6 +1,6 @@
 {
  "project": "BoardNotes",
- "updated": "2026-11-14T23:40Z",
+ "updated": "2026-11-15T01:30Z",
  "status_flow": [
   "todo",
   "building",
@@ -98,7 +98,7 @@
    "title": "Demo clip + 15 hand-labelled board frames",
    "phase": "P0",
    "owner": "you + lead",
-   "status": "blocked",
+   "status": "building",
    "depends_on": [],
    "acceptance": "fixtures/video/demo.mp4 present; fixtures/frames/NN.jpg + NN.json",
    "checks": {
@@ -106,8 +106,8 @@
    },
    "branch": null,
    "pr": null,
-   "notes": "Waiting for the demo clip in fixtures/video/demo.mp4",
-   "updated": "2026-11-14T16:44Z"
+   "notes": "Clip ready: fixtures/video/demo.mp4 = first 5 min of MIT 18.06SC 'Geometry of Linear Algebra' (360p, CC BY-NC-SA). Labelling 15 frames still to do.",
+   "updated": "2026-11-15T01:30Z"
   },
   {
    "id": "P0-5",
@@ -660,8 +660,8 @@
    },
    "branch": null,
    "pr": null,
-   "notes": "",
-   "updated": "2026-11-14T16:44Z"
+   "notes": "Supabase project 'boardnotes' created (eu-west-2), schema + demo users loaded, RLS on; connection string in .env. Hosting still to choose.",
+   "updated": "2026-11-15T01:30Z"
   }
  ]
 }

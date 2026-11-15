@@ -1,5 +1,9 @@
 [
  {
+  "at": "2026-11-15T05:30:00Z",
+  "text": "Wave 1 merged: fal transcription, formula check, transcript-aware board reading, consistent terms, diagrams (lead resolved merge conflicts). Added make migrate; local and Supabase databases migrated. End-to-end smoke test passes on main (684 server tests)."
+ },
+ {
   "at": "2026-11-15T04:40:00Z",
   "text": "H (diagrams) built: PR #8, in review. G: security passed, fixing code-review findings and the transcribe signature mismatch from parallel branches."
  },

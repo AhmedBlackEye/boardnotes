@@ -29,7 +29,9 @@ def test_structure() -> None:
     assert tex.count(r"\begin{itemize}") == tex.count(r"\end{itemize}") >= 2
     assert r"\section{" in tex
     assert r"\det(A - \lambda I) = 0" in tex and "\\[" in tex
-    assert r"\href{https://example.org/media/lec_21.mp4\#t=2010.5}{[33:30]}" in tex
+    assert tex.count(r"\href{") == 1
+    assert r"\href{https://example.org/media/lec_21.mp4}{Watch the lecture video}" in tex
+    assert r"\#t=" not in tex
     assert r"\draftmark" in tex
 
 
@@ -102,7 +104,7 @@ def test_href_url_is_percent_encoded() -> None:
     hrefs = re.findall(r"\\href\{([^}]*)\}", tex)
     assert hrefs
     for h in hrefs:
-        assert h.startswith(r"https://example.com/v?a=1&b=x\%7D\%7Binput\%7By\%7D~z\#t="), h
+        assert h == r"https://example.com/v?a=1&b=x\%7D\%7Binput\%7By\%7D~z", h
 
 
 @pytest.mark.parametrize(

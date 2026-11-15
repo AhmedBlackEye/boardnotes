@@ -120,6 +120,7 @@
   <header class="lecture-head">
     <h1>{{ lec.title }}</h1>
     <div class="meta">{{ lec.status_label }}{% if lec.duration %} · {{ lec.duration }}{% endif %} · {{ lec.verified_sections }} of {{ lec.total_sections }} sections verified</div>
+    {% if lec.video_link %}<div class="meta"><a class="video-link" href="{{ lec.video_link }}">Watch the lecture video</a></div>{% endif %}
   </header>
   {% for s in lec.sections %}
   <section class="notes">
@@ -145,13 +146,12 @@
           </figure>
           {% endfor %}
         </div>
-        {% if b.link %}<a class="chip" href="{{ b.link }}">&#9654; {{ b.time }}</a>{% endif %}
       </li>
     {% endfor %}
     </ul>
     {% for n in s.said %}
     <div class="said">
-      <div class="eyebrow">Said but not written{% if n.link %} · <a href="{{ n.link }}">{{ n.time }}</a>{% endif %}</div>
+      <div class="eyebrow">Said but not written</div>
       <p>{{ n.text }}</p>
     </div>
     {% endfor %}

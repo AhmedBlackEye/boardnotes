@@ -57,9 +57,10 @@ def test_render_pdf_returns_real_pdf():
     assert "Trace" in t
 
 
-def test_pdf_has_clickable_timestamp_links_in_seconds():
+def test_pdf_has_one_video_link_and_no_per_point_links():
+    # Changed by the user (2026-11-15): one "Watch the lecture video" link per lecture, no timestamp links.
     links = links_of(run(P.render_pdf(lec())))
-    assert any("#t=2010" in x for x in links), links
+    assert len(links) == 1 and "#t=" not in links[0], links
 
 
 def test_pdf_draft_marks_present_when_unverified_and_absent_when_verified():

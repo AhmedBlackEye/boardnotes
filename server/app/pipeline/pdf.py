@@ -162,6 +162,7 @@ class LectureView:
     verified_sections: int
     total_sections: int
     sections: list[SectionView] = field(default_factory=list)
+    video_link: str | None = None  # one link per lecture, at the top; no per-point video links in the PDF
 
 
 @dataclass
@@ -234,7 +235,7 @@ def lecture_view(lecture: LectureDetail, include_drafts: bool = True) -> Lecture
     ordered = sorted(lecture.sections, key=lambda s: s.order)
     # Numbers follow the full lecture so they match the web app even when drafts are left out.
     sections = [
-        _section_view(i, s, video_url, first_seen, figures)
+        _section_view(i, s, None, first_seen, figures)  # no per-point links: one link at the top instead
         for i, s in enumerate(ordered, start=1)
         if include_drafts or s.status == SectionStatus.VERIFIED
     ]
@@ -247,6 +248,7 @@ def lecture_view(lecture: LectureDetail, include_drafts: bool = True) -> Lecture
         verified_sections=sum(s.status == SectionStatus.VERIFIED for s in ordered),
         total_sections=len(ordered),
         sections=sections,
+        video_link=video_url,
     )
 
 

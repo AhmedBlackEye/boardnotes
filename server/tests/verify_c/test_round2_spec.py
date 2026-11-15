@@ -133,10 +133,10 @@ def test_unsafe_video_urls_never_linked(url):
     assert not re.search(r'<a [^>]*href="\s*(javascript|data|file|vbscript):', html, re.I)
 
 
-def test_timestamps_in_links_are_seconds_not_mmss():
+def test_pdf_html_links_only_to_the_video_once():
     html = P.build_lecture_html(sample_lecture().model_copy(update={"video_url": "https://v.example/x.mp4"}))
-    assert "#t=2512" in html
-    assert "#t=41:52" not in html
+    assert html.count('href="https://v.example/x.mp4"') == 1
+    assert "#t=" not in html
 
 
 def test_format_time_mmss():

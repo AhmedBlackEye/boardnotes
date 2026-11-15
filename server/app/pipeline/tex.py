@@ -14,7 +14,7 @@ from urllib.parse import quote
 
 from app.contracts.api import LectureDetail
 from app.contracts.enums import LectureStatus, SectionStatus
-from app.pipeline.pdf import bullet_time, format_time, safe_video_url, status_label, timestamp_link
+from app.pipeline.pdf import format_time, safe_video_url, status_label
 
 _SPECIAL = {
     "\\": r"\textbackslash{}",
@@ -155,7 +155,6 @@ def _stamp(link: str | None, seconds: float) -> str:
 def export_tex(lecture: LectureDetail, include_drafts: bool = True) -> str:
     """Pipeline stage: one lecture's notes as a complete LaTeX document."""
     video_url = safe_video_url(lecture.video_url)
-    first_seen = {b.id: b.first_seen_s for b in lecture.board_blocks}
     status = lecture.summary.status
     lines = [
         r"\documentclass[11pt,a4paper]{article}",
@@ -171,6 +170,9 @@ def export_tex(lecture: LectureDetail, include_drafts: bool = True) -> str:
         r"\begin{document}",
         r"\maketitle",
     ]
+    top_link = _href(video_url) if video_url else None
+    if top_link:
+        lines.append(f"\\noindent\\href{{{top_link}}}{{Watch the lecture video}}\n")
     if status != LectureStatus.VERIFIED:
         lines.append(r"\noindent\draftmark" + "\n")
     for section in sorted(lecture.sections, key=lambda s: s.order):
@@ -184,9 +186,6 @@ def export_tex(lecture: LectureDetail, include_drafts: bool = True) -> str:
             item = r"\item{} " + escape_tex(b.text)  # {} stops a leading "[" becoming an \item label
             if b.uncertain:
                 item += r" \textit{(uncertain)}"
-            t = bullet_time(b, first_seen)
-            if t is not None:
-                item += _stamp(timestamp_link(video_url, t), t)
             lines.append(item)
             math = safe_math(b.latex) if b.latex else None
             if math:
@@ -195,9 +194,7 @@ def export_tex(lecture: LectureDetail, include_drafts: bool = True) -> str:
                 lines.append(r"\texttt{" + escape_tex(b.latex.strip()) + "}")
         lines.append(r"\end{itemize}")
         for n in section.said_not_written:
-            lines.append(
-                f"\\par\\noindent\\textit{{Said but not written:}} {escape_tex(n.text)}{_stamp(timestamp_link(video_url, n.at_s), n.at_s)}"
-            )
+            lines.append(f"\\par\\noindent\\textit{{Said but not written:}} {escape_tex(n.text)}")
         lines.append("")
     lines.append(r"\end{document}")
     return "\n".join(lines) + "\n"

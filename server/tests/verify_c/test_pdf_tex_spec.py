@@ -125,7 +125,9 @@ def test_module_pdf_empty_list_does_not_crash():
 def test_no_remote_assets_in_html():
     html = P.build_lecture_html(lec())
     external = re.findall(r'(?:src|href)="(https?://[^"]+)"', html)
-    assert all("lec_21.mp4" in u for u in external), external
+    # The only external link is the lecture page in the web app (no remote scripts, styles or images).
+    assert all(u.endswith("/lectures/lec_21") for u in external), external
+    assert not re.findall(r'src="https?://', html)
 
 
 # ---------------- TeX ----------------

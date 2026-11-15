@@ -93,7 +93,7 @@ def test_html_structure() -> None:
     assert html.index("The characteristic equation") < html.index("Trace &amp; determinant")
     assert html.count("Draft · not yet verified") >= 1
     # One link to the lecture video at the top; no per-point timestamp links.
-    assert html.count('href="https://example.org/media/lec_21.mp4"') == 1
+    assert html.count('href="http://localhost:3000/lectures/lec_21"') == 1
     assert "#t=" not in html
     assert "Watch the lecture video" in html
     assert 'data-latex="\\det(A - \\lambda I) = 0"' in html
@@ -157,7 +157,7 @@ async def test_render_pdf(chromium_ok: None) -> None:
         "Watch the lecture video",
     ]:
         assert expected in text, expected
-    assert pdf_links(data) == ["https://example.org/media/lec_21.mp4"]
+    assert pdf_links(data) == ["http://localhost:3000/lectures/lec_21"]
     if (pdf.KATEX_DIR / "katex.min.js").exists():
         # KaTeX rendered the formula (its HTML output repeats glyphs; the raw source is gone).
         assert "\\det(A" not in text

@@ -248,7 +248,8 @@ def lecture_view(lecture: LectureDetail, include_drafts: bool = True) -> Lecture
         verified_sections=sum(s.status == SectionStatus.VERIFIED for s in ordered),
         total_sections=len(ordered),
         sections=sections,
-        video_link=video_url,
+        # Link to the lecture's page in the web app (it has the player); the raw video URL is served by the API host.
+        video_link=safe_video_url(f"/lectures/{lecture.summary.id}") if video_url else None,
     )
 
 

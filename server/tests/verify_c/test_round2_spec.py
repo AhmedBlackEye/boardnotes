@@ -135,8 +135,8 @@ def test_unsafe_video_urls_never_linked(url):
 
 def test_pdf_html_links_only_to_the_video_once():
     html = P.build_lecture_html(sample_lecture().model_copy(update={"video_url": "https://v.example/x.mp4"}))
-    assert html.count('href="https://v.example/x.mp4"') == 1
-    assert "#t=" not in html
+    assert html.count("Watch the lecture video") == 1
+    assert "#t=" not in html and "x.mp4" not in html
 
 
 def test_format_time_mmss():

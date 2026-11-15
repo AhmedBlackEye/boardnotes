@@ -1,5 +1,9 @@
 [
  {
+  "at": "2026-11-15T04:40:00Z",
+  "text": "H (diagrams) built: PR #8, in review. G: security passed, fixing code-review findings and the transcribe signature mismatch from parallel branches."
+ },
+ {
   "at": "2026-11-15T04:00:00Z",
   "text": "Q-1 fal transcription merged (all checks passed first time). G (board accuracy) built, PR #7, in review. H (diagrams) still building."
  },

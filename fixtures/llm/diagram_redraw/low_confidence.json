@@ -1,0 +1,15 @@
+{
+  "kind": "chart",
+  "chart": {
+    "title": null,
+    "x_label": null,
+    "y_label": null,
+    "x_range": [0, 1],
+    "y_range": [0, 1],
+    "show_axes": false,
+    "elements": [{"type": "segment", "points": [[0, 0], [1, 1]], "label": null}]
+  },
+  "mermaid": null,
+  "caption": "A sketch that is hard to read.",
+  "confidence": 0.4
+}

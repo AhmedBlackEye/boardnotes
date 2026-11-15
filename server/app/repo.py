@@ -5,7 +5,7 @@ from typing import Any
 
 from fastapi import HTTPException, status
 
-from app.contracts.ai import LOW_CONFIDENCE, BoardBlock, SaidNotWritten, TimeRange
+from app.contracts.ai import LOW_CONFIDENCE, BoardBlock, DiagramFigure, SaidNotWritten, TimeRange
 from app.contracts.api import Bullet, LectureDetail, LectureSummary, Me, Section, Suggestion, TranscriptLine
 from app.contracts.enums import LectureStatus, Role
 from app.db import Conn, fetch_all, fetch_one
@@ -88,6 +88,7 @@ def block_from_row(row: dict[str, Any]) -> BoardBlock:
         first_seen_s=row["first_seen_s"],
         best_frame_s=row["best_frame_s"],
         bbox=list(row["bbox"]),
+        figure=DiagramFigure.model_validate(row["figure"]) if row.get("figure") else None,
     )
 
 

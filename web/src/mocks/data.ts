@@ -71,6 +71,16 @@ const L21_BLOCKS: BoardBlock[] = [
   block("b_21_prod", "λ₁ λ₂ ⋯ λₙ = det(A)", "\\lambda_1\\lambda_2\\cdots\\lambda_n = \\det(A)", 2550),
   block("b_21_quad", "λ² − tr(A) λ + det(A) = 0", "\\lambda^2 - \\operatorname{tr}(A)\\lambda + \\det(A) = 0", 2645),
   block("b_21_ex", "A = [[4,1],[2,3]]", "A=\\begin{pmatrix}4&1\\\\2&3\\end{pmatrix}", 2838),
+  {
+    ...block("b_21_flow", "det(A − λI) = 0 → polynomial p(λ) → roots = eigenvalues", null, 2160, 0.9, "diagram"),
+    figure: {
+      kind: "mermaid",
+      caption: "From the determinant to the eigenvalues: expand to a polynomial, then find its roots.",
+      redrawn_by_ai: true,
+      chart: null,
+      mermaid: 'flowchart LR\n  A["det(A − λI) = 0"] --> B["polynomial p(λ)"]\n  B --> C["roots = eigenvalues"]',
+    },
+  },
 ];
 
 export const L21: LectureDetail = {
@@ -87,7 +97,7 @@ export const L21: LectureDetail = {
     ]),
     section("sec_21_3", 3, "The characteristic equation", 1980, 2400, "verified", [
       bullet("bl_21_3a", 1, "λ is an eigenvalue of A exactly when A − λI has no inverse.", "\\det(A - \\lambda I) = 0", ["b_21_det"], 2042, 2064, 0.96),
-      bullet("bl_21_3b", 2, "Expanding the determinant gives a polynomial of degree n in λ, the characteristic polynomial. Its roots are the eigenvalues.", null, ["b_21_poly"], 2142, 2170, 0.94),
+      bullet("bl_21_3b", 2, "Expanding the determinant gives a polynomial of degree n in λ, the characteristic polynomial. Its roots are the eigenvalues.", null, ["b_21_poly", "b_21_flow"], 2142, 2170, 0.94),
       bullet("bl_21_3c", 3, "An n×n matrix has exactly n eigenvalues, counted with repetition, possibly complex.", null, ["b_21_n"], 2225, 2250, 0.9),
     ], [{ at_s: 2910, text: "For a triangular matrix you can skip all this: the eigenvalues are just the diagonal entries." }]),
     section("sec_21_4", 4, "Trace and determinant", 2400, 2700, "uncertain", [
@@ -114,6 +124,29 @@ const DEMO_BLOCKS: BoardBlock[] = [
   block("b_0001", "2x + y = 3, x − 2y = −1", "\\begin{cases} 2x + y = 3 \\\\ x - 2y = -1 \\end{cases}", 18),
   block("b_0003", "x = 2y − 1", "x = 2y - 1", 70),
   block("b_0004", "row picture · column picture", null, 40, 0.88, "text"),
+  {
+    ...block("b_0005", "Sketch: lines x − 2y = −1 and 2x + y = 3 crossing at (1, 1)", null, 115, 0.9, "diagram"),
+    bbox: [0.5, 0.15, 0.95, 0.85],
+    figure: {
+      kind: "chart",
+      caption: "The two lines x − 2y = −1 and 2x + y = 3 meet at the solution (1, 1).",
+      redrawn_by_ai: true,
+      mermaid: null,
+      chart: {
+        title: "Row picture",
+        x_label: "x",
+        y_label: "y",
+        x_range: [-2, 3],
+        y_range: [-1, 3],
+        show_axes: true,
+        elements: [
+          { type: "line", points: [[-1, 0], [1, 1]], label: "x − 2y = −1" },
+          { type: "line", points: [[0, 3], [1.5, 0]], label: "2x + y = 3" },
+          { type: "point", points: [[1, 1]], label: "(1, 1)" },
+        ],
+      },
+    },
+  },
 ];
 
 export const DEMO: LectureDetail = {
@@ -127,7 +160,7 @@ export const DEMO: LectureDetail = {
       bullet("bl_d_1b", 2, "Rearranging the second equation gives x in terms of y.", "x = 2y - 1", ["b_0003"], 60, 72, 0.95),
     ], [{ at_s: 35, text: "The row picture and column picture give the same answer, seen two different ways." }]),
     section("sec_d_2", 2, "Row picture and column picture", 95, 240, "verified", [
-      bullet("bl_d_2a", 1, "The row picture draws each equation as a line; the solution is where the lines cross.", null, ["b_0004"], 100, 128, 0.9),
+      bullet("bl_d_2a", 1, "The row picture draws each equation as a line; the solution is where the lines cross.", null, ["b_0004", "b_0005"], 100, 128, 0.9),
     ]),
   ],
 };

@@ -19,6 +19,7 @@ SCHEMA_FOR_TASK = {
     "ask": ai.LectureAnswer,
     "formula_reread": ai.BoardReadBlock,
     "normalise_terms": TermMap,
+    "diagram_redraw": ai.DiagramRedraw,
 }
 
 

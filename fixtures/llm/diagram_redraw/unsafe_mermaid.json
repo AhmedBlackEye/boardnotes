@@ -1,0 +1,7 @@
+{
+  "kind": "mermaid",
+  "chart": null,
+  "mermaid": "flowchart TD\n  A[\"Start\"] --> B[\"End\"]\n  click A \"javascript:alert(1)\"",
+  "caption": "A two-step process.",
+  "confidence": 0.95
+}

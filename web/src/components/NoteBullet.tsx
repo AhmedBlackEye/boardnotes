@@ -10,12 +10,15 @@ export function NoteBullet({
   latex,
   state = "default",
   onSelect,
+  figures,
   children,
 }: {
   text: string;
   latex?: string | null;
   state?: NoteBulletState;
   onSelect?: () => void;
+  /** Diagrams from the board that this point cites (shown under the text; clicks on them don't select the bullet). */
+  figures?: ReactNode;
   children?: ReactNode;
 }) {
   const box = {
@@ -42,6 +45,11 @@ export function NoteBullet({
             )}
           >
             <Math latex={latex} display />
+          </div>
+        )}
+        {figures && (
+          <div className="flex flex-col gap-2" onClick={(e) => e.stopPropagation()}>
+            {figures}
           </div>
         )}
         {children && (

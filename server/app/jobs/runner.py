@@ -22,6 +22,7 @@ from app.contracts.enums import JobStage, LectureStatus, SectionStatus
 from app.db import Conn, Pool, execute, fetch_all, fetch_one
 from app.llm.client import LLM
 from app.media import lecture_dir, make_snapshot
+from app.pipeline.fix_examples import FixExample, TrainingRow, select_examples, with_fix_examples
 from app.pipeline.interfaces import (
     AudioExtractor,
     BlockMerger,
@@ -262,6 +263,32 @@ async def set_lecture(pool: Pool, lecture_id: str, **fields: Any) -> None:
         await execute(conn, f"update lectures set {sets} where id = %(id)s", {**fields, "id": lecture_id})  # noqa: S608 - keys are whitelisted
 
 
+# ---------- Learning from approved fixes (Q-9) ----------
+EXAMPLE_ROWS_SCANNED = 200  # recent training rows looked at when picking examples
+
+
+async def load_fix_examples(pool: Pool, lecture_id: str, limit: int) -> list[FixExample]:
+    """Recent approved corrections for the lecture's uploader (others' fill any gap). Never fails the job."""
+    if limit <= 0:
+        return []
+    try:
+        async with pool.connection() as conn:
+            lecture = await fetch_one(conn, "select uploaded_by from lectures where id = %(id)s", {"id": lecture_id})
+            uploader = lecture["uploaded_by"] if lecture else None
+            rows = await fetch_all(  # the uploader's own rows first, so older ones aren't crowded out by others' newer ones
+                conn,
+                """select l.uploaded_by, t.model_reading, t.corrected_text, t.created_at
+                   from training_examples t left join lectures l on l.id = t.lecture_id
+                   order by coalesce(l.uploaded_by = %(by)s, false) desc, t.created_at desc, t.id desc
+                   limit %(n)s""",
+                {"by": uploader, "n": EXAMPLE_ROWS_SCANNED},
+            )
+    except Exception:
+        log.exception("lecture %s: could not load past corrections; reading the board without them", lecture_id)
+        return []
+    return select_examples([TrainingRow(**r) for r in rows], uploader, limit)
+
+
 # ---------- Running a job ----------
 def glance_vocabulary(keyframes: list[Keyframe]) -> list[str]:
     """Distinct lines of board text from the keyframe glance, in order of first appearance."""
@@ -313,7 +340,8 @@ async def run_job(
         await save_transcript(pool, lecture_id, segments)
 
         await step(JobStage.READ_BOARD, 0.45, f"Reading the board in {len(keyframes)} frames")
-        readings = await stages.read_board(keyframes, llm, segments)
+        examples = await load_fix_examples(pool, lecture_id, settings.fix_examples)
+        readings = await stages.read_board(keyframes, with_fix_examples(llm, examples), segments)
 
         await step(JobStage.MERGE_BLOCKS, 0.65, "Combining board readings")
         blocks = await asyncio.to_thread(stages.merge_blocks, readings)

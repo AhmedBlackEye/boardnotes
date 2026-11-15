@@ -16,3 +16,4 @@ data/
 # Agent worktrees and local Claude settings
 .claude/worktrees/
 .claude/settings.local.json
+.playwright-mcp/

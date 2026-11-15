@@ -1,6 +1,6 @@
 {
  "project": "BoardNotes",
- "updated": "2026-11-15T02:30Z",
+ "updated": "2026-11-15T02:50Z",
  "status_flow": [
   "todo",
   "building",
@@ -562,7 +562,7 @@
    "title": "Merge all branches, wire pipeline into job runner",
    "phase": "P2",
    "owner": "lead",
-   "status": "building",
+   "status": "in_review",
    "depends_on": [
     "A-3",
     "B-4",
@@ -579,8 +579,8 @@
    },
    "branch": null,
    "pr": null,
-   "notes": "",
-   "updated": "2026-11-15T02:30Z"
+   "notes": "Offline end-to-end works: demo clip uploads, all stages run, notes + sources + PDF produced (scripts/smoke_e2e.py, ~3 s with recorded AI). Web connected to the real API. Small fixes queued until wave 1 merges (they touch the same files): section numbers start at 0; '0 student fixes and…' banner wording; lecture title in the list isn't a link; CORS origins should come from settings.",
+   "updated": "2026-11-15T02:50Z"
   },
   {
    "id": "I-2",

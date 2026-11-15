@@ -161,6 +161,10 @@ class Calls:
             self.hit("recheck_formulas")
             return blocks
 
+        async def normalise_terms(blocks: list[BoardBlock], llm: Any) -> list[BoardBlock]:
+            self.hit("normalise_terms")
+            return [b.model_copy(update={"text": "x = 1"}) for b in blocks]
+
         async def plan_sections(blocks: list[BoardBlock], transcript: list[TranscriptSegment], llm: Any) -> SectionPlan:
             self.hit("plan_sections")
             return SectionPlan(sections=[SectionPlan.Span(heading="Intro", start_s=0, end_s=60)])
@@ -186,6 +190,7 @@ class Calls:
             write_notes=write_notes,
             validate_citations=validate_citations,
             recheck_formulas=recheck_formulas,
+            normalise_terms=normalise_terms,
         )
 
 
@@ -214,6 +219,7 @@ async def test_job_runs_stages_in_order_and_stores_results(pool: Pool, db: Db, s
         "read_board",
         "merge_blocks",
         "recheck_formulas",
+        "normalise_terms",
         "plan_sections",
         "write_notes",
         "validate_citations",
@@ -225,8 +231,9 @@ async def test_job_runs_stages_in_order_and_stores_results(pool: Pool, db: Db, s
     assert job is not None
     assert (job["stage"], job["progress"], job["sections_ready"], job["error"]) == ("done", 1.0, 1, None)
     assert (await (await db.execute("select count(*) as n from transcript_segments")).fetchone()) == {"n": 1}
-    block = await (await db.execute("select snapshot_path from board_blocks where id = 'b_1'")).fetchone()
+    block = await (await db.execute("select snapshot_path, text from board_blocks where id = 'b_1'")).fetchone()
     assert block is not None and block["snapshot_path"] == str(calls.frame)
+    assert block["text"] == "x = 1"  # blocks are stored after recheck and normalisation
     section = await (await db.execute("select * from sections")).fetchone()
     assert section is not None and section["status"] == "uncertain"
     bullets = await (await db.execute("select text, confidence from bullets order by ord")).fetchall()

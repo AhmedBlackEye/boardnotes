@@ -33,6 +33,7 @@ from app.pipeline.interfaces import (
     NoteWriter,
     Probe,
     SectionPlanner,
+    TermNormaliser,
     Transcriber,
     VideoCheckError,
 )
@@ -54,6 +55,7 @@ class Stages:
     write_notes: NoteWriter
     validate_citations: CitationValidator
     recheck_formulas: FormulaRechecker
+    normalise_terms: TermNormaliser
 
 
 def _lazy(module: str, name: str) -> Any:
@@ -77,6 +79,7 @@ def default_stages() -> Stages:
         write_notes=_lazy("notes", "write_notes"),
         validate_citations=_lazy("citations", "validate_citations"),
         recheck_formulas=_lazy("formulas", "recheck_formulas"),
+        normalise_terms=_lazy("terms", "normalise_terms"),
     )
 
 
@@ -292,6 +295,9 @@ async def run_job(
         blocks = await asyncio.to_thread(stages.merge_blocks, readings)
         await step(JobStage.MERGE_BLOCKS, 0.66, "Checking that formulas display correctly")
         blocks = await stages.recheck_formulas(blocks, keyframes, llm)
+        await step(JobStage.MERGE_BLOCKS, 0.68, "Making terms and symbols consistent")
+        blocks = await stages.normalise_terms(blocks, llm)
+        # redraw_diagrams (DiagramRedrawer) goes here: blocks = await stages.redraw_diagrams(blocks, keyframes, llm)
         await save_blocks(pool, lecture_id, blocks, keyframes)
 
         await step(JobStage.SECTION, 0.7, "Splitting the lecture into sections")

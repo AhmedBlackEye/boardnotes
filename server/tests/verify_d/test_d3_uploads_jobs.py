@@ -234,7 +234,11 @@ class Recorder:
             self._hit("recheck")
             return blocks
 
-        return Stages(probe, audio, transcribe, select, read, merge, plan, write, validate, recheck)
+        async def normalise(blocks, llm):
+            self._hit("normalise")
+            return blocks
+
+        return Stages(probe, audio, transcribe, select, read, merge, plan, write, validate, recheck, normalise)
 
 
 async def _wait_job(client, lec_id: str, limit_s=15.0) -> dict:
@@ -291,7 +295,19 @@ async def test_job_runs_stages_in_order_and_stores_results(settings, db, fake_ll
             result = await _wait_job(c, lec_id)
             app_client = c
             assert result["error"] is None and result["stage"] == "done" and result["progress"] == 1.0
-            assert rec.calls == ["probe", "audio", "select", "transcribe", "read", "merge", "recheck", "plan", "write", "validate"]
+            assert rec.calls == [
+                "probe",
+                "audio",
+                "select",
+                "transcribe",
+                "read",
+                "merge",
+                "recheck",
+                "normalise",
+                "plan",
+                "write",
+                "validate",
+            ]
             assert all(x is fake_llm for x in rec.llms)
             d = (await c.get(f"/lectures/{lec_id}")).json()
             assert d["summary"]["status"] == "draft"

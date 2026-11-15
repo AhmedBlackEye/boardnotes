@@ -47,6 +47,9 @@ def create_app(
             llm_slots=asyncio.Semaphore(settings.llm_concurrency),
         )
         app.state.boardnotes = state
+        cleared = await state.pdfs.clear()  # renderer/template may have changed since the last start
+        if cleared:
+            log.info("cleared %d cached PDF(s) on startup", cleared)
         worker: asyncio.Task[None] | None = None
         if run_worker:
 

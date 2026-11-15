@@ -4,7 +4,6 @@ import { useState } from "react";
 import { Button } from "@/components/Button";
 import { Icon } from "@/components/Icon";
 import { Math as Tex } from "@/components/Math";
-import { SourceChip } from "@/components/SourceChip";
 import { StatusPill } from "@/components/StatusPill";
 import { TopBar } from "@/components/TopBar";
 import type { LectureDetail } from "@/contracts/LectureDetail";
@@ -29,6 +28,7 @@ function Page({ lecture, sections, n, total }: { lecture: LectureDetail; section
         <span>Linear Algebra · {lecture.summary.title.split(" · ")[0]}</span>
         {lecture.summary.status === "verified" && <span className="text-success">Verified by lecturer</span>}
       </div>
+      {n === 1 && <span className="text-[10px] text-accent underline">Watch the lecture video</span>}
       {sections.map((s) => (
         <div key={s.id} className="flex flex-col gap-2">
           <div className="flex items-center justify-between gap-2">
@@ -49,7 +49,6 @@ function Page({ lecture, sections, n, total }: { lecture: LectureDetail; section
                   </div>
                 )}
               </div>
-              {b.transcript_ranges[0] && <SourceChip seconds={b.transcript_ranges[0].start_s} />}
             </div>
           ))}
         </div>
@@ -165,7 +164,7 @@ export default function PdfPreviewPage() {
           <div className="border-t border-default pt-3">
             <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.08em] text-tertiary">Included</p>
             <ul className="flex flex-col gap-2 text-[13px] text-primary">
-              {["Notes and formulas", "Board snapshots", "Clickable video timestamps", "Draft marks on unverified sections"].map((t) => (
+              {["Notes and formulas", "Board snapshots", "Link to the lecture video", "Draft marks on unverified sections"].map((t) => (
                 <li key={t} className="flex items-center gap-2">
                   <Icon name="check" size={16} className="text-success" />
                   {t}

@@ -97,6 +97,15 @@ class PdfService:
         self._locks: dict[str | None, asyncio.Lock] = {}
         self._generation: dict[str | None, int] = {}
 
+    async def clear(self) -> int:
+        """Forget every cached PDF (rows and files). Called on startup so a changed template or renderer never
+        leaves old PDFs being served; PDFs are rendered again on the next request."""
+        async with self.pool.connection() as conn:
+            rows = await fetch_all(conn, "delete from pdfs returning path")
+        paths = [Path(r["path"]) for r in rows]
+        await asyncio.to_thread(lambda: [p.unlink(missing_ok=True) for p in paths])
+        return len(rows)
+
     def _lock(self, key: str | None) -> asyncio.Lock:
         return self._locks.setdefault(key, asyncio.Lock())
 
